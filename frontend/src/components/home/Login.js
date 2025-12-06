@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
+import logo from '../../logo.svg';
 
 const Login = () => {
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -19,7 +20,10 @@ const Login = () => {
             {/* Navbar */}
             <nav className="navbar navbar-expand-lg navbar-dark bg-transparent pt-4">
                 <div className="container">
-                    <Link className="navbar-brand fw-bold text-light fs-3" to="/">NextOffer</Link>
+                    <Link className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" to="/">
+                        <img src={logo} alt="NextOffer Logo" style={{ height: '40px' }} />
+                        NextOffer
+                    </Link>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                         <span className="navbar-toggler-icon"></span>
                     </button>
@@ -98,9 +102,9 @@ const Login = () => {
                                                 Remember me
                                             </label>
                                         </div>
-                                        <a href="#!" className="text-primary text-decoration-none small">
+                                        <Link to="/forgot-password" className="text-primary text-decoration-none small">
                                             Forgot Password?
-                                        </a>
+                                        </Link>
                                     </div>
 
                                     {/* Submit Button */}
@@ -144,7 +148,7 @@ const Login = () => {
                                 <div className="text-center pt-3 border-top border-secondary">
                                     <p className="text-muted small mb-0">
                                         Don't have an account?
-                                        <a href="#!" className="text-primary text-decoration-none ms-1 fw-bold">
+                                        <a onClick={() => navigate('/register')} className="text-primary text-decoration-none ms-1 fw-bold">
                                             Sign Up
                                         </a>
                                     </p>

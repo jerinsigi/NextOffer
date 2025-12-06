@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import { useNavigate } from 'react-router-dom';
+import logo from '../../logo.svg';
 
 class Home extends PureComponent {
     componentDidMount() {
@@ -18,7 +19,10 @@ class Home extends PureComponent {
                 {/* Navbar */}
                 <nav className="navbar navbar-expand-lg navbar-dark bg-transparent pt-4 fixed-top">
                     <div className="container">
-                        <Link className="navbar-brand fw-bold text-light fs-3" to="/">NextOffer</Link>
+                        <Link className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" to="/">
+                            <img src={logo} alt="NextOffer Logo" style={{ height: '40px' }} />
+                            NextOffer
+                        </Link>
                         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                             <span className="navbar-toggler-icon"></span>
                         </button>
@@ -40,7 +44,7 @@ class Home extends PureComponent {
                             </ul>
                             <div className="d-flex ms-lg-3">
                                 <button className="btn btn-outline-light me-3 px-4 rounded-pill" onClick={() => this.props.navigate('/login')}>Login</button>
-                                <button className="btn btn-primary px-4 rounded-pill shadow-lg">Get Started</button>
+                                <button className="btn btn-primary px-4 rounded-pill shadow-lg" onClick={() => this.props.navigate('/register')}>Get Started</button>
                             </div>
                         </div>
                     </div>
