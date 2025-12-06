@@ -1,0 +1,228 @@
+/* Logs & Audit Styles */
+
+/* Tabs Navigation */
+.logs-tabs .nav-pills {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    display: inline-flex;
+    gap: 0.5rem;
+}
+
+.logs-tabs .nav-link {
+    background: transparent;
+    border: none;
+    color: var(--muted-text);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.logs-tabs .nav-link:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--light-text);
+}
+
+.logs-tabs .nav-link.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.logs-tabs .nav-link .badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Log List */
+.log-list {
+    max-height: 700px;
+    overflow-y: auto;
+}
+
+.log-item {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.log-item:hover {
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.log-item.selected {
+    background: rgba(99, 102, 241, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.log-item:last-child {
+    border-bottom: none;
+}
+
+.log-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    flex-shrink: 0;
+}
+
+.log-icon i {
+    font-size: 1.25rem;
+}
+
+.log-action {
+    color: var(--light-text);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.log-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--muted-text);
+    flex-wrap: wrap;
+}
+
+.log-meta span {
+    display: flex;
+    align-items: center;
+}
+
+/* Log Info Grid */
+.log-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 0.5rem;
+}
+
+.info-item label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+/* Changes Display */
+.changes-display {
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 0.5rem;
+}
+
+.change-value {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.change-value.text-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.change-value.text-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Error Log Card */
+.error-log-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-left: 4px solid;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.error-log-card:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+
+/* Stack Trace */
+.stack-trace-container {
+    margin-top: 1rem;
+}
+
+.stack-trace {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    color: #ff6b6b;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    overflow-x: auto;
+    margin: 0;
+}
+
+/* API Logs Table Enhancements */
+code {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Scrollbar Styling */
+.log-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.log-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.log-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.log-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .log-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .logs-tabs .nav-pills {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .logs-tabs .nav-link {
+        flex: 1;
+        justify-content: center;
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .log-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .changes-display .d-flex {
+        flex-direction: column;
+    }
+    
+    .changes-display .bi-arrow-right {
+        transform: rotate(90deg);
+    }
+}

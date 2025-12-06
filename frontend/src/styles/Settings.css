@@ -1,0 +1,188 @@
+/* Settings Styles */
+
+/* Tabs Navigation */
+.settings-tabs .nav-pills {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.settings-tabs .nav-link {
+    background: transparent;
+    border: none;
+    color: var(--muted-text);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.settings-tabs .nav-link:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--light-text);
+}
+
+.settings-tabs .nav-link.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Setting Item */
+.setting-item {
+    padding: 1rem 0;
+}
+
+.setting-item h6 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.setting-item p {
+    font-size: 0.85rem;
+}
+
+/* Form Switches */
+.form-check-input {
+    width: 3rem;
+    height: 1.5rem;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+/* Form Range */
+.form-range {
+    height: 0.5rem;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: var(--primary-color);
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.form-range::-webkit-slider-thumb:hover {
+    background: var(--secondary-color);
+}
+
+.form-range::-moz-range-thumb {
+    background: var(--primary-color);
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.form-range::-moz-range-thumb:hover {
+    background: var(--secondary-color);
+}
+
+.form-range::-webkit-slider-runnable-track {
+    background: rgba(99, 102, 241, 0.2);
+    height: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.form-range::-moz-range-track {
+    background: rgba(99, 102, 241, 0.2);
+    height: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* Info Box */
+.info-box {
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.info-box h6 {
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+/* Alert */
+.alert {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.alert-success {
+    color: #10b981;
+}
+
+/* Badge in Header */
+.card-header-custom .badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .settings-tabs .nav-pills {
+        width: 100%;
+    }
+    
+    .settings-tabs .nav-link {
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .setting-item {
+        padding: 0.75rem 0;
+    }
+    
+    .setting-item .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .setting-item .form-check-switch {
+        margin-top: 0.75rem;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .header-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Input Focus States */
+input[type="number"].form-control-dark:focus,
+input[type="text"].form-control-dark:focus,
+input[type="email"].form-control-dark:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+/* Divider Enhancement */
+hr.border-secondary {
+    margin: 1.5rem 0;
+}
