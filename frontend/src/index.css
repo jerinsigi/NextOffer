@@ -390,3 +390,22 @@ section {
   border-color: var(--primary-color) !important;
   transform: translateY(-5px);
 }
+/* Admin Form Controls */
+.form-select-dark {
+  background-color: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--light-text);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.form-select-dark:focus {
+  background-color: rgba(2, 6, 23, 1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  color: var(--light-text);
+}
+
+.form-select-dark option {
+  background-color: var(--darker-bg);
+  color: var(--light-text);
+}
