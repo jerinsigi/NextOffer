@@ -6,7 +6,7 @@ const JobDescriptions = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [companyFilter, setCompanyFilter] = useState('all');
     const [selectedJob, setSelectedJob] = useState(null);
-    const [showAddModal, setShowAddModal] = useState(false);
+
 
     // Sample job data
     const jobsData = [
@@ -184,8 +184,8 @@ const JobDescriptions = () => {
 
     const filteredJobs = jobsData.filter(job => {
         const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            job.department.toLowerCase().includes(searchTerm.toLowerCase());
+            job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.department.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
         const matchesCompany = companyFilter === 'all' || job.company === companyFilter;
         return matchesSearch && matchesStatus && matchesCompany;
@@ -272,7 +272,7 @@ const JobDescriptions = () => {
                     <button className="btn btn-outline-primary me-2">
                         <i className="bi bi-download me-2"></i>Export Jobs
                     </button>
-                    <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                    <button className="btn btn-primary">
                         <i className="bi bi-plus-circle me-2"></i>Post New Job
                     </button>
                 </div>
@@ -353,7 +353,7 @@ const JobDescriptions = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <select 
+                        <select
                             className="form-select-dark"
                             value={companyFilter}
                             onChange={(e) => setCompanyFilter(e.target.value)}
@@ -363,7 +363,7 @@ const JobDescriptions = () => {
                                 <option key={company} value={company}>{company}</option>
                             ))}
                         </select>
-                        <select 
+                        <select
                             className="form-select-dark"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -381,8 +381,8 @@ const JobDescriptions = () => {
                         {filteredJobs.map(job => {
                             const daysRemaining = calculateDaysRemaining(job.expiryDate);
                             return (
-                                <div 
-                                    key={job.id} 
+                                <div
+                                    key={job.id}
                                     className={`job-card ${selectedJob?.id === job.id ? 'selected' : ''}`}
                                     onClick={() => handleJobClick(job)}
                                 >
@@ -452,14 +452,14 @@ const JobDescriptions = () => {
                                             {job.status === 'Active' && (
                                                 <span className={`expiry-info ${daysRemaining < 7 ? 'expiring-soon' : ''}`}>
                                                     <i className="bi bi-clock"></i>
-                                                    {daysRemaining > 0 
+                                                    {daysRemaining > 0
                                                         ? `${daysRemaining} days remaining`
                                                         : 'Expired'}
                                                 </span>
                                             )}
                                         </div>
                                         <div className="job-actions">
-                                            <button 
+                                            <button
                                                 className="btn-icon"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -469,7 +469,7 @@ const JobDescriptions = () => {
                                             >
                                                 <i className="bi bi-pencil"></i>
                                             </button>
-                                            <button 
+                                            <button
                                                 className="btn-icon"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -480,7 +480,7 @@ const JobDescriptions = () => {
                                                 <i className="bi bi-files"></i>
                                             </button>
                                             {job.status === 'Active' ? (
-                                                <button 
+                                                <button
                                                     className="btn-icon warning"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -491,7 +491,7 @@ const JobDescriptions = () => {
                                                     <i className="bi bi-pause-circle"></i>
                                                 </button>
                                             ) : job.status === 'Paused' || job.status === 'Draft' ? (
-                                                <button 
+                                                <button
                                                     className="btn-icon success"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -502,7 +502,7 @@ const JobDescriptions = () => {
                                                     <i className="bi bi-play-circle"></i>
                                                 </button>
                                             ) : null}
-                                            <button 
+                                            <button
                                                 className="btn-icon danger"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -524,7 +524,7 @@ const JobDescriptions = () => {
                         <div className="job-details-panel">
                             <div className="panel-header">
                                 <h5>Job Details</h5>
-                                <button 
+                                <button
                                     className="btn-close"
                                     onClick={() => setSelectedJob(null)}
                                 >

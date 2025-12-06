@@ -123,9 +123,9 @@ const Login = () => {
                                 <div className="text-center pt-3 border-top border-secondary">
                                     <p className="text-muted small mb-0">
                                         Don't have an account?
-                                        <a onClick={() => navigate('/register')} className="text-primary text-decoration-none ms-1 fw-bold" role="button">
+                                        <Link to="/register" className="text-primary text-decoration-none ms-1 fw-bold">
                                             Sign Up
-                                        </a>
+                                        </Link>
                                     </p>
                                 </div>
                             </div>

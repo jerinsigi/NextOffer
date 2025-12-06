@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import AuthNavbar from '../common/AuthNavbar';
 import Footer from '../common/Footer';
 
 const ForgotPassword = () => {
-    const navigate = useNavigate();
+
 
     useEffect(() => {
         window.scrollTo(0, 0);
