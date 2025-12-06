@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
-import logo from '../../logo.svg';
+import AuthNavbar from '../common/AuthNavbar';
+import Footer from '../common/Footer';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -18,33 +19,7 @@ const Login = () => {
             <div className="shape-blob shape-blob-2"></div>
 
             {/* Navbar */}
-            <nav className="navbar navbar-expand-lg navbar-dark bg-transparent pt-4">
-                <div className="container">
-                    <Link className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" to="/">
-                        <img src={logo} alt="NextOffer Logo" style={{ height: '40px' }} />
-                        NextOffer
-                    </Link>
-                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon"></span>
-                    </button>
-                    <div className="collapse navbar-collapse" id="navbarNav">
-                        <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-                            <li className="nav-item">
-                                <Link className="nav-link px-3" to="/">Home</Link>
-                            </li>
-                            <li className="nav-item">
-                                <a className="nav-link px-3" href="/#features">Features</a>
-                            </li>
-                            <li className="nav-item">
-                                <a className="nav-link px-3" href="/#about">About</a>
-                            </li>
-                            <li className="nav-item">
-                                <a className="nav-link px-3" href="/#contact">Contact</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+            <AuthNavbar />
 
             {/* Login Section */}
             <div className="flex-grow-1 d-flex align-items-center py-5">
@@ -148,7 +123,7 @@ const Login = () => {
                                 <div className="text-center pt-3 border-top border-secondary">
                                     <p className="text-muted small mb-0">
                                         Don't have an account?
-                                        <a onClick={() => navigate('/register')} className="text-primary text-decoration-none ms-1 fw-bold">
+                                        <a onClick={() => navigate('/register')} className="text-primary text-decoration-none ms-1 fw-bold" role="button">
                                             Sign Up
                                         </a>
                                     </p>
@@ -168,22 +143,7 @@ const Login = () => {
             </div>
 
             {/* Footer */}
-            <footer className="bg-transparent text-light py-4 mt-auto border-top border-secondary border-opacity-25">
-                <div className="container">
-                    <div className="row align-items-center">
-                        <div className="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                            <small className="text-muted">
-                                &copy; 2025 <strong className="text-light">NextOffer</strong>. All Rights Reserved
-                            </small>
-                        </div>
-                        <div className="col-md-6 text-center text-md-end">
-                            <a href="#!" className="text-muted text-decoration-none small me-3">Privacy Policy</a>
-                            <a href="#!" className="text-muted text-decoration-none small me-3">Terms of Service</a>
-                            <a href="#!" className="text-muted text-decoration-none small">Help</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };

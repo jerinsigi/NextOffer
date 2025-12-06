@@ -580,8 +580,8 @@ class Home extends PureComponent {
                                     <li className="mb-2"><Link to="/" className="text-decoration-none text-muted hover-text-primary">Home</Link></li>
                                     <li className="mb-2"><a href="#about" className="text-decoration-none text-muted hover-text-primary">About us</a></li>
                                     <li className="mb-2"><a href="#features" className="text-decoration-none text-muted hover-text-primary">Features</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Terms of service</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Privacy policy</a></li>
+                                    <li className="mb-2"><Link to="/terms" className="text-decoration-none text-muted hover-text-primary">Terms of service</Link></li>
+                                    <li className="mb-2"><Link to="/privacy" className="text-decoration-none text-muted hover-text-primary">Privacy policy</Link></li>
                                 </ul>
                             </div>
 
