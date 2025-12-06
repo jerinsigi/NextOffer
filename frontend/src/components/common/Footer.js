@@ -14,7 +14,7 @@ const Footer = () => {
                     <div className="col-md-6 text-center text-md-end">
                         <Link to="/privacy" className="text-muted text-decoration-none small me-3">Privacy Policy</Link>
                         <Link to="/terms" className="text-muted text-decoration-none small me-3">Terms of Service</Link>
-                        <a href="#!" className="text-muted text-decoration-none small">Help</a>
+                        <Link to="/help" className="text-muted text-decoration-none small">Help</Link>
                     </div>
                 </div>
             </div>
