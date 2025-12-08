@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../../styles/Support.css';
+import './Support.css';
 
 const Support = () => {
     const [activeTab, setActiveTab] = useState('tickets');

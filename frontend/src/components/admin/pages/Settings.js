@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../../styles/Settings.css';
+import './Settings.css';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');

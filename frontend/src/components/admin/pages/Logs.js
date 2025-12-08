@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../../styles/Logs.css';
+import './Logs.css';
 
 const Logs = () => {
     const [activeTab, setActiveTab] = useState('activity');

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../../styles/Documentation.css';
+import './Documentation.css';
 
 const Documentation = () => {
     const [activeSection, setActiveSection] = useState('getting-started');

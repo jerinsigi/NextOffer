@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../../../styles/Reports.css';
+import './Reports.css';
 
 const Reports = () => {
     const [dateRange, setDateRange] = useState('last7days');

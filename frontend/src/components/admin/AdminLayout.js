@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import '../../styles/AdminLayout.css';
+import './AdminLayout.css';
 import logo from '../../logo.svg';
 
 const AdminLayout = () => {
