@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import '../../styles/UserLayout.css';
+import './UserLayout.css';
 import logo from '../../logo.svg';
 
 const UserLayout = () => {
