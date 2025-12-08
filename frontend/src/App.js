@@ -21,6 +21,19 @@ import InterviewMonitoring from './components/admin/pages/InterviewMonitoring';
 import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
 import ComingSoon from './components/admin/pages/ComingSoon';
+import UserLayout from './components/user/UserLayout';
+import UserDashboard from './components/user/pages/UserDashboard';
+import UserProfile from './components/user/pages/UserProfile';
+import MyApplications from './components/user/pages/MyApplications';
+import InterviewCenter from './components/user/pages/InterviewCenter';
+import PracticeInterview from './components/user/pages/PracticeInterview';
+import ResultsFeedback from './components/user/pages/ResultsFeedback';
+import SkillDevelopment from './components/user/pages/SkillDevelopment';
+import Notifications from './components/user/pages/Notifications';
+import HelpSupport from './components/user/pages/HelpSupport';
+import UserSettings from './components/user/pages/Settings';
+
+
 
 function App() {
   return (
@@ -50,6 +63,23 @@ function App() {
           <Route path="profile" element={<AdminProfile />} />
           <Route path="documentation" element={<Documentation />} />
         </Route>
+
+        {/* User Routes */}
+        <Route path="/user" element={<UserLayout />}>
+          <Route index element={<UserDashboard />} />
+          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="profile" element={<UserProfile />} />
+          <Route path="jobs" element={<ComingSoon />} />
+          <Route path="applications" element={<MyApplications />} />
+          <Route path="interview" element={<InterviewCenter />} />
+          <Route path="practice" element={<PracticeInterview />} />
+          <Route path="results" element={<ResultsFeedback />} />
+          <Route path="skills" element={<SkillDevelopment />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="help" element={<HelpSupport />} />
+          <Route path="settings" element={<UserSettings />} />
+        </Route>
+
       </Routes>
     </div>
   );
