@@ -2,19 +2,32 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: ["http://localhost:3000", "https://nextoffer.vercel.app"],
+    credentials: true
+}));
 app.use(express.json());
 
+// Connect to MongoDB
+// NOTE: You must set MONGODB_URI in your Vercel Environment Variables
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/nextoffer';
 
-mongoose.connect('mongodb://localhost:27017/nextoffer')
+mongoose.connect(MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error(err));
-app.listen(5000, () => {
-    console.log('Server is running on port 5000');
-});
 
 app.get('/', (req, res) => {
     res.send('Hello! The server is running.');
 });
+
+// Vercel serverless requires exporting the app
+module.exports = app;
+
+// Only listen if not running on Vercel
+if (require.main === module) {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
