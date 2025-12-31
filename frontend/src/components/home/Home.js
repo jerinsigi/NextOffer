@@ -584,8 +584,8 @@ class Home extends PureComponent {
                             {/* Right Column: Form */}
                             <div className="col-lg-6 animate-on-scroll delay-200">
                                 <div className="contact-form-card p-5 rounded-5 h-100 border border-secondary border-opacity-25" style={{ background: 'linear-gradient(145deg, #1e2532 0%, #131823 100%)' }}>
-                                    <h3 className="fw-bold mb-2">Start Your Project</h3>
-                                    <p className="text-muted mb-4">Tell us about your project and we'll get back to you with a tailored solution.</p>
+                                    <h3 className="fw-bold mb-2">Let's Talk Hiring</h3>
+                                    <p className="text-muted mb-4">Tell us about your hiring needs and we'll get back to you with a tailored solution.</p>
 
                                     <form>
                                         <div className="mb-4">
@@ -598,7 +598,7 @@ class Home extends PureComponent {
                                         </div>
                                         <div className="mb-4">
                                             <label htmlFor="subject" className="form-label fw-bold text-light">Subject</label>
-                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="subject" placeholder="Project Inquiry" />
+                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="subject" placeholder="Demo Request / Inquiry" />
                                         </div>
                                         <div className="mb-4">
                                             <label htmlFor="message" className="form-label fw-bold text-light">Message</label>
