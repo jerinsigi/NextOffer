@@ -3,13 +3,72 @@ import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import { useNavigate } from 'react-router-dom';
 import logo from '../../logo.svg';
+import { InterviewPracticeScroll } from './HeroScrollDemo';
+import { AnimatedTestimonialsDemo } from './TestimonialsDemo';
+import { TestimonialsColumns } from './TestimonialsColumns';
+import Footer from '../common/Footer';
 
 class Home extends PureComponent {
-    componentDidMount() {
-        initAnimations();
+    constructor(props) {
+        super(props);
+        this.state = {
+            scrolled: false,
+            activeSection: 'home'
+        };
     }
 
+    componentDidMount() {
+        initAnimations();
+        window.addEventListener('scroll', this.handleScroll);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('scroll', this.handleScroll);
+    }
+
+    scrollToTop = (e) => {
+        e.preventDefault();
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        this.setState({ activeSection: 'home' });
+        // Update URL to match standard behavior without reload
+        window.history.pushState({}, '', '/');
+    };
+
+    handleScroll = () => {
+        const scrollY = window.scrollY;
+
+        // Navbar background logic
+        if (scrollY > 50) {
+            if (!this.state.scrolled) this.setState({ scrolled: true });
+        } else {
+            if (this.state.scrolled) this.setState({ scrolled: false });
+        }
+
+        // Scroll Spy Logic
+        const sections = ['about', 'features', 'contact'];
+        let current = 'home';
+
+        // Check offset of each section
+        for (const section of sections) {
+            const element = document.getElementById(section);
+            if (element) {
+                // Offset of 100px for navbar height
+                if (scrollY >= element.offsetTop - 150) {
+                    current = section;
+                }
+            }
+        }
+
+        if (this.state.activeSection !== current) {
+            this.setState({ activeSection: current });
+        }
+    };
+
     render() {
+        const { activeSection } = this.state;
         return (
             <div className="d-flex flex-column min-vh-100 position-relative overflow-hidden">
                 {/* Background Shapes */}
@@ -17,29 +76,28 @@ class Home extends PureComponent {
                 <div className="shape-blob shape-blob-2"></div>
 
                 {/* Navbar */}
-                <nav className="navbar navbar-expand-lg navbar-dark bg-transparent pt-4 fixed-top">
+                <nav className={`navbar navbar-expand-lg navbar-dark pt-4 fixed-top transition-all ${this.state.scrolled ? 'scrolled py-3' : 'bg-transparent'}`}>
                     <div className="container">
-                        <Link className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" to="/">
+                        <a className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" href="/" onClick={this.scrollToTop}>
                             <img src={logo} alt="NextOffer Logo" style={{ height: '40px' }} />
                             NextOffer
-                        </Link>
+                        </a>
                         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                             <span className="navbar-toggler-icon"></span>
                         </button>
                         <div className="collapse navbar-collapse" id="navbarNav">
                             <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
                                 <li className="nav-item">
-                                    <Link className="nav-link active px-3" aria-current="page" to="/">Home</Link>
+                                    <a className={`nav-link px-3 ${activeSection === 'home' ? 'active' : ''}`} href="/" onClick={this.scrollToTop}>Home</a>
                                 </li>
                                 <li className="nav-item">
-                                    <a className="nav-link px-3" href="#about">About</a>
+                                    <a className={`nav-link px-3 ${activeSection === 'about' ? 'active' : ''}`} href="#about">About</a>
                                 </li>
                                 <li className="nav-item">
-                                    <a className="nav-link px-3" href="#features">Features</a>
+                                    <a className={`nav-link px-3 ${activeSection === 'features' ? 'active' : ''}`} href="#features">Features</a>
                                 </li>
-
                                 <li className="nav-item">
-                                    <a className="nav-link px-3" href="#contact">Contact</a>
+                                    <a className={`nav-link px-3 ${activeSection === 'contact' ? 'active' : ''}`} href="#contact">Contact</a>
                                 </li>
                             </ul>
                             <div className="d-flex ms-lg-3">
@@ -59,13 +117,13 @@ class Home extends PureComponent {
                                 <div className="col-lg-10">
                                     {/* Feature Badges */}
                                     <div className="d-flex justify-content-center gap-3 mb-4 flex-wrap animate-on-scroll">
-                                        <span className="badge bg-primary bg-opacity-25 text-light px-3 py-2 rounded-pill">
+                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
                                             <i className="bi bi-check-circle me-2"></i>AI Resume Screening
                                         </span>
-                                        <span className="badge bg-primary bg-opacity-25 text-light px-3 py-2 rounded-pill">
+                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
                                             <i className="bi bi-check-circle me-2"></i>Live Voice Interviews
                                         </span>
-                                        <span className="badge bg-primary bg-opacity-25 text-light px-3 py-2 rounded-pill">
+                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
                                             <i className="bi bi-check-circle me-2"></i>Integrity Monitoring
                                         </span>
                                     </div>
@@ -82,20 +140,20 @@ class Home extends PureComponent {
                                     {/* Key Statistics */}
                                     <div className="row g-4 mb-5 mt-4 animate-on-scroll">
                                         <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
-                                                <h2 className="display-4 fw-bold text-primary mb-2">90%</h2>
+                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
+                                                <h2 className="display-4 fw-bold text-white mb-2">90%</h2>
                                                 <p className="text-light mb-0">Reduced Time-to-Hire</p>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
-                                                <h2 className="display-4 fw-bold text-primary mb-2">100%</h2>
+                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
+                                                <h2 className="display-4 fw-bold text-white mb-2">100%</h2>
                                                 <p className="text-light mb-0">Candidate Authenticity</p>
                                             </div>
                                         </div>
                                         <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
-                                                <h2 className="display-4 fw-bold text-primary mb-2">3-Stage</h2>
+                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
+                                                <h2 className="display-4 fw-bold text-white mb-2">3-Stage</h2>
                                                 <p className="text-light mb-0">AI Validation Pipeline</p>
                                             </div>
                                         </div>
@@ -131,14 +189,19 @@ class Home extends PureComponent {
                         </div>
                     </section>
 
+                    {/* Scroll Animation Section */}
+                    <section className="scroll-animation-section position-relative" style={{ backgroundColor: '#020617', paddingTop: '0', paddingBottom: '0' }}>
+                        <InterviewPracticeScroll />
+                    </section>
+
                     {/* About Us Section: Mission & Comparison */}
                     <section className="py-5 bg-gradient-features position-relative" id="about">
                         <div className="container position-relative z-2">
                             {/* Mission Header */}
                             <div className="row justify-content-center mb-5">
                                 <div className="col-lg-8 text-center animate-on-scroll">
-                                    <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-3">OUR MISSION</span>
-                                    <h2 className="display-5 fw-bold mb-4">Building the Future of Hiring with <span className="text-white">Integrity & AI</span></h2>
+                                    <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">OUR MISSION</span>
+                                    <h2 className="display-5 fw-bold mb-4 text-white">Building the Future of Hiring with <span className="text-primary">Integrity & AI</span></h2>
                                     <div className="p-4 glass-card rounded-4 d-inline-block">
                                         <p className="lead text-light mb-0 fst-italic">
                                             "To replace the noise of traditional recruitment with a signal of pure potential, ensuring every hire is authentic, verified, and data-backed."
@@ -313,24 +376,24 @@ class Home extends PureComponent {
                             {/* Top Section: Header & Stats */}
                             <div className="row align-items-center mb-5">
                                 <div className="col-lg-6 animate-on-scroll">
-                                    <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-3">WHY CHOOSE US</span>
+                                    <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">WHY CHOOSE US</span>
                                     <h2 className="display-4 fw-bold mb-4">Partner with an AI That Delivers <span className="text-white">Real Results</span></h2>
-                                    <p className="lead text-muted mb-5">
+                                    <p className="lead text-light opacity-75 mb-5">
                                         NextOffer doesn't just screen candidates—it validates potential. Our data-driven approach combines semantic analysis with behavioral AI to help you build world-class teams.
                                     </p>
 
                                     <div className="row g-4">
                                         <div className="col-4">
                                             <h3 className="display-5 fw-bold text-white mb-0">90%</h3>
-                                            <small className="text-muted">Reduced Time-to-Hire</small>
+                                            <small className="text-light opacity-75">Reduced Time-to-Hire</small>
                                         </div>
-                                        <div className="col-4 border-start border-secondary ps-4">
+                                        <div className="col-4 border-start border-light border-opacity-25 ps-4">
                                             <h3 className="display-5 fw-bold text-white mb-0">100%</h3>
-                                            <small className="text-muted">Candidate Authenticity</small>
+                                            <small className="text-light opacity-75">Candidate Authenticity</small>
                                         </div>
-                                        <div className="col-4 border-start border-secondary ps-4">
+                                        <div className="col-4 border-start border-light border-opacity-25 ps-4">
                                             <h3 className="display-5 fw-bold text-white mb-0">3x</h3>
-                                            <small className="text-muted">Faster Scaling</small>
+                                            <small className="text-light opacity-75">Faster Scaling</small>
                                         </div>
                                     </div>
                                 </div>
@@ -342,42 +405,42 @@ class Home extends PureComponent {
                             {/* Middle Section: Cards */}
                             <div className="row g-4 mb-5">
                                 <div className="col-lg-4 animate-on-scroll delay-100">
-                                    <div className="card h-100 bg-dark border-secondary p-4 rounded-4">
-                                        <div className="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
+                                    <div className="card h-100 bg-dark border-secondary border-opacity-25 p-4 rounded-4">
+                                        <div className="icon-box bg-white bg-opacity-10 text-white rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
                                             <i className="bi bi-lightning-charge fs-4"></i>
                                         </div>
-                                        <h4 className="fw-bold mb-3">Instant Filtering</h4>
-                                        <p className="text-muted mb-4">
+                                        <h4 className="fw-bold mb-3 text-white">Instant Filtering</h4>
+                                        <p className="text-light opacity-75 mb-4">
                                             Automatically parse and rank thousands of resumes against your JD in seconds, not days.
                                         </p>
-                                        <a href="#features" className="text-primary text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
+                                        <a href="#features" className="text-white text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
                                     </div>
                                 </div>
                                 <div className="col-lg-4 animate-on-scroll delay-200">
-                                    <div className="card h-100 bg-dark border-primary p-4 rounded-4 position-relative shadow-lg" style={{ transform: 'scale(1.05)', zIndex: 2 }}>
+                                    <div className="card h-100 bg-primary border-primary p-4 rounded-4 position-relative shadow-lg" style={{ transform: 'scale(1.05)', zIndex: 2 }}>
                                         <div className="position-absolute top-0 end-0 mt-3 me-3">
-                                            <span className="badge bg-primary">Most Popular</span>
+                                            <span className="badge bg-white text-primary">Most Popular</span>
                                         </div>
-                                        <div className="icon-box bg-primary text-white rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
+                                        <div className="icon-box bg-white text-primary rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
                                             <i className="bi bi-graph-up-arrow fs-4"></i>
                                         </div>
                                         <h4 className="fw-bold mb-3 text-white">Deep Insights</h4>
-                                        <p className="text-light opacity-75 mb-4">
+                                        <p className="text-white opacity-90 mb-4">
                                             Go beyond keywords. Our AI analyzes behavioral cues and technical depth during voice interviews.
                                         </p>
-                                        <a href="#features" className="text-primary text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
+                                        <a href="#features" className="text-white text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
                                     </div>
                                 </div>
                                 <div className="col-lg-4 animate-on-scroll delay-300">
-                                    <div className="card h-100 bg-dark border-secondary p-4 rounded-4">
-                                        <div className="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
+                                    <div className="card h-100 bg-dark border-secondary border-opacity-25 p-4 rounded-4">
+                                        <div className="icon-box bg-white bg-opacity-10 text-white rounded-3 p-3 mb-4" style={{ width: 'fit-content' }}>
                                             <i className="bi bi-shield-check fs-4"></i>
                                         </div>
-                                        <h4 className="fw-bold mb-3">Secure Testing</h4>
-                                        <p className="text-muted mb-4">
+                                        <h4 className="fw-bold mb-3 text-white">Secure Testing</h4>
+                                        <p className="text-light opacity-75 mb-4">
                                             Eliminate proxy candidates with military-grade proctoring and identity verification.
                                         </p>
-                                        <a href="#features" className="text-primary text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
+                                        <a href="#features" className="text-white text-decoration-none fw-bold">Learn more <i className="bi bi-arrow-right"></i></a>
                                     </div>
                                 </div>
                             </div>
@@ -443,33 +506,35 @@ class Home extends PureComponent {
                             </svg>
                         </div>
                     </section>
+
+                    {/* Testimonials Section - Scrolling Columns */}
+                    <TestimonialsColumns />
                 </main>
 
                 {/* Contact Section */}
                 <section className="py-5 bg-darker position-relative" id="contact">
                     <div className="container position-relative z-2">
                         <div className="text-center mb-5 animate-on-scroll">
-                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-3">CONTACT</span>
-                            <h2 className="display-4 fw-bold">Need Help? <span className="text-primary">Contact Us</span></h2>
+                            <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">CONTACT</span>
+                            <h2 className="display-4 fw-bold text-white">Need Help? <span className="text-primary">Contact Us</span></h2>
                         </div>
 
                         <div className="row g-5">
                             {/* Left Column: Info */}
                             <div className="col-lg-6 animate-on-scroll delay-100">
                                 <div className="mb-4">
-                                    <span className="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill mb-3">
-                                        <i className="bi bi-rocket-takeoff me-2"></i>Let's Build Something Amazing
+                                    <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">
+                                        <i className="bi bi-rocket-takeoff me-2"></i>Get in Touch
                                     </span>
-                                    <h3 className="display-6 fw-bold mb-4">Ready to Transform Your Digital Presence?</h3>
+                                    <h3 className="display-6 fw-bold mb-4">Ready to Transform Your Hiring?</h3>
                                     <p className="text-muted mb-5">
-                                        Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
-                                        totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+                                        Experience the future of recruitment with NextOffer. Reach out to us for a demo, custom pricing, or any questions about our AI-driven platform.
                                     </p>
                                 </div>
 
                                 <div className="d-flex flex-column gap-3 mb-5">
                                     <div className="contact-info-card p-4 rounded-4 d-flex align-items-center">
-                                        <div className="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-4">
+                                        <div className="icon-box bg-white bg-opacity-10 text-white rounded-3 p-3 me-4">
                                             <i className="bi bi-envelope fs-4"></i>
                                         </div>
                                         <div>
@@ -479,7 +544,7 @@ class Home extends PureComponent {
                                         </div>
                                     </div>
                                     <div className="contact-info-card p-4 rounded-4 d-flex align-items-center">
-                                        <div className="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-4">
+                                        <div className="icon-box bg-white bg-opacity-10 text-white rounded-3 p-3 me-4">
                                             <i className="bi bi-telephone fs-4"></i>
                                         </div>
                                         <div>
@@ -489,7 +554,7 @@ class Home extends PureComponent {
                                         </div>
                                     </div>
                                     <div className="contact-info-card p-4 rounded-4 d-flex align-items-center">
-                                        <div className="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-4">
+                                        <div className="icon-box bg-white bg-opacity-10 text-white rounded-3 p-3 me-4">
                                             <i className="bi bi-geo-alt fs-4"></i>
                                         </div>
                                         <div>
@@ -518,37 +583,31 @@ class Home extends PureComponent {
 
                             {/* Right Column: Form */}
                             <div className="col-lg-6 animate-on-scroll delay-200">
-                                <div className="contact-form-card p-5 rounded-5 h-100">
+                                <div className="contact-form-card p-5 rounded-5 h-100 border border-secondary border-opacity-25" style={{ background: 'linear-gradient(145deg, #1e2532 0%, #131823 100%)' }}>
                                     <h3 className="fw-bold mb-2">Start Your Project</h3>
                                     <p className="text-muted mb-4">Tell us about your project and we'll get back to you with a tailored solution.</p>
 
                                     <form>
                                         <div className="mb-4">
-                                            <label className="form-label text-light small fw-bold">Full Name</label>
-                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <label htmlFor="name" className="form-label fw-bold text-light">Full Name</label>
+                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="name" placeholder="John Doe" />
                                         </div>
                                         <div className="mb-4">
-                                            <label className="form-label text-light small fw-bold">Email Address</label>
-                                            <input type="email" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <label htmlFor="email" className="form-label fw-bold text-light">Email Address</label>
+                                            <input type="email" className="form-control form-control-lg bg-dark border-secondary text-light" id="email" placeholder="name@company.com" />
                                         </div>
                                         <div className="mb-4">
-                                            <label className="form-label text-light small fw-bold">Subject</label>
-                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <label htmlFor="subject" className="form-label fw-bold text-light">Subject</label>
+                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="subject" placeholder="Project Inquiry" />
                                         </div>
                                         <div className="mb-4">
-                                            <label className="form-label text-light small fw-bold">Message</label>
-                                            <textarea className="form-control form-control-dark p-3 rounded-3" rows="4" placeholder=""></textarea>
+                                            <label htmlFor="message" className="form-label fw-bold text-light">Message</label>
+                                            <textarea className="form-control form-control-lg bg-dark border-secondary text-light" id="message" rows="4" placeholder="How can we help you?"></textarea>
                                         </div>
-                                        <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg">
+                                        <button type="submit" className="btn btn-primary btn-lg w-100 py-3 rounded-3 fw-bold shadow-lg d-flex align-items-center justify-content-center">
                                             Send Message <i className="bi bi-arrow-right ms-2"></i>
                                         </button>
                                     </form>
-
-                                    <div className="mt-4 text-center">
-                                        <small className="text-muted">
-                                            <i className="bi bi-shield-lock me-2"></i>Your information is secure and will never be shared
-                                        </small>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -556,61 +615,7 @@ class Home extends PureComponent {
                 </section>
 
                 {/* Footer */}
-                <footer className="bg-darker text-light py-5 mt-auto border-top border-secondary animate-on-scroll">
-                    <div className="container">
-                        <div className="row">
-                            {/* Brand Column */}
-                            <div className="col-lg-3 col-md-6 mb-4">
-                                <h3 className="fw-bold text-light mb-4">NextOffer</h3>
-                                <p className="text-muted mb-4">
-                                    An automated, AI-driven pre-screening ecosystem designed to replace manual technical interviews with a three-stage validation pipeline: Resume Screening, Multimodal Simulation, and Integrity Enforcement.
-                                </p>
-                                <div className="d-flex gap-2">
-                                    <a href="#!" className="social-icon"><i className="bi bi-twitter"></i></a>
-                                    <a href="#!" className="social-icon"><i className="bi bi-facebook"></i></a>
-                                    <a href="#!" className="social-icon"><i className="bi bi-instagram"></i></a>
-                                    <a href="#!" className="social-icon"><i className="bi bi-linkedin"></i></a>
-                                </div>
-                            </div>
-
-                            {/* Useful Links */}
-                            <div className="col-lg-3 col-md-6 mb-4">
-                                <h5 className="fw-bold text-light mb-4">Useful Links</h5>
-                                <ul className="list-unstyled">
-                                    <li className="mb-2"><Link to="/" className="text-decoration-none text-muted hover-text-primary">Home</Link></li>
-                                    <li className="mb-2"><a href="#about" className="text-decoration-none text-muted hover-text-primary">About us</a></li>
-                                    <li className="mb-2"><a href="#features" className="text-decoration-none text-muted hover-text-primary">Features</a></li>
-                                    <li className="mb-2"><Link to="/terms" className="text-decoration-none text-muted hover-text-primary">Terms of service</Link></li>
-                                    <li className="mb-2"><Link to="/privacy" className="text-decoration-none text-muted hover-text-primary">Privacy policy</Link></li>
-                                </ul>
-                            </div>
-
-                            {/* Our Services */}
-                            <div className="col-lg-3 col-md-6 mb-4">
-                                <h5 className="fw-bold text-light mb-4">Our Services</h5>
-                                <ul className="list-unstyled">
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Resume Screening</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Multimodal Simulation</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Integrity Enforcement</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Candidate Reports</a></li>
-                                    <li className="mb-2"><a href="#!" className="text-decoration-none text-muted hover-text-primary">Data-Driven Hiring</a></li>
-                                </ul>
-                            </div>
-
-                            {/* Contact Us */}
-                            <div className="col-lg-3 col-md-6 mb-4">
-                                <h5 className="fw-bold text-light mb-4">Contact Us</h5>
-                                <p className="text-muted mb-2">A108 Adam Street</p>
-                                <p className="text-muted mb-4">New York, NY 535022<br />United States</p>
-                                <p className="text-muted mb-2"><strong>Phone:</strong> +1 5589 55488 55</p>
-                                <p className="text-muted"><strong>Email:</strong> info@example.com</p>
-                            </div>
-                        </div>
-                        <div className="text-center pt-4 border-top border-secondary mt-4">
-                            <div className="mb-2">&copy; Copyright <strong>NextOffer</strong>. All Rights Reserved</div>
-                        </div>
-                    </div>
-                </footer>
+                <Footer />
             </div>
         )
     }
