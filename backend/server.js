@@ -22,6 +22,9 @@ app.get('/', (req, res) => {
 });
 
 // Vercel serverless requires exporting the app
+const companiesRouter = require('./routes/companies');
+app.use('/api/companies', companiesRouter);
+
 module.exports = app;
 
 // Only listen if not running on Vercel

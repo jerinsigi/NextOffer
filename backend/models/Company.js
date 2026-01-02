@@ -5,6 +5,11 @@ const companySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
     industry: {
         type: String
     },
@@ -19,6 +24,14 @@ const companySchema = new mongoose.Schema({
         type: String
     },
     company_desc: {
+        type: String
+    },
+    status: {
+        type: String,
+        enum: ['Active', 'Pending', 'Suspended'],
+        default: 'Active'
+    },
+    logo: {
         type: String
     }
 });
