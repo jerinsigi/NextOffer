@@ -33,6 +33,10 @@
     display: flex;
     gap: 1rem;
     transition: all 0.3s ease;
+    align-items: center;
+    /* Ensure vertical alignment */
+    height: 100%;
+    /* Ensure uniform height */
 }
 
 .stat-card:hover {
@@ -53,12 +57,18 @@
 
 .stat-content {
     flex: 1;
+    min-width: 0;
+    /* Important for text truncation if needed */
 }
 
 .stat-label {
     font-size: 0.875rem;
     color: var(--muted-text);
     margin-bottom: 0.5rem;
+    white-space: nowrap;
+    /* Prevent wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-value {

@@ -8,6 +8,13 @@ const Users = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        role: 'Candidate',
+        company: '',
+        status: 'Active'
+    });
 
     // Sample user data
     const usersData = [
@@ -145,8 +152,8 @@ const Users = () => {
 
     const filteredUsers = usersData.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            user.company.toLowerCase().includes(searchTerm.toLowerCase());
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.company.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesRole = roleFilter === 'all' || user.role === roleFilter;
         const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
         return matchesSearch && matchesRole && matchesStatus;
@@ -194,6 +201,13 @@ const Users = () => {
 
     const handleEditUser = (user) => {
         setSelectedUser(user);
+        setFormData({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            company: user.company,
+            status: user.status
+        });
         setShowEditModal(true);
     };
 
@@ -201,6 +215,19 @@ const Users = () => {
         console.log('Sending password reset email to user:', userId);
         alert('Password reset email sent successfully');
     };
+
+    const handleAddUser = () => {
+        setFormData({
+            name: '',
+            email: '',
+            role: 'Candidate',
+            company: '',
+            status: 'Active'
+        });
+        setSelectedUser(null);
+        setShowAddModal(true);
+    };
+
 
     return (
         <div className="dashboard-container">
@@ -210,7 +237,7 @@ const Users = () => {
                     <p className="text-muted">Manage all users, roles, and permissions</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                    <button className="btn btn-primary" onClick={handleAddUser}>
                         <i className="bi bi-plus-circle me-2"></i>Add New User
                     </button>
                 </div>
@@ -291,7 +318,7 @@ const Users = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <select 
+                        <select
                             className="form-select-dark"
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
@@ -302,7 +329,7 @@ const Users = () => {
                             <option value="Recruiter">Recruiter</option>
                             <option value="Company Admin">Company Admin</option>
                         </select>
-                        <select 
+                        <select
                             className="form-select-dark"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -332,8 +359,8 @@ const Users = () => {
                             </thead>
                             <tbody>
                                 {filteredUsers.map(user => (
-                                    <tr 
-                                        key={user.id} 
+                                    <tr
+                                        key={user.id}
                                         onClick={() => handleUserClick(user)}
                                         className={selectedUser?.id === user.id ? 'selected' : ''}
                                     >
@@ -370,7 +397,7 @@ const Users = () => {
                                         </td>
                                         <td>
                                             <div className="action-buttons">
-                                                <button 
+                                                <button
                                                     className="btn-icon"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -380,7 +407,7 @@ const Users = () => {
                                                 >
                                                     <i className="bi bi-pencil"></i>
                                                 </button>
-                                                <button 
+                                                <button
                                                     className="btn-icon"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -391,7 +418,7 @@ const Users = () => {
                                                     <i className="bi bi-key"></i>
                                                 </button>
                                                 {user.status === 'Active' ? (
-                                                    <button 
+                                                    <button
                                                         className="btn-icon danger"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -402,7 +429,7 @@ const Users = () => {
                                                         <i className="bi bi-ban"></i>
                                                     </button>
                                                 ) : (
-                                                    <button 
+                                                    <button
                                                         className="btn-icon success"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -426,7 +453,7 @@ const Users = () => {
                         <div className="user-details-panel">
                             <div className="panel-header">
                                 <h5>User Details</h5>
-                                <button 
+                                <button
                                     className="btn-close"
                                     onClick={() => setSelectedUser(null)}
                                 >
@@ -509,6 +536,106 @@ const Users = () => {
                     )}
                 </div>
             </div>
+
+            {/* Modal */}
+            {(showAddModal || showEditModal) && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <h5 className="modal-title">{showEditModal ? 'Edit User' : 'Add New User'}</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        setShowEditModal(false);
+                                    }}
+                                ></button>
+                            </div>
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                // Handle form submission here
+                                console.log('Form submitted:', formData);
+                                setShowAddModal(false);
+                                setShowEditModal(false);
+                            }}>
+                                <div className="modal-body">
+                                    <div className="mb-3">
+                                        <label className="form-label">Full Name</label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-dark"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Email Address</label>
+                                        <input
+                                            type="email"
+                                            className="form-control form-control-dark"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Role</label>
+                                        <select
+                                            className="form-select form-select-dark"
+                                            value={formData.role}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                        >
+                                            <option value="Candidate">Candidate</option>
+                                            <option value="HR Manager">HR Manager</option>
+                                            <option value="Recruiter">Recruiter</option>
+                                            <option value="Company Admin">Company Admin</option>
+                                        </select>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Company</label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-dark"
+                                            value={formData.company}
+                                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                            className="form-select form-select-dark"
+                                            value={formData.status}
+                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        >
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Suspended">Suspended</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="modal-footer border-secondary">
+                                    <button
+                                        type="button"
+                                        className="btn btn-secondary"
+                                        onClick={() => {
+                                            setShowAddModal(false);
+                                            setShowEditModal(false);
+                                        }}
+                                    >
+                                        Close
+                                    </button>
+                                    <button type="submit" className="btn btn-primary">
+                                        {showEditModal ? 'Save Changes' : 'Add User'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
