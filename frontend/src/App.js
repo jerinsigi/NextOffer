@@ -20,6 +20,7 @@ import JobDescriptions from './components/admin/pages/JobDescriptions';
 import InterviewMonitoring from './components/admin/pages/InterviewMonitoring';
 import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
+import JobCategories from './components/admin/pages/JobCategories';
 import ComingSoon from './components/admin/pages/ComingSoon';
 import UserLayout from './components/user/UserLayout';
 import UserDashboard from './components/user/pages/UserDashboard';
@@ -46,7 +47,7 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/help" element={<Help />} />
-        
+
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
@@ -54,6 +55,7 @@ function App() {
           <Route path="companies" element={<Companies />} />
           <Route path="users" element={<Users />} />
           <Route path="jobs" element={<JobDescriptions />} />
+          <Route path="job-categories" element={<JobCategories />} />
           <Route path="interviews" element={<InterviewMonitoring />} />
           <Route path="integrity" element={<Integrity />} />
           <Route path="reports" element={<Reports />} />

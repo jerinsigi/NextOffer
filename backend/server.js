@@ -25,6 +25,9 @@ app.get('/', (req, res) => {
 const companiesRouter = require('./routes/companies');
 app.use('/api/companies', companiesRouter);
 
+const jobCategoriesRouter = require('./routes/jobCategories');
+app.use('/api/job-categories', jobCategoriesRouter);
+
 module.exports = app;
 
 // Only listen if not running on Vercel

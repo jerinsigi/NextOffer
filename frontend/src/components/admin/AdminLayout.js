@@ -35,6 +35,12 @@ const AdminLayout = () => {
             badge: null
         },
         {
+            title: 'Job Categories',
+            icon: 'bi-folder',
+            path: '/admin/job-categories',
+            badge: null
+        },
+        {
             title: 'Interview Monitoring',
             icon: 'bi-camera-video',
             path: '/admin/interviews',
@@ -89,8 +95,8 @@ const AdminLayout = () => {
                         <img src={logo} alt="NextOffer" className="brand-logo" />
                         {!sidebarCollapsed && <span className="brand-text">NextOffer</span>}
                     </Link>
-                    <button 
-                        className="sidebar-toggle" 
+                    <button
+                        className="sidebar-toggle"
                         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                         title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
                     >
@@ -103,8 +109,8 @@ const AdminLayout = () => {
                     <ul className="nav-list">
                         {menuItems.map((item, index) => (
                             <li key={index} className="nav-item">
-                                <Link 
-                                    to={item.path} 
+                                <Link
+                                    to={item.path}
                                     className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
                                     title={sidebarCollapsed ? item.title : ''}
                                 >
@@ -155,18 +161,18 @@ const AdminLayout = () => {
                         {/* Search Bar */}
                         <div className="search-bar">
                             <i className="bi bi-search search-icon"></i>
-                            <input 
-                                type="text" 
-                                className="form-control" 
-                                placeholder="Search users, companies, candidates..." 
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Search users, companies, candidates..."
                             />
                         </div>
 
                         {/* Notifications */}
                         <div className="dropdown">
-                            <button 
-                                className="btn btn-icon position-relative" 
-                                type="button" 
+                            <button
+                                className="btn btn-icon position-relative"
+                                type="button"
                                 data-bs-toggle="dropdown"
                             >
                                 <i className="bi bi-bell fs-5"></i>
@@ -221,9 +227,9 @@ const AdminLayout = () => {
 
                         {/* Admin Profile Dropdown */}
                         <div className="dropdown">
-                            <button 
-                                className="btn btn-profile d-flex align-items-center gap-2" 
-                                type="button" 
+                            <button
+                                className="btn btn-profile d-flex align-items-center gap-2"
+                                type="button"
                                 data-bs-toggle="dropdown"
                             >
                                 <div className="avatar">
