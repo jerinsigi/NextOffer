@@ -6,6 +6,8 @@ const Companies = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [currentCompany, setCurrentCompany] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All Status');
 
     // Form State
     const [formData, setFormData] = useState({
@@ -135,6 +137,19 @@ const Companies = () => {
         }
     };
 
+    // Filter companies based on search term and status
+    const filteredCompanies = companies.filter(company => {
+        const matchesSearch =
+            company.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            company.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (company.industry && company.industry.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (company.location && company.location.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesStatus = statusFilter === 'All Status' || company.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
     return (
         <div className="dashboard-container">
             <div className="page-header mb-4">
@@ -151,9 +166,21 @@ const Companies = () => {
 
             <div className="dashboard-card">
                 <div className="card-header-custom">
-                    <div className="d-flex gap-3 flex-wrap">
-                        <input type="text" className="form-control form-control-dark" placeholder="Search companies..." style={{ maxWidth: '300px' }} />
-                        <select className="form-select form-select-dark" style={{ maxWidth: '200px' }}>
+                    <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap w-100">
+                        <input
+                            type="text"
+                            className="form-control form-control-dark"
+                            placeholder="Search companies..."
+                            style={{ maxWidth: '300px' }}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        <select
+                            className="form-select form-select-dark"
+                            style={{ maxWidth: '200px' }}
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
                             <option>All Status</option>
                             <option>Active</option>
                             <option>Pending</option>
@@ -175,7 +202,7 @@ const Companies = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {companies.map(company => (
+                            {filteredCompanies.map(company => (
                                 <tr key={company._id}>
                                     <td>
                                         <div className="d-flex align-items-center">
