@@ -174,51 +174,7 @@ const JobCategories = () => {
                 </div>
             )}
 
-            {/* Stats Cards */}
-            <div className="row g-4 mb-4">
-                <div className="col-md-4">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-grid fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Total Categories</div>
-                            <div className="stat-value">{stats.total}</div>
-                            <div className="stat-trend text-muted">
-                                Across all industries
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-4">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-check-circle fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Active Categories</div>
-                            <div className="stat-value">{stats.active}</div>
-                            <div className="stat-trend text-success">
-                                <i className="bi bi-arrow-up"></i> Currently in use
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-4">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-briefcase fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Total Jobs</div>
-                            <div className="stat-value">{stats.totalJobs}</div>
-                            <div className="stat-trend text-info">
-                                Using these categories
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
 
             {/* Categories Table */}
             <div className="dashboard-card">
