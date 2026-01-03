@@ -9,7 +9,8 @@ app.use(cors({
     origin: ["http://localhost:3000", "https://nextoffer.vercel.app"],
     credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Connect to MongoDB
 // NOTE: You must set MONGODB_URI in your Vercel Environment Variables
@@ -26,6 +27,9 @@ app.get('/', (req, res) => {
 // Vercel serverless requires exporting the app
 const companiesRouter = require('./routes/companies');
 app.use('/api/companies', companiesRouter);
+
+const authRouter = require('./routes/auth');
+app.use('/api/auth', authRouter);
 
 const jobCategoriesRouter = require('./routes/jobCategories');
 app.use('/api/job-categories', jobCategoriesRouter);
