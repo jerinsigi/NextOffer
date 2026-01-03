@@ -1,4 +1,81 @@
 const Company = require('../models/Company');
+const Login = require('../models/Login');
+const bcrypt = require('bcrypt');
+
+// Register a new company (public endpoint)
+exports.registerCompany = async (req, res) => {
+    try {
+        const { username, email, password, companyName, industry, location, website, description, logo } = req.body;
+
+        // Validate required fields
+        if (!username || !email || !password || !companyName || !industry || !location) {
+            return res.status(400).json({
+                message: 'Please provide all required fields: username, email, password, company name, industry, and location'
+            });
+        }
+
+        // Check if username already exists
+        const existingUsername = await Login.findOne({ username });
+        if (existingUsername) {
+            return res.status(400).json({ message: 'Username already exists' });
+        }
+
+        // Check if email already exists in Login
+        const existingLoginEmail = await Login.findOne({ email });
+        if (existingLoginEmail) {
+            return res.status(400).json({ message: 'Email already registered' });
+        }
+
+        // Check if email already exists in Company
+        const existingCompanyEmail = await Company.findOne({ email });
+        if (existingCompanyEmail) {
+            return res.status(400).json({ message: 'Company with this email already exists' });
+        }
+
+        // Hash password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        // Create Login entry
+        const login = new Login({
+            username,
+            email,
+            password: hashedPassword,
+            usertype: 'company',
+            status: 'inactive' // Pending admin approval
+        });
+
+        const savedLogin = await login.save();
+
+        // Create Company entry
+        const company = new Company({
+            company_name: companyName,
+            email,
+            industry,
+            location,
+            website: website || '',
+            company_desc: description || '',
+            logo: logo || '',
+            status: 'Pending' // Pending admin approval
+        });
+
+        const savedCompany = await company.save();
+
+        res.status(201).json({
+            message: 'Company registration successful! Your account is pending admin approval.',
+            company: {
+                id: savedCompany._id,
+                company_name: savedCompany.company_name,
+                email: savedCompany.email,
+                status: savedCompany.status
+            }
+        });
+
+    } catch (err) {
+        console.error('Registration error:', err);
+        res.status(500).json({ message: 'Server error during registration', error: err.message });
+    }
+};
 
 // Get all companies
 exports.getAllCompanies = async (req, res) => {
@@ -74,5 +151,76 @@ exports.deleteCompany = async (req, res) => {
         res.json({ message: 'Company deleted' });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+// Approve a company (Admin only)
+exports.approveCompany = async (req, res) => {
+    try {
+        const companyId = req.params.id;
+
+        // Find the company
+        const company = await Company.findById(companyId);
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        // Update Company status to Active
+        company.status = 'Active';
+        await company.save();
+
+        // Update Login status to active using the company email
+        const login = await Login.findOne({ email: company.email });
+        if (login) {
+            login.status = 'active';
+            await login.save();
+            console.log(`Approved company: ${company.company_name}, Login status updated to active`);
+        } else {
+            console.warn(`Login not found for company email: ${company.email}`);
+        }
+
+        res.json({
+            message: 'Company approved successfully',
+            company: {
+                id: company._id,
+                company_name: company.company_name,
+                email: company.email,
+                status: company.status
+            }
+        });
+
+    } catch (err) {
+        console.error('Approval error:', err);
+        res.status(500).json({ message: 'Server error during approval', error: err.message });
+    }
+};
+
+// Get company by Email (for dashboard profile)
+exports.getCompanyByEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const company = await Company.findOne({ email });
+
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        // Fetch login details to get username
+        const login = await Login.findOne({ email });
+
+        const companyData = company.toObject();
+        if (login) {
+            companyData.username = login.username;
+        }
+
+        res.json(companyData);
+    } catch (err) {
+        console.error('Get profile error:', err);
+        res.status(500).json({ message: 'Server error retrieving profile', error: err.message });
     }
 };

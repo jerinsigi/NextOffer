@@ -29,7 +29,7 @@ const companySchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['Active', 'Pending', 'Suspended'],
-        default: 'Active'
+        default: 'Pending'
     },
     logo: {
         type: String
