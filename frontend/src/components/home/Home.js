@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../logo.svg';
 import { InterviewPracticeScroll } from './HeroScrollDemo';
 import { AnimatedTestimonialsDemo } from './TestimonialsDemo';
@@ -21,6 +21,17 @@ class Home extends PureComponent {
     componentDidMount() {
         initAnimations();
         window.addEventListener('scroll', this.handleScroll);
+
+        // Handle initial hash scroll
+        if (this.props.location && this.props.location.hash) {
+            const id = this.props.location.hash.substring(1);
+            setTimeout(() => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100); // Small delay to ensure render
+        }
     }
 
     componentWillUnmount() {
@@ -605,7 +616,8 @@ class Home extends PureComponent {
 // HOC to wrap the class component and provide navigate functionality
 function HomeWithNavigate(props) {
     const navigate = useNavigate();
-    return <Home {...props} navigate={navigate} />;
+    const location = useLocation();
+    return <Home {...props} navigate={navigate} location={location} />;
 }
 
 export default HomeWithNavigate;

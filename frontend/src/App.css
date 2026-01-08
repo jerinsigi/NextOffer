@@ -41,8 +41,8 @@
 /* Navbar Dropdown Styles */
 .dropdown-menu {
   border-radius: 12px !important;
-  overflow: hidden;
-  margin-top: 8px !important;
+  /* overflow: hidden; Removed to allow hover bridge */
+  /* margin-top: 8px !important; Removed to reduce gap */
 }
 
 .dropdown-item {

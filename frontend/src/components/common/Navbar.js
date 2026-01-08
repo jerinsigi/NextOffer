@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import logo from '../../logo.svg';
 import './Navbar.css';
 
 const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeDropdown, setActiveDropdown] = useState(null);
 
     const handleMouseEnter = (dropdownName) => {
@@ -15,19 +16,48 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
         setActiveDropdown(null);
     };
 
+    const handleNavClick = (e, targetId) => {
+        e.preventDefault();
+
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            const element = document.getElementById(targetId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                // Update URL without reload
+                window.history.pushState(null, '', `/#${targetId}`);
+            } else if (targetId === 'home') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.history.pushState(null, '', '/');
+            }
+        } else {
+            // Not on home page, navigate to home with hash
+            if (targetId === 'home') {
+                navigate('/');
+            } else {
+                navigate(`/#${targetId}`);
+            }
+        }
+    };
+
     return (
         <nav className={`enhanced-navbar fixed-top ${scrolled ? 'scrolled' : ''}`}>
             <div className="container">
                 <div className="navbar-content">
                     {/* Logo */}
-                    <a
+                    <Link
                         className="navbar-brand"
-                        href="/"
-                        onClick={onScrollToTop}
+                        to="/"
+                        onClick={(e) => {
+                            if (location.pathname === '/') {
+                                e.preventDefault();
+                                onScrollToTop();
+                            }
+                        }}
                     >
                         <img src={logo} alt="NextOffer Logo" className="brand-logo" />
-                        <span className="brand-text">NextOffer</span>
-                    </a>
+                        <span className="fw-bold text-white" style={{ fontSize: '1.75rem', letterSpacing: '-0.5px' }}>NextOffer</span>
+                    </Link>
 
                     {/* Desktop Navigation */}
                     <div className="navbar-menu">
@@ -36,7 +66,7 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                 <a
                                     className={`nav-link ${activeSection === 'home' ? 'active' : ''}`}
                                     href="/"
-                                    onClick={onScrollToTop}
+                                    onClick={(e) => handleNavClick(e, 'home')}
                                 >
                                     Home
                                 </a>
@@ -45,6 +75,7 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                 <a
                                     className={`nav-link ${activeSection === 'about' ? 'active' : ''}`}
                                     href="#about"
+                                    onClick={(e) => handleNavClick(e, 'about')}
                                 >
                                     About
                                 </a>
@@ -53,6 +84,7 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                 <a
                                     className={`nav-link ${activeSection === 'features' ? 'active' : ''}`}
                                     href="#features"
+                                    onClick={(e) => handleNavClick(e, 'features')}
                                 >
                                     Features
                                 </a>
@@ -69,28 +101,44 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                 </span>
                                 <div className={`dropdown-menu ${activeDropdown === 'resources' ? 'show' : ''}`}>
                                     <div className="dropdown-content">
-                                        <a href="#blog" className="dropdown-item">
+                                        <a
+                                            href="#blog"
+                                            className="dropdown-item"
+                                            onClick={(e) => handleNavClick(e, 'blog')}
+                                        >
                                             <i className="bi bi-newspaper"></i>
                                             <div>
                                                 <div className="item-title">Blog</div>
                                                 <div className="item-desc">Latest insights and updates</div>
                                             </div>
                                         </a>
-                                        <a href="#documentation" className="dropdown-item">
+                                        <a
+                                            href="#documentation"
+                                            className="dropdown-item"
+                                            onClick={(e) => handleNavClick(e, 'documentation')}
+                                        >
                                             <i className="bi bi-book"></i>
                                             <div>
                                                 <div className="item-title">Documentation</div>
                                                 <div className="item-desc">Complete guides and tutorials</div>
                                             </div>
                                         </a>
-                                        <a href="#case-studies" className="dropdown-item">
+                                        <a
+                                            href="#case-studies"
+                                            className="dropdown-item"
+                                            onClick={(e) => handleNavClick(e, 'case-studies')}
+                                        >
                                             <i className="bi bi-graph-up"></i>
                                             <div>
                                                 <div className="item-title">Case Studies</div>
                                                 <div className="item-desc">Success stories from our clients</div>
                                             </div>
                                         </a>
-                                        <a href="#faq" className="dropdown-item">
+                                        <a
+                                            href="#faq"
+                                            className="dropdown-item"
+                                            onClick={(e) => handleNavClick(e, 'faq')}
+                                        >
                                             <i className="bi bi-question-circle"></i>
                                             <div>
                                                 <div className="item-title">FAQ</div>
@@ -105,6 +153,7 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                 <a
                                     className={`nav-link ${activeSection === 'contact' ? 'active' : ''}`}
                                     href="#contact"
+                                    onClick={(e) => handleNavClick(e, 'contact')}
                                 >
                                     Contact
                                 </a>
