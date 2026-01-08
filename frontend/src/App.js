@@ -4,6 +4,7 @@ import Home from './components/home/Home';
 import Login from './components/home/Login';
 import Register from './components/home/Register';
 import ForgotPassword from './components/home/ForgotPassword';
+import ResetPassword from './components/home/ResetPassword';
 import TermsOfService from './components/home/TermsOfService';
 import PrivacyPolicy from './components/home/PrivacyPolicy';
 import Help from './components/home/Help';
@@ -64,6 +65,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/help" element={<Help />} />
