@@ -1,16 +1,17 @@
 const Company = require('../models/Company');
 const Login = require('../models/Login');
 const bcrypt = require('bcrypt');
+const { sendOTP } = require('../utils/emailService');
 
 // Register a new company (public endpoint)
 exports.registerCompany = async (req, res) => {
     try {
-        const { username, email, password, companyName, industry, location, website, description, logo } = req.body;
+        const { username, email, password, companyName, industry, location, website, description, logo, phone } = req.body;
 
         // Validate required fields
-        if (!username || !email || !password || !companyName || !industry || !location) {
+        if (!username || !email || !password || !companyName || !industry || !location || !phone) {
             return res.status(400).json({
-                message: 'Please provide all required fields: username, email, password, company name, industry, and location'
+                message: 'Please provide all required fields: username, email, password, company name, industry, location, and phone'
             });
         }
 
@@ -42,7 +43,12 @@ exports.registerCompany = async (req, res) => {
             email,
             password: hashedPassword,
             usertype: 'company',
-            status: 'inactive' // Pending admin approval
+            email,
+            password: hashedPassword,
+            usertype: 'company',
+            status: 'pending', // Pending email verification
+            otp: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            otpExpires: Date.now() + 10 * 60 * 1000 // 10 minutes
         });
 
         const savedLogin = await login.save();
@@ -51,6 +57,7 @@ exports.registerCompany = async (req, res) => {
         const company = new Company({
             company_name: companyName,
             email,
+            phone,
             industry,
             location,
             website: website || '',
@@ -60,6 +67,9 @@ exports.registerCompany = async (req, res) => {
         });
 
         const savedCompany = await company.save();
+
+        // Send OTP via email
+        await sendOTP(email, login.otp);
 
         res.status(201).json({
             message: 'Company registration successful! Your account is pending admin approval.',
@@ -74,6 +84,68 @@ exports.registerCompany = async (req, res) => {
     } catch (err) {
         console.error('Registration error:', err);
         res.status(500).json({ message: 'Server error during registration', error: err.message });
+    }
+};
+
+// Verify Company Email OTP
+exports.verifyCompanyEmail = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Missing email or OTP' });
+        }
+
+        const login = await Login.findOne({ email });
+
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (login.status !== 'pending') {
+            return res.status(400).json({ message: 'Account is not in pending state' });
+        }
+
+        if (login.otp.trim() !== otp.trim()) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+
+        if (login.otpExpires < Date.now()) {
+            return res.status(400).json({ message: 'OTP expired' });
+        }
+
+        // Update status to 'inactive' (Email verified, checks out for Admin Approval)
+        login.status = 'inactive';
+        login.otp = undefined;
+        login.otpExpires = undefined;
+        await login.save();
+
+        res.json({ message: 'Email verified! Account is now pending Admin Approval.' });
+
+    } catch (err) {
+        console.error('Company Verification error:', err);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+// Resend Company OTP
+exports.resendCompanyOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const login = await Login.findOne({ email });
+
+        if (!login) return res.status(404).json({ message: 'User not found' });
+        if (login.status !== 'pending') return res.status(400).json({ message: 'Account not pending' });
+
+        const otp = Math.random().toString(36).substring(2, 8).toUpperCase();
+        login.otp = otp;
+        login.otpExpires = Date.now() + 10 * 60 * 1000;
+        await login.save();
+
+        await sendOTP(email, otp);
+        res.json({ message: 'New OTP sent' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
 

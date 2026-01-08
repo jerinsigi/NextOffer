@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
+const upload = require('../middleware/upload');
+
+// Register
+router.post('/register', upload.single('profileImage'), authController.register);
+
+// OTP Verification
+router.post('/verify-otp', authController.verifyOTP);
+router.post('/resend-otp', authController.resendOTP);
+
 // Login
 router.post('/login', authController.login);
 

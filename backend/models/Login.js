@@ -22,8 +22,14 @@ const loginSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive'],
-        default: 'inactive'
+        enum: ['active', 'inactive', 'pending'],
+        default: 'pending'
+    },
+    otp: {
+        type: String
+    },
+    otpExpires: {
+        type: Date
     }
 });
 

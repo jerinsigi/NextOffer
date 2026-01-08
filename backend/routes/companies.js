@@ -4,6 +4,8 @@ const companyController = require('../controllers/companyController');
 
 // Register a new company (public)
 router.post('/register', companyController.registerCompany);
+router.post('/verify-email', companyController.verifyCompanyEmail);
+router.post('/resend-otp', companyController.resendCompanyOTP);
 
 // Get all companies
 router.get('/', companyController.getAllCompanies);
