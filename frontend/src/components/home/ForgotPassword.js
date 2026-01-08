@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
-import AuthNavbar from '../common/AuthNavbar';
+import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 
 const ForgotPassword = () => {
@@ -19,7 +19,10 @@ const ForgotPassword = () => {
             <div className="shape-blob shape-blob-2"></div>
 
             {/* Navbar */}
-            <AuthNavbar />
+            <Navbar />
+
+            {/* Spacer for fixed navbar */}
+            <div style={{ height: '80px' }}></div>
 
             {/* Main Content */}
             <div className="flex-grow-1 d-flex align-items-center py-5">

@@ -7,6 +7,7 @@ import { InterviewPracticeScroll } from './HeroScrollDemo';
 import { AnimatedTestimonialsDemo } from './TestimonialsDemo';
 import { TestimonialsColumns } from './TestimonialsColumns';
 import Footer from '../common/Footer';
+import Navbar from '../common/Navbar';
 
 class Home extends PureComponent {
     constructor(props) {
@@ -76,37 +77,11 @@ class Home extends PureComponent {
                 <div className="shape-blob shape-blob-2"></div>
 
                 {/* Navbar */}
-                <nav className={`navbar navbar-expand-lg navbar-dark pt-4 fixed-top transition-all ${this.state.scrolled ? 'scrolled py-3' : 'bg-transparent'}`}>
-                    <div className="container">
-                        <a className="navbar-brand fw-bold text-light fs-3 d-flex align-items-center gap-2" href="/" onClick={this.scrollToTop}>
-                            <img src={logo} alt="NextOffer Logo" style={{ height: '40px' }} />
-                            NextOffer
-                        </a>
-                        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                            <span className="navbar-toggler-icon"></span>
-                        </button>
-                        <div className="collapse navbar-collapse" id="navbarNav">
-                            <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-                                <li className="nav-item">
-                                    <a className={`nav-link px-3 ${activeSection === 'home' ? 'active' : ''}`} href="/" onClick={this.scrollToTop}>Home</a>
-                                </li>
-                                <li className="nav-item">
-                                    <a className={`nav-link px-3 ${activeSection === 'about' ? 'active' : ''}`} href="#about">About</a>
-                                </li>
-                                <li className="nav-item">
-                                    <a className={`nav-link px-3 ${activeSection === 'features' ? 'active' : ''}`} href="#features">Features</a>
-                                </li>
-                                <li className="nav-item">
-                                    <a className={`nav-link px-3 ${activeSection === 'contact' ? 'active' : ''}`} href="#contact">Contact</a>
-                                </li>
-                            </ul>
-                            <div className="d-flex ms-lg-3">
-                                <button className="btn btn-outline-light me-3 px-4 rounded-pill" onClick={() => this.props.navigate('/login')}>Login</button>
-                                <button className="btn btn-primary px-4 rounded-pill shadow-lg" onClick={() => this.props.navigate('/register')}>Get Started</button>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
+                <Navbar
+                    scrolled={this.state.scrolled}
+                    activeSection={activeSection}
+                    onScrollToTop={this.scrollToTop}
+                />
 
                 {/* Main Content */}
                 <main className="flex-grow-1">
@@ -201,7 +176,7 @@ class Home extends PureComponent {
                             <div className="row justify-content-center mb-5">
                                 <div className="col-lg-8 text-center animate-on-scroll">
                                     <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">OUR MISSION</span>
-                                    <h2 className="display-5 fw-bold mb-4 text-white">Building the Future of Hiring with <span className="text-primary">Integrity & AI</span></h2>
+                                    <h2 className="display-5 fw-bold mb-4">Building the Future of Hiring with <span className="text-white">Integrity & AI</span></h2>
                                     <div className="p-4 glass-card rounded-4 d-inline-block">
                                         <p className="lead text-light mb-0 fst-italic">
                                             "To replace the noise of traditional recruitment with a signal of pure potential, ensuring every hire is authentic, verified, and data-backed."
@@ -516,7 +491,7 @@ class Home extends PureComponent {
                     <div className="container position-relative z-2">
                         <div className="text-center mb-5 animate-on-scroll">
                             <span className="badge bg-white bg-opacity-10 text-white px-3 py-2 rounded-pill mb-3 border border-light border-opacity-25">CONTACT</span>
-                            <h2 className="display-4 fw-bold text-white">Need Help? <span className="text-primary">Contact Us</span></h2>
+                            <h2 className="display-4 fw-bold">Need Help? <span className="text-primary">Contact Us</span></h2>
                         </div>
 
                         <div className="row g-5">
@@ -583,31 +558,37 @@ class Home extends PureComponent {
 
                             {/* Right Column: Form */}
                             <div className="col-lg-6 animate-on-scroll delay-200">
-                                <div className="contact-form-card p-5 rounded-5 h-100 border border-secondary border-opacity-25" style={{ background: 'linear-gradient(145deg, #1e2532 0%, #131823 100%)' }}>
-                                    <h3 className="fw-bold mb-2">Let's Talk Hiring</h3>
-                                    <p className="text-muted mb-4">Tell us about your hiring needs and we'll get back to you with a tailored solution.</p>
+                                <div className="contact-form-card p-5 rounded-5 h-100">
+                                    <h3 className="fw-bold mb-2">Start Your Project</h3>
+                                    <p className="text-muted mb-4">Tell us about your project and we'll get back to you with a tailored solution.</p>
 
                                     <form>
                                         <div className="mb-4">
-                                            <label htmlFor="name" className="form-label fw-bold text-light">Full Name</label>
-                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="name" placeholder="John Doe" />
+                                            <label className="form-label text-light small fw-bold">Full Name</label>
+                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
                                         </div>
                                         <div className="mb-4">
-                                            <label htmlFor="email" className="form-label fw-bold text-light">Email Address</label>
-                                            <input type="email" className="form-control form-control-lg bg-dark border-secondary text-light" id="email" placeholder="name@company.com" />
+                                            <label className="form-label text-light small fw-bold">Email Address</label>
+                                            <input type="email" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
                                         </div>
                                         <div className="mb-4">
-                                            <label htmlFor="subject" className="form-label fw-bold text-light">Subject</label>
-                                            <input type="text" className="form-control form-control-lg bg-dark border-secondary text-light" id="subject" placeholder="Demo Request / Inquiry" />
+                                            <label className="form-label text-light small fw-bold">Subject</label>
+                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
                                         </div>
                                         <div className="mb-4">
-                                            <label htmlFor="message" className="form-label fw-bold text-light">Message</label>
-                                            <textarea className="form-control form-control-lg bg-dark border-secondary text-light" id="message" rows="4" placeholder="How can we help you?"></textarea>
+                                            <label className="form-label text-light small fw-bold">Message</label>
+                                            <textarea className="form-control form-control-dark p-3 rounded-3" rows="4" placeholder=""></textarea>
                                         </div>
-                                        <button type="submit" className="btn btn-primary btn-lg w-100 py-3 rounded-3 fw-bold shadow-lg d-flex align-items-center justify-content-center">
+                                        <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg">
                                             Send Message <i className="bi bi-arrow-right ms-2"></i>
                                         </button>
                                     </form>
+
+                                    <div className="mt-4 text-center">
+                                        <small className="text-muted">
+                                            <i className="bi bi-shield-lock me-2"></i>Your information is secure and will never be shared
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>

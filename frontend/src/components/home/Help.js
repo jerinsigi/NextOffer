@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { initAnimations } from '../../assets/js/animations';
-import AuthNavbar from '../common/AuthNavbar';
+import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 
 const Help = () => {
@@ -16,7 +16,10 @@ const Help = () => {
             <div className="shape-blob shape-blob-2"></div>
 
             {/* Navbar */}
-            <AuthNavbar showButtons={true} />
+            <Navbar />
+
+            {/* Spacer for fixed navbar */}
+            <div style={{ height: '80px' }}></div>
 
             {/* Help Content */}
             <div className="flex-grow-1 py-5">

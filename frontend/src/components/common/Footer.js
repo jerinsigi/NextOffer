@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Twitter, Instagram, Linkedin, Youtube, Zap } from 'lucide-react';
+import { Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import logo from '../../logo.svg';
 
 const Footer = () => {
     return (
@@ -10,6 +11,7 @@ const Footer = () => {
                     {/* Brand Section */}
                     <div className="col-lg-4">
                         <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none text-light mb-4">
+                            <img src={logo} alt="NextOffer Logo" style={{ height: '32px', width: 'auto' }} />
                             <span className="fs-4 fw-bold">NextOffer</span>
                         </Link>
                         <p className="text-muted mb-4" style={{ maxWidth: '300px' }}>

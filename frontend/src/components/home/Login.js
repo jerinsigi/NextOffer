@@ -1,16 +1,87 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
-import AuthNavbar from '../common/AuthNavbar';
+import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 
 const Login = () => {
     const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
+    const [rememberMe, setRememberMe] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
         initAnimations();
     }, []);
+
+    const handleChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setMessage({ type: '', text: '' });
+        setLoading(true);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: formData.email, // Can be email or username
+                    password: formData.password
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store user info (you might want to use localStorage or context)
+                if (rememberMe) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                } else {
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
+                }
+
+                // Redirect based on user type
+                if (data.user.usertype === 'company') {
+                    navigate('/company/dashboard');
+                } else if (data.user.usertype === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/user/dashboard');
+                }
+            } else {
+                // Handle specific error cases
+                if (data.status === 'inactive') {
+                    setMessage({
+                        type: 'warning',
+                        text: data.message || 'Your account is pending admin approval.'
+                    });
+                } else {
+                    setMessage({
+                        type: 'error',
+                        text: data.message || 'Login failed. Please check your credentials.'
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            setMessage({ type: 'error', text: 'Network error. Please try again.' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="d-flex flex-column min-vh-100 position-relative overflow-hidden bg-gradient-hero">
@@ -19,7 +90,10 @@ const Login = () => {
             <div className="shape-blob shape-blob-2"></div>
 
             {/* Navbar */}
-            <AuthNavbar />
+            <Navbar />
+
+            {/* Spacer for fixed navbar */}
+            <div style={{ height: '80px' }}></div>
 
             {/* Login Section */}
             <div className="flex-grow-1 d-flex align-items-center py-5">
@@ -28,7 +102,7 @@ const Login = () => {
                         <div className="col-lg-5 col-md-7">
                             {/* Login Card */}
                             <div className="glass-card p-5 rounded-4 shadow-lg animate-on-scroll">
-                                {/* Header */}
+                                {/* Header with Message */}
                                 <div className="text-center mb-4">
                                     <div className="mb-3">
                                         <div className="icon-box bg-primary bg-opacity-20 text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
@@ -37,18 +111,29 @@ const Login = () => {
                                     </div>
                                     <h2 className="fw-bold text-light mb-2">Welcome Back</h2>
                                     <p className="text-muted">Sign in to continue to NextOffer</p>
+
+                                    {/* Success/Error/Warning Message */}
+                                    {message.text && (
+                                        <div className={`alert ${message.type === 'success' ? 'alert-success' : message.type === 'warning' ? 'alert-warning' : 'alert-danger'} mt-3`} role="alert">
+                                            <i className={`bi ${message.type === 'success' ? 'bi-check-circle' : message.type === 'warning' ? 'bi-exclamation-circle' : 'bi-exclamation-triangle'} me-2`}></i>
+                                            {message.text}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Login Form */}
-                                <form>
+                                <form onSubmit={handleSubmit}>
                                     <div className="mb-4">
                                         <label className="form-label text-light small fw-bold mb-2">
-                                            <i className="bi bi-envelope me-2"></i>Email Address
+                                            <i className="bi bi-envelope me-2"></i>Email or Username
                                         </label>
                                         <input
-                                            type="email"
+                                            type="text"
+                                            name="email"
                                             className="form-control form-control-dark p-3 rounded-3"
-                                            placeholder="Enter your email"
+                                            placeholder="Enter your email or username"
+                                            value={formData.email}
+                                            onChange={handleChange}
                                             required
                                         />
                                     </div>
@@ -59,8 +144,11 @@ const Login = () => {
                                         </label>
                                         <input
                                             type="password"
+                                            name="password"
                                             className="form-control form-control-dark p-3 rounded-3"
                                             placeholder="Enter your password"
+                                            value={formData.password}
+                                            onChange={handleChange}
                                             required
                                         />
                                     </div>
@@ -72,6 +160,8 @@ const Login = () => {
                                                 className="form-check-input"
                                                 type="checkbox"
                                                 id="rememberMe"
+                                                checked={rememberMe}
+                                                onChange={(e) => setRememberMe(e.target.checked)}
                                             />
                                             <label className="form-check-label text-light small" htmlFor="rememberMe">
                                                 Remember me
@@ -86,8 +176,18 @@ const Login = () => {
                                     <button
                                         type="submit"
                                         className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg mb-3"
+                                        disabled={loading}
                                     >
-                                        <i className="bi bi-box-arrow-in-right me-2"></i>Sign In
+                                        {loading ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Signing in...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="bi bi-box-arrow-in-right me-2"></i>Sign In
+                                            </>
+                                        )}
                                     </button>
 
                                     {/* Divider */}
@@ -121,10 +221,16 @@ const Login = () => {
 
                                 {/* Sign Up Link */}
                                 <div className="text-center pt-3 border-top border-secondary">
-                                    <p className="text-muted small mb-0">
+                                    <p className="text-muted small mb-2">
                                         Don't have an account?
                                         <Link to="/register" className="text-primary text-decoration-none ms-1 fw-bold">
                                             Sign Up
+                                        </Link>
+                                    </p>
+                                    <p className="text-muted small mb-0">
+                                        Want to hire talent?
+                                        <Link to="/company/register" className="text-info text-decoration-none ms-1 fw-bold">
+                                            Register Company
                                         </Link>
                                     </p>
                                 </div>

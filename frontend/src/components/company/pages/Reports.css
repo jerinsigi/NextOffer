@@ -1,0 +1,321 @@
+/* Reports & Analytics Styles */
+
+/* Metric Cards */
+.metric-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.metric-header i {
+    font-size: 2rem;
+}
+
+.metric-change {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+}
+
+.metric-change.positive {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.metric-change.negative {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--light-text);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--muted-text);
+    margin-bottom: 1rem;
+}
+
+.metric-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.metric-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+/* Chart Container */
+.chart-container {
+    width: 100%;
+    height: 250px;
+}
+
+.line-chart {
+    width: 100%;
+    height: 100%;
+}
+
+/* Chart Legend */
+.chart-legend {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--muted-text);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Donut Chart */
+.donut-chart-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.donut-chart {
+    width: 200px;
+    height: 200px;
+}
+
+/* Violation List */
+.violation-list {
+    margin-top: 1.5rem;
+}
+
+.violation-item {
+    margin-bottom: 1.5rem;
+}
+
+.violation-item:last-child {
+    margin-bottom: 0;
+}
+
+.bg-purple {
+    background-color: #8b5cf6 !important;
+}
+
+/* Skill Item */
+.skill-item {
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.skill-item:hover {
+    background: rgba(99, 102, 241, 0.1);
+    transform: translateX(4px);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+/* Hiring Funnel */
+.funnel-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.funnel-stage {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.6) 0%, rgba(139, 92, 246, 0.4) 100%);
+    border-radius: 0.5rem;
+    margin: 0 auto;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.funnel-stage:nth-child(1) {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.funnel-stage:nth-child(2) {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%);
+}
+
+.funnel-stage:nth-child(3) {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.6) 0%, rgba(139, 92, 246, 0.6) 100%);
+}
+
+.funnel-stage:nth-child(4) {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%);
+}
+
+.funnel-stage:nth-child(5) {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
+}
+
+.funnel-stage:hover {
+    transform: scale(1.02);
+}
+
+.funnel-content {
+    text-align: center;
+}
+
+.funnel-label {
+    font-size: 0.875rem;
+    color: var(--light-text);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.funnel-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.25rem;
+}
+
+.funnel-percentage {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.funnel-metrics {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1.5rem;
+}
+
+/* Progress Bar Enhancement */
+.progress {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+/* Export Dropdown */
+.dropdown-menu {
+    background-color: var(--navbar-bg);
+    border: 1px solid var(--sidebar-border);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item {
+    color: var(--light-text);
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-item:hover {
+    background-color: var(--hover-bg);
+    color: var(--light-text);
+}
+
+.dropdown-item i {
+    width: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .chart-legend {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .metric-card {
+        text-align: center;
+    }
+    
+    .metric-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .metric-value {
+        font-size: 1.75rem;
+    }
+    
+    .chart-container {
+        height: 200px;
+    }
+    
+    .donut-chart {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .funnel-label {
+        font-size: 0.75rem;
+    }
+    
+    .funnel-value {
+        font-size: 1.25rem;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .header-actions .form-select,
+    .header-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.metric-card,
+.dashboard-card {
+    animation: fadeInUp 0.5s ease-out;
+}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { initAnimations } from '../../assets/js/animations';
-import AuthNavbar from '../common/AuthNavbar';
+import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 
 const TermsOfService = () => {
@@ -16,7 +16,10 @@ const TermsOfService = () => {
             <div className="shape-blob shape-blob-2"></div>
 
             {/* Navbar */}
-            <AuthNavbar showButtons={true} />
+            <Navbar showButtons={true} />
+
+            {/* Spacer for fixed navbar */}
+            <div style={{ height: '80px' }}></div>
 
             {/* Terms of Service Content */}
             <div className="flex-grow-1 py-5">

@@ -73,19 +73,21 @@ const Companies = () => {
 
     const handleApproveClick = async (company) => {
         try {
-            const response = await fetch(`${API_URL}/${company._id}`, {
+            // Use the approval endpoint which updates both Company and Login status
+            const response = await fetch(`${API_URL}/${company._id}/approve`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ status: 'Active' }),
+                }
             });
 
             if (response.ok) {
+                const data = await response.json();
+                alert(data.message || 'Company approved successfully! They can now login.');
                 fetchCompanies();
             } else {
                 const error = await response.json();
-                alert(error.message);
+                alert(error.message || 'Failed to approve company');
             }
         } catch (error) {
             console.error('Error approving company:', error);

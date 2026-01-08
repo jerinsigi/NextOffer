@@ -1,0 +1,445 @@
+/* Company Layout Variables */
+:root {
+    --sidebar-width: 260px;
+    --sidebar-collapsed-width: 80px;
+    --navbar-height: 70px;
+    --footer-height: 60px;
+    --sidebar-bg: #0f172a;
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --navbar-bg: #1e293b;
+    --content-bg: #0f172a;
+    --hover-bg: rgba(99, 102, 241, 0.1);
+    --active-bg: rgba(99, 102, 241, 0.2);
+    --transition-speed: 0.3s;
+}
+
+/* Main Layout Container */
+.company-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--content-bg);
+}
+
+/* Sidebar Styles */
+.company-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transition: width var(--transition-speed) ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.company-sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid var(--sidebar-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--navbar-height);
+}
+
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: var(--light-text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.brand-logo {
+    height: 32px;
+    width: 32px;
+    flex-shrink: 0;
+}
+
+.brand-text {
+    transition: opacity var(--transition-speed) ease;
+}
+
+.company-sidebar.collapsed .brand-text {
+    opacity: 0;
+    width: 0;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--muted-text);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+    background-color: var(--hover-bg);
+    color: var(--primary-color);
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 0;
+}
+
+.nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin: 0.25rem 0.75rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--muted-text);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+    position: relative;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    background-color: var(--hover-bg);
+    color: var(--light-text);
+}
+
+.nav-link.active {
+    background-color: var(--active-bg);
+    color: var(--primary-color);
+}
+
+.nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 70%;
+    background-color: var(--primary-color);
+    border-radius: 0 3px 3px 0;
+}
+
+.nav-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.nav-text {
+    flex: 1;
+}
+
+.company-sidebar.collapsed .nav-link {
+    justify-content: center;
+}
+
+.company-sidebar.collapsed .nav-text,
+.company-sidebar.collapsed .badge {
+    display: none;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--sidebar-border);
+}
+
+.sidebar-info {
+    text-align: center;
+}
+
+/* Main Content Area */
+.company-main {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: margin-left var(--transition-speed) ease;
+}
+
+.company-sidebar.collapsed~.company-main {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+/* Top Navbar */
+.company-navbar {
+    height: var(--navbar-height);
+    background-color: var(--navbar-bg);
+    border-bottom: 1px solid var(--sidebar-border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.navbar-left {
+    flex: 1;
+}
+
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+}
+
+.breadcrumb-item a {
+    color: var(--muted-text);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+    color: var(--light-text);
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Search Bar */
+.search-bar {
+    position: relative;
+    width: 300px;
+}
+
+.search-bar .form-control {
+    padding-left: 2.5rem;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--sidebar-border);
+    color: var(--light-text);
+    border-radius: 0.5rem;
+}
+
+.search-bar .form-control:focus {
+    background-color: var(--sidebar-bg);
+    border-color: var(--primary-color);
+    color: var(--light-text);
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.search-bar .form-control::placeholder {
+    color: var(--muted-text);
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-text);
+}
+
+/* Icon Button */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--muted-text);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background-color: var(--hover-bg);
+    color: var(--light-text);
+}
+
+/* Profile Button */
+.btn-profile {
+    background: none;
+    border: none;
+    color: var(--light-text);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-profile:hover {
+    background-color: var(--hover-bg);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--primary-color);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.profile-info {
+    text-align: left;
+}
+
+.profile-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--light-text);
+}
+
+.profile-role {
+    font-size: 0.75rem;
+    color: var(--muted-text);
+}
+
+/* Dropdown Menus */
+.dropdown-menu {
+    background-color: var(--navbar-bg);
+    border: 1px solid var(--sidebar-border);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    min-width: 250px;
+}
+
+.dropdown-item {
+    color: var(--light-text);
+    padding: 0.75rem 1rem;
+}
+
+.dropdown-item:hover {
+    background-color: var(--hover-bg);
+    color: var(--light-text);
+}
+
+.dropdown-header {
+    padding: 0.75rem 1rem;
+    color: var(--light-text);
+    font-weight: 600;
+}
+
+.dropdown-divider {
+    border-color: var(--sidebar-border);
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-dropdown .dropdown-item {
+    padding: 1rem;
+    white-space: normal;
+}
+
+/* Content Area */
+.company-content {
+    flex: 1;
+    padding: 2rem;
+    background-color: var(--content-bg);
+}
+
+/* Footer */
+.company-footer {
+    height: var(--footer-height);
+    background-color: var(--navbar-bg);
+    border-top: 1px solid var(--sidebar-border);
+    padding: 0 2rem;
+}
+
+.footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--muted-text);
+}
+
+.footer-right {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.footer-link {
+    color: var(--muted-text);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footer-link:hover {
+    color: var(--primary-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .company-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .company-sidebar.collapsed {
+        transform: translateX(0);
+    }
+
+    .company-main {
+        margin-left: 0;
+    }
+
+    .search-bar {
+        width: 200px;
+    }
+
+    .profile-info {
+        display: none !important;
+    }
+
+    .company-content {
+        padding: 1rem;
+    }
+}
+
+/* Scrollbar Styling */
+.sidebar-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: var(--sidebar-border);
+    border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-text);
+}

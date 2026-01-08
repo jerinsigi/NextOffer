@@ -7,6 +7,9 @@ import ForgotPassword from './components/home/ForgotPassword';
 import TermsOfService from './components/home/TermsOfService';
 import PrivacyPolicy from './components/home/PrivacyPolicy';
 import Help from './components/home/Help';
+import CompanyRegister from './components/home/CompanyRegister';
+
+
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './components/admin/pages/Dashboard';
 import Companies from './components/admin/pages/Companies';
@@ -22,6 +25,8 @@ import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
 import JobCategories from './components/admin/pages/JobCategories';
 import ComingSoon from './components/admin/pages/ComingSoon';
+
+
 import UserLayout from './components/user/UserLayout';
 import UserDashboard from './components/user/pages/UserDashboard';
 import UserProfile from './components/user/pages/UserProfile';
@@ -34,6 +39,21 @@ import Notifications from './components/user/pages/Notifications';
 import HelpSupport from './components/user/pages/HelpSupport';
 import UserSettings from './components/user/pages/Settings';
 
+import CompanyLayout from './components/company/CompanyLayout';
+import CompanyDashboard from './components/company/pages/Dashboard';
+import CompanyProfile from './components/company/pages/CompanyProfile';
+
+import CompanyUsers from './components/company/pages/Users';
+import CompanyIntegrity from './components/company/pages/Integrity';
+import CompanySupport from './components/company/pages/Support';
+import CompanyLogs from './components/company/pages/Logs';
+import CompanySettings from './components/company/pages/Settings';
+import CompanyReports from './components/company/pages/Reports';
+import CompanyJobDescriptions from './components/company/pages/JobDescriptions';
+import CompanyInterviewMonitoring from './components/company/pages/InterviewMonitoring';
+
+import CompanyDocumentation from './components/company/pages/Documentation';
+import CompanyComingSoon from './components/company/pages/ComingSoon';
 
 
 function App() {
@@ -47,6 +67,7 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/company/register" element={<CompanyRegister />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
@@ -80,6 +101,24 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
           <Route path="help" element={<HelpSupport />} />
           <Route path="settings" element={<UserSettings />} />
+        </Route>
+
+        {/* Company Routes */}
+        <Route path="/company" element={<CompanyLayout />}>
+          <Route index element={<CompanyDashboard />} />
+          <Route path="dashboard" element={<CompanyDashboard />} />
+          <Route path="profile" element={<CompanyProfile />} />
+          <Route path="jobs" element={<CompanyJobDescriptions />} />
+
+          <Route path="interviews" element={<CompanyInterviewMonitoring />} />
+          <Route path="integrity" element={<CompanyIntegrity />} />
+          <Route path="reports" element={<CompanyReports />} />
+          <Route path="logs" element={<CompanyLogs />} />
+          <Route path="support" element={<CompanySupport />} />
+          <Route path="documentation" element={<CompanyDocumentation />} />
+          <Route path="settings" element={<CompanySettings />} />
+
+          <Route path="users" element={<CompanyUsers />} />
         </Route>
 
       </Routes>
