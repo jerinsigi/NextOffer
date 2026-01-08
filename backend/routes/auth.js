@@ -22,4 +22,8 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/verify-reset-otp', authController.verifyResetOTP);
 router.post('/reset-password', authController.resetPassword);
 
+// Google Authentication
+router.post('/google-login', authController.googleLogin);
+router.post('/google-register', authController.googleRegister);
+
 module.exports = router;

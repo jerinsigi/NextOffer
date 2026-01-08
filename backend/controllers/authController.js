@@ -3,6 +3,7 @@ const Candidate = require('../models/Candidate');
 const Company = require('../models/Company');
 const bcrypt = require('bcrypt');
 const { sendOTP } = require('../utils/emailService');
+const { auth: firebaseAuth } = require('../config/firebase');
 
 // Login authentication
 exports.login = async (req, res) => {
@@ -416,5 +417,145 @@ exports.resetPassword = async (req, res) => {
     } catch (err) {
         console.error('Reset Password error:', err);
         res.status(500).json({ message: 'Server error', error: err.message });
+    }
+};
+
+// Google Login
+exports.googleLogin = async (req, res) => {
+    try {
+        const { idToken, email, displayName, photoURL } = req.body;
+
+        if (!idToken || !email) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Verify Firebase ID token
+        let decodedToken;
+        try {
+            decodedToken = await firebaseAuth.verifyIdToken(idToken);
+        } catch (error) {
+            console.error('Firebase token verification failed:', error);
+            return res.status(401).json({ message: 'Invalid authentication token' });
+        }
+
+        // Check if user exists
+        const user = await Login.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({
+                message: 'Account not found. Please register first.',
+                requiresRegistration: true
+            });
+        }
+
+        // Check if account is active
+        if (user.status === 'inactive') {
+            return res.status(403).json({
+                message: 'Your account is pending admin approval.',
+                status: 'inactive'
+            });
+        }
+
+        // Successful login
+        res.json({
+            message: 'Login successful',
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                usertype: user.usertype,
+                status: user.status
+            }
+        });
+
+    } catch (err) {
+        console.error('Google login error:', err);
+        res.status(500).json({ message: 'Server error during Google login', error: err.message });
+    }
+};
+
+// Google Register
+exports.googleRegister = async (req, res) => {
+    try {
+        const { idToken, email, displayName, photoURL, usertype } = req.body;
+
+        if (!idToken || !email || !displayName) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Verify Firebase ID token
+        let decodedToken;
+        try {
+            decodedToken = await firebaseAuth.verifyIdToken(idToken);
+        } catch (error) {
+            console.error('Firebase token verification failed:', error);
+            return res.status(401).json({ message: 'Invalid authentication token' });
+        }
+
+        // Check if user already exists
+        const existingUser = await Login.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({
+                message: 'Account already exists. Please login instead.'
+            });
+        }
+
+        // Check if email exists in Company
+        const existingCompany = await Company.findOne({ email });
+        if (existingCompany) {
+            return res.status(400).json({ message: 'Email already registered as a company' });
+        }
+
+        // Generate a random password (won't be used for Google auth)
+        const randomPassword = Math.random().toString(36).substring(2, 15);
+        const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+        // Create username from display name or email
+        let username = displayName || email.split('@')[0];
+
+        // Check if username exists, if so append random number
+        const existingUsername = await Login.findOne({ username });
+        if (existingUsername) {
+            username = `${username}_${Math.floor(Math.random() * 10000)}`;
+        }
+
+        // Create Login record (automatically active for Google users)
+        const newLogin = new Login({
+            username,
+            email,
+            password: hashedPassword,
+            usertype: usertype || 'candidate',
+            status: 'active' // Google users are automatically verified
+        });
+
+        await newLogin.save();
+
+        // Create specific user record based on type
+        if (usertype === 'candidate') {
+            const newCandidate = new Candidate({
+                full_name: displayName,
+                email,
+                phone: '', // Optional for Google sign-up
+                education: '',
+                experience_years: 0,
+                image_url: photoURL || ''
+            });
+            await newCandidate.save();
+        }
+
+        res.status(201).json({
+            message: 'Registration successful with Google!',
+            user: {
+                id: newLogin._id,
+                username: newLogin.username,
+                email: newLogin.email,
+                usertype: newLogin.usertype,
+                status: newLogin.status
+            }
+        });
+
+    } catch (err) {
+        console.error('Google registration error:', err);
+        res.status(500).json({ message: 'Server error during Google registration', error: err.message });
     }
 };

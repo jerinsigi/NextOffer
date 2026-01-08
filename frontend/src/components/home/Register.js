@@ -6,6 +6,8 @@ import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import { auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from 'firebase/auth';
 const Register = () => {
     const [formData, setFormData] = React.useState({
         username: '',
@@ -28,6 +30,7 @@ const Register = () => {
     const [otp, setOtp] = React.useState(['', '', '', '', '', '']);
     const [emailForOtp, setEmailForOtp] = React.useState('');
     const otpRefs = React.useRef([]);
+    const [loading, setLoading] = React.useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -155,6 +158,54 @@ const Register = () => {
     const handleKeyDown = (index, e) => {
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             otpRefs.current[index - 1].focus();
+        }
+    };
+
+    const handleGoogleSignUp = async () => {
+        setLoading(true);
+
+        try {
+            // Sign in with Google
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Get Firebase ID token
+            const idToken = await user.getIdToken();
+
+            // Send token to backend for registration
+            const response = await fetch('http://localhost:5000/api/auth/google-register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    idToken,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    usertype: 'candidate' // Default to candidate
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Registration successful with Google! Please login.');
+                window.location.href = '/login';
+            } else {
+                alert(data.message || 'Google registration failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Google sign-up error:', error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                alert('Sign-up cancelled.');
+            } else if (error.code === 'auth/account-exists-with-different-credential') {
+                alert('An account already exists with this email. Please login instead.');
+            } else {
+                alert('Failed to sign up with Google. Please try again.');
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -398,6 +449,8 @@ const Register = () => {
                                                 <button
                                                     type="button"
                                                     className="btn btn-outline-light w-100 py-2 rounded-3"
+                                                    onClick={handleGoogleSignUp}
+                                                    disabled={loading}
                                                 >
                                                     <i className="bi bi-google me-2"></i>Google
                                                 </button>

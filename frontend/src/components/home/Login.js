@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
+import { auth, googleProvider } from '../../firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -78,6 +80,68 @@ const Login = () => {
         } catch (error) {
             console.error('Login error:', error);
             setMessage({ type: 'error', text: 'Network error. Please try again.' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setMessage({ type: '', text: '' });
+        setLoading(true);
+
+        try {
+            // Sign in with Google
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Get Firebase ID token
+            const idToken = await user.getIdToken();
+
+            // Send token to backend for verification
+            const response = await fetch('http://localhost:5000/api/auth/google-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    idToken,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store user info
+                if (rememberMe) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                } else {
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
+                }
+
+                // Redirect based on user type
+                if (data.user.usertype === 'company') {
+                    navigate('/company/dashboard');
+                } else if (data.user.usertype === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/user/dashboard');
+                }
+            } else {
+                setMessage({
+                    type: 'error',
+                    text: data.message || 'Google sign-in failed. Please try again.'
+                });
+            }
+        } catch (error) {
+            console.error('Google sign-in error:', error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                setMessage({ type: 'info', text: 'Sign-in cancelled.' });
+            } else {
+                setMessage({ type: 'error', text: 'Failed to sign in with Google. Please try again.' });
+            }
         } finally {
             setLoading(false);
         }
@@ -204,6 +268,8 @@ const Login = () => {
                                             <button
                                                 type="button"
                                                 className="btn btn-outline-light w-100 py-2 rounded-3"
+                                                onClick={handleGoogleSignIn}
+                                                disabled={loading}
                                             >
                                                 <i className="bi bi-google me-2"></i>Google
                                             </button>
