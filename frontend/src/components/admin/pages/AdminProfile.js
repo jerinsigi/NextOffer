@@ -1,23 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AdminProfile.css';
 
 const AdminProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isEditing, setIsEditing] = useState(false);
-    
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState({ type: '', text: '' });
+
     // Profile data
     const [profileData, setProfileData] = useState({
-        firstName: 'Vivek',
-        lastName: 'Kumar',
-        email: 'vivek.kumar@nextoffer.com',
-        phone: '+91 98765 43210',
-        role: 'Super Admin',
-        department: 'System Administration',
-        employeeId: 'ADM-2024-001',
-        joinDate: '2024-01-15',
-        timezone: 'Asia/Kolkata',
-        language: 'English (US)',
-        avatar: 'VK'
+        username: '',
+        email: '',
+        usertype: '',
+        status: '',
+        id: ''
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -26,89 +22,45 @@ const AdminProfile = () => {
         confirmPassword: ''
     });
 
-    const [preferences, setPreferences] = useState({
-        emailNotifications: true,
-        smsNotifications: false,
-        violationAlerts: true,
-        weeklyReports: true,
-        systemUpdates: true,
-        darkMode: true,
-        compactView: false,
-        autoRefresh: true,
-        refreshInterval: '30'
-    });
+    // Fetch Profile on Mount
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+                if (!userStr) {
+                    setLoading(false);
+                    return;
+                }
 
-    // Activity logs
-    const activityLogs = [
-        {
-            id: 1,
-            action: 'Updated compliance rule settings',
-            timestamp: '2024-12-06 10:30 AM',
-            details: 'Modified tab switching threshold',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        },
-        {
-            id: 2,
-            action: 'Reviewed integrity violation',
-            timestamp: '2024-12-06 09:15 AM',
-            details: 'Dismissed violation ID #003',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        },
-        {
-            id: 3,
-            action: 'Added new user',
-            timestamp: '2024-12-05 04:20 PM',
-            details: 'Created account for John Doe',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        },
-        {
-            id: 4,
-            action: 'Generated analytics report',
-            timestamp: '2024-12-05 02:10 PM',
-            details: 'Exported interview data for November',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        },
-        {
-            id: 5,
-            action: 'Updated job posting',
-            timestamp: '2024-12-05 11:30 AM',
-            details: 'Modified Senior Developer position',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        },
-        {
-            id: 6,
-            action: 'Login successful',
-            timestamp: '2024-12-05 08:00 AM',
-            details: 'Logged in from office network',
-            ipAddress: '192.168.1.100',
-            device: 'Chrome on Windows'
-        }
-    ];
+                const user = JSON.parse(userStr);
+                // Use the new generic auth profile endpoint
+                const response = await fetch('http://localhost:5000/api/auth/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
 
-    // Sessions
-    const activeSessions = [
-        {
-            id: 1,
-            device: 'Chrome on Windows',
-            location: 'New York, USA',
-            ipAddress: '192.168.1.100',
-            lastActive: '2024-12-06 10:45 AM',
-            current: true
-        },
-        {
-            id: 2,
-            device: 'Safari on iPhone',
-            location: 'New York, USA',
-            ipAddress: '192.168.1.105',
-            lastActive: '2024-12-05 08:30 PM',
-            current: false
-        }
-    ];
+                if (response.ok) {
+                    const data = await response.json();
+                    setProfileData({
+                        username: data.username,
+                        email: data.email,
+                        usertype: data.usertype,
+                        status: data.status,
+                        id: data._id
+                    });
+                } else {
+                    console.error('Failed to fetch profile');
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
 
     const handleProfileChange = (field, value) => {
         setProfileData(prev => ({
@@ -124,46 +76,82 @@ const AdminProfile = () => {
         }));
     };
 
-    const handlePreferenceChange = (field, value) => {
-        setPreferences(prev => ({
-            ...prev,
-            [field]: value
-        }));
+    const handleSaveProfile = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: profileData.id,
+                    username: profileData.username,
+                    email: profileData.email
+                })
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                setIsEditing(false);
+
+                // Update local storage if email/username changed to keep session consistent
+                const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'));
+                if (currentUser) {
+                    const updatedUser = { ...currentUser, ...responseData.user };
+                    if (localStorage.getItem('user')) {
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                    } else {
+                        sessionStorage.setItem('user', JSON.stringify(updatedUser));
+                    }
+                }
+
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            } else {
+                const errorData = await response.json();
+                setMessage({ type: 'error', text: errorData.message || 'Failed to update profile' });
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            setMessage({ type: 'error', text: 'Server error updating profile' });
+        }
     };
 
-    const handleSaveProfile = () => {
-        console.log('Saving profile:', profileData);
-        setIsEditing(false);
-        alert('Profile updated successfully');
-    };
-
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert('New passwords do not match');
+            setMessage({ type: 'error', text: 'New passwords do not match' });
             return;
         }
-        console.log('Changing password');
-        setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        });
-        alert('Password changed successfully');
+
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: profileData.email,
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setMessage({ type: 'success', text: 'Password changed successfully!' });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            } else {
+                setMessage({ type: 'error', text: data.message || 'Failed to change password' });
+            }
+        } catch (error) {
+            console.error('Password change error:', error);
+            setMessage({ type: 'error', text: 'Server error changing password' });
+        }
     };
 
-    const handleSavePreferences = () => {
-        console.log('Saving preferences:', preferences);
-        alert('Preferences saved successfully');
-    };
+    if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
 
-    const handleRevokeSession = (sessionId) => {
-        console.log('Revoking session:', sessionId);
-        alert('Session revoked successfully');
-    };
-
-    const handleDownloadData = () => {
-        console.log('Downloading account data');
-        alert('Account data download started. You will receive an email when ready.');
+    // Helper to get initials for avatar
+    const getInitials = (name) => {
+        return name ? name.substring(0, 2).toUpperCase() : 'AD';
     };
 
     return (
@@ -171,7 +159,7 @@ const AdminProfile = () => {
             <div className="page-header mb-4">
                 <div>
                     <h1 className="page-title">Admin Profile</h1>
-                    <p className="text-muted">Manage your account settings and preferences</p>
+                    <p className="text-muted">Manage your admin account settings</p>
                 </div>
                 <div className="header-actions">
                     {activeTab === 'profile' && (
@@ -195,31 +183,18 @@ const AdminProfile = () => {
 
             {/* Profile Header Card */}
             <div className="profile-header-card mb-4">
-                <div className="profile-banner"></div>
-                <div className="profile-header-content">
+                <div className="profile-header-content pt-5">
                     <div className="profile-avatar-section">
-                        <div className="profile-avatar-large">{profileData.avatar}</div>
-                        <button className="btn-change-avatar">
-                            <i className="bi bi-camera"></i>
-                        </button>
+                        <div className="profile-avatar-large">
+                            {getInitials(profileData.username)}
+                        </div>
                     </div>
                     <div className="profile-header-info">
-                        <h2>{profileData.firstName} {profileData.lastName}</h2>
-                        <p className="profile-role">{profileData.role}</p>
+                        <h2>{profileData.username}</h2>
+                        <p className="profile-role">{profileData.usertype ? profileData.usertype.toUpperCase() : 'ADMIN'}</p>
                         <div className="profile-meta">
                             <span><i className="bi bi-envelope"></i> {profileData.email}</span>
-                            <span><i className="bi bi-telephone"></i> {profileData.phone}</span>
-                            <span><i className="bi bi-calendar"></i> Joined {profileData.joinDate}</span>
-                        </div>
-                    </div>
-                    <div className="profile-stats">
-                        <div className="stat-item">
-                            <div className="stat-value">156</div>
-                            <div className="stat-label">Actions Today</div>
-                        </div>
-                        <div className="stat-item">
-                            <div className="stat-value">1,247</div>
-                            <div className="stat-label">Total Actions</div>
+                            <span><i className="bi bi-shield-check"></i> Status: <span className="text-success">{profileData.status}</span></span>
                         </div>
                     </div>
                 </div>
@@ -228,40 +203,19 @@ const AdminProfile = () => {
             {/* Tabs */}
             <div className="dashboard-card">
                 <div className="profile-tabs">
-                    <button 
+                    <button
                         className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
                         onClick={() => setActiveTab('profile')}
                     >
-                        <i className="bi bi-person"></i>
+                        <i className="bi bi-person-fill"></i>
                         Personal Info
                     </button>
-                    <button 
+                    <button
                         className={`profile-tab ${activeTab === 'security' ? 'active' : ''}`}
                         onClick={() => setActiveTab('security')}
                     >
                         <i className="bi bi-shield-lock"></i>
                         Security
-                    </button>
-                    <button 
-                        className={`profile-tab ${activeTab === 'preferences' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('preferences')}
-                    >
-                        <i className="bi bi-sliders"></i>
-                        Preferences
-                    </button>
-                    <button 
-                        className={`profile-tab ${activeTab === 'activity' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('activity')}
-                    >
-                        <i className="bi bi-clock-history"></i>
-                        Activity Log
-                    </button>
-                    <button 
-                        className={`profile-tab ${activeTab === 'sessions' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('sessions')}
-                    >
-                        <i className="bi bi-pc-display"></i>
-                        Sessions
                     </button>
                 </div>
 
@@ -269,111 +223,66 @@ const AdminProfile = () => {
                     {/* Personal Info Tab */}
                     {activeTab === 'profile' && (
                         <div className="tab-pane">
-                            <div className="profile-form">
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">Account Information</h5>
+                                {/* Alert Messages */}
+                                {message.text && activeTab === 'profile' && (
+                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {message.text}
+                                    </div>
+                                )}
                                 <div className="row g-4">
                                     <div className="col-md-6">
-                                        <label className="form-label">First Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.firstName}
-                                            onChange={(e) => handleProfileChange('firstName', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Last Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.lastName}
-                                            onChange={(e) => handleProfileChange('lastName', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                        <label className="form-label">Username</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-person"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.username}
+                                                onChange={(e) => handleProfileChange('username', e.target.value)}
+                                                disabled={!isEditing}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Email Address</label>
-                                        <input
-                                            type="email"
-                                            className="form-control-dark"
-                                            value={profileData.email}
-                                            onChange={(e) => handleProfileChange('email', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            className="form-control-dark"
-                                            value={profileData.phone}
-                                            onChange={(e) => handleProfileChange('phone', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-envelope"></i></span>
+                                            <input
+                                                type="email"
+                                                className="form-control form-control-dark"
+                                                value={profileData.email}
+                                                onChange={(e) => handleProfileChange('email', e.target.value)}
+                                                disabled={!isEditing}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Role</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.role}
-                                            disabled
-                                        />
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-briefcase"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.usertype}
+                                                readOnly
+                                                disabled
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
-                                        <label className="form-label">Department</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.department}
-                                            disabled
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Employee ID</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.employeeId}
-                                            disabled
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Join Date</label>
-                                        <input
-                                            type="text"
-                                            className="form-control-dark"
-                                            value={profileData.joinDate}
-                                            disabled
-                                        />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Timezone</label>
-                                        <select
-                                            className="form-select-dark"
-                                            value={profileData.timezone}
-                                            onChange={(e) => handleProfileChange('timezone', e.target.value)}
-                                            disabled={!isEditing}
-                                        >
-                                            <option value="America/New_York">Eastern Time (ET)</option>
-                                            <option value="America/Chicago">Central Time (CT)</option>
-                                            <option value="America/Denver">Mountain Time (MT)</option>
-                                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Language</label>
-                                        <select
-                                            className="form-select-dark"
-                                            value={profileData.language}
-                                            onChange={(e) => handleProfileChange('language', e.target.value)}
-                                            disabled={!isEditing}
-                                        >
-                                            <option value="English (US)">English (US)</option>
-                                            <option value="English (UK)">English (UK)</option>
-                                            <option value="Spanish">Spanish</option>
-                                            <option value="French">French</option>
-                                        </select>
+                                        <label className="form-label">Account Status</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-activity"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.status}
+                                                readOnly
+                                                disabled
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -383,299 +292,60 @@ const AdminProfile = () => {
                     {/* Security Tab */}
                     {activeTab === 'security' && (
                         <div className="tab-pane">
-                            <div className="security-section">
-                                <h5>Change Password</h5>
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">Change Password</h5>
+                                {/* Alert Messages */}
+                                {message.text && activeTab === 'security' && (
+                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {message.text}
+                                    </div>
+                                )}
                                 <div className="row g-4">
                                     <div className="col-md-12">
                                         <label className="form-label">Current Password</label>
-                                        <input
-                                            type="password"
-                                            className="form-control-dark"
-                                            value={passwordData.currentPassword}
-                                            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                                            placeholder="Enter current password"
-                                        />
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-key"></i></span>
+                                            <input
+                                                type="password"
+                                                className="form-control form-control-dark"
+                                                value={passwordData.currentPassword}
+                                                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                                                placeholder="Enter current password"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">New Password</label>
-                                        <input
-                                            type="password"
-                                            className="form-control-dark"
-                                            value={passwordData.newPassword}
-                                            onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                                            placeholder="Enter new password"
-                                        />
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-shield-lock"></i></span>
+                                            <input
+                                                type="password"
+                                                className="form-control form-control-dark"
+                                                value={passwordData.newPassword}
+                                                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                                                placeholder="Enter new password"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Confirm New Password</label>
-                                        <input
-                                            type="password"
-                                            className="form-control-dark"
-                                            value={passwordData.confirmPassword}
-                                            onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                                            placeholder="Confirm new password"
-                                        />
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-shield-lock-fill"></i></span>
+                                            <input
+                                                type="password"
+                                                className="form-control form-control-dark"
+                                                value={passwordData.confirmPassword}
+                                                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                                                placeholder="Confirm new password"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="col-md-12">
                                         <button className="btn btn-primary" onClick={handleChangePassword}>
-                                            <i className="bi bi-key me-2"></i>Update Password
+                                            <i className="bi bi-check-circle me-2"></i>Update Password
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="security-section">
-                                <h5>Two-Factor Authentication</h5>
-                                <div className="tfa-card">
-                                    <div className="tfa-info">
-                                        <i className="bi bi-shield-check text-success"></i>
-                                        <div>
-                                            <h6>Two-Factor Authentication Enabled</h6>
-                                            <p>Your account is protected with 2FA via authenticator app</p>
-                                        </div>
-                                    </div>
-                                    <button className="btn btn-outline-danger">
-                                        Disable 2FA
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="security-section">
-                                <h5>Account Security</h5>
-                                <div className="security-options">
-                                    <div className="security-option">
-                                        <div>
-                                            <h6>Download Account Data</h6>
-                                            <p>Export all your account data and activity</p>
-                                        </div>
-                                        <button className="btn btn-outline-primary" onClick={handleDownloadData}>
-                                            <i className="bi bi-download me-2"></i>Download
-                                        </button>
-                                    </div>
-                                    <div className="security-option">
-                                        <div>
-                                            <h6>Delete Account</h6>
-                                            <p>Permanently delete your account and all data</p>
-                                        </div>
-                                        <button className="btn btn-outline-danger">
-                                            <i className="bi bi-trash me-2"></i>Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Preferences Tab */}
-                    {activeTab === 'preferences' && (
-                        <div className="tab-pane">
-                            <div className="preferences-section">
-                                <h5>Notification Preferences</h5>
-                                <div className="preferences-list">
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Email Notifications</h6>
-                                            <p>Receive email updates about system activities</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.emailNotifications}
-                                                onChange={(e) => handlePreferenceChange('emailNotifications', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>SMS Notifications</h6>
-                                            <p>Get critical alerts via text message</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.smsNotifications}
-                                                onChange={(e) => handlePreferenceChange('smsNotifications', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Violation Alerts</h6>
-                                            <p>Get notified of new integrity violations</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.violationAlerts}
-                                                onChange={(e) => handlePreferenceChange('violationAlerts', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Weekly Reports</h6>
-                                            <p>Receive weekly summary reports</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.weeklyReports}
-                                                onChange={(e) => handlePreferenceChange('weeklyReports', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>System Updates</h6>
-                                            <p>Get notified about platform updates</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.systemUpdates}
-                                                onChange={(e) => handlePreferenceChange('systemUpdates', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="preferences-section">
-                                <h5>Display Preferences</h5>
-                                <div className="preferences-list">
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Dark Mode</h6>
-                                            <p>Use dark theme for the interface</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.darkMode}
-                                                onChange={(e) => handlePreferenceChange('darkMode', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Compact View</h6>
-                                            <p>Show more information in less space</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.compactView}
-                                                onChange={(e) => handlePreferenceChange('compactView', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div className="preference-info">
-                                            <h6>Auto Refresh</h6>
-                                            <p>Automatically refresh data on dashboard</p>
-                                        </div>
-                                        <label className="toggle-switch">
-                                            <input 
-                                                type="checkbox" 
-                                                checked={preferences.autoRefresh}
-                                                onChange={(e) => handlePreferenceChange('autoRefresh', e.target.checked)}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                    {preferences.autoRefresh && (
-                                        <div className="preference-item">
-                                            <div className="preference-info">
-                                                <h6>Refresh Interval</h6>
-                                                <p>How often to refresh data (seconds)</p>
-                                            </div>
-                                            <select
-                                                className="form-select-dark"
-                                                value={preferences.refreshInterval}
-                                                onChange={(e) => handlePreferenceChange('refreshInterval', e.target.value)}
-                                                style={{ width: '150px' }}
-                                            >
-                                                <option value="15">15 seconds</option>
-                                                <option value="30">30 seconds</option>
-                                                <option value="60">1 minute</option>
-                                                <option value="300">5 minutes</option>
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="preferences-section">
-                                <button className="btn btn-primary" onClick={handleSavePreferences}>
-                                    <i className="bi bi-check-circle me-2"></i>Save Preferences
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Activity Log Tab */}
-                    {activeTab === 'activity' && (
-                        <div className="tab-pane">
-                            <div className="activity-log">
-                                {activityLogs.map(log => (
-                                    <div key={log.id} className="activity-item">
-                                        <div className="activity-icon">
-                                            <i className="bi bi-circle-fill"></i>
-                                        </div>
-                                        <div className="activity-content">
-                                            <h6>{log.action}</h6>
-                                            <p>{log.details}</p>
-                                            <div className="activity-meta">
-                                                <span><i className="bi bi-clock"></i> {log.timestamp}</span>
-                                                <span><i className="bi bi-geo-alt"></i> {log.ipAddress}</span>
-                                                <span><i className="bi bi-pc-display"></i> {log.device}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Sessions Tab */}
-                    {activeTab === 'sessions' && (
-                        <div className="tab-pane">
-                            <div className="sessions-list">
-                                {activeSessions.map(session => (
-                                    <div key={session.id} className="session-card">
-                                        <div className="session-icon">
-                                            <i className="bi bi-pc-display fs-2"></i>
-                                        </div>
-                                        <div className="session-info">
-                                            <h6>{session.device}</h6>
-                                            <p className="session-location">
-                                                <i className="bi bi-geo-alt"></i> {session.location}
-                                            </p>
-                                            <div className="session-meta">
-                                                <span>IP: {session.ipAddress}</span>
-                                                <span>Last active: {session.lastActive}</span>
-                                            </div>
-                                            {session.current && (
-                                                <span className="current-session-badge">Current Session</span>
-                                            )}
-                                        </div>
-                                        {!session.current && (
-                                            <button 
-                                                className="btn btn-outline-danger btn-sm"
-                                                onClick={() => handleRevokeSession(session.id)}
-                                            >
-                                                <i className="bi bi-x-circle me-2"></i>Revoke
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     )}

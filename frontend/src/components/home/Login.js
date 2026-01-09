@@ -48,7 +48,6 @@ const Login = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Store user info (you might want to use localStorage or context)
                 if (rememberMe) {
                     localStorage.setItem('user', JSON.stringify(data.user));
                 } else {

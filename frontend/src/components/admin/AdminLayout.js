@@ -41,6 +41,12 @@ const AdminLayout = () => {
             badge: null
         },
         {
+            title: 'Skills',
+            icon: 'bi-stars',
+            path: '/admin/skills',
+            badge: null
+        },
+        {
             title: 'Interview Monitoring',
             icon: 'bi-camera-video',
             path: '/admin/interviews',

@@ -17,8 +17,7 @@ const companySchema = new mongoose.Schema({
         type: String
     },
     phone: {
-        type: String,
-        required: true
+        type: String
     },
     created_at: {
         type: Date,

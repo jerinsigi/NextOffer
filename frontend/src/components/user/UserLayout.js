@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import './UserLayout.css';
 import logo from '../../logo.svg';
@@ -7,8 +7,35 @@ const UserLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notificationCount] = useState(3);
+    const [userData, setUserData] = useState({ name: 'Guest', type: 'Candidate', avatar: null });
     const location = useLocation();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const loadUserData = () => {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                setUserData({
+                    name: user.username || 'User',
+                    type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                    // Use image_url from localStorage if available, otherwise just initials
+                    avatar: user.image_url ?
+                        (user.image_url.startsWith('http') || user.image_url.startsWith('data') ? user.image_url : `http://localhost:5000${user.image_url}`)
+                        : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
+                });
+            }
+        };
+
+        loadUserData();
+
+        // Listen for profile updates
+        window.addEventListener('userProfileUpdated', loadUserData);
+
+        return () => {
+            window.removeEventListener('userProfileUpdated', loadUserData);
+        };
+    }, []);
 
     const menuItems = [
         {
@@ -76,16 +103,17 @@ const UserLayout = () => {
     const isActive = (path) => location.pathname === path;
 
     const handleLogout = () => {
-        // Add logout logic here
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         navigate('/login');
     };
 
     return (
-        <div className="user-layout">
+        <div className={`user-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
             {/* Mobile Overlay */}
             {mobileMenuOpen && (
-                <div 
-                    className="mobile-overlay" 
+                <div
+                    className="mobile-overlay"
                     onClick={() => setMobileMenuOpen(false)}
                 ></div>
             )}
@@ -98,8 +126,8 @@ const UserLayout = () => {
                         <img src={logo} alt="NextOffer" className="brand-logo" />
                         {!sidebarCollapsed && <span className="brand-text">NextOffer</span>}
                     </Link>
-                    <button 
-                        className="sidebar-toggle" 
+                    <button
+                        className="sidebar-toggle"
                         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                         title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
                     >
@@ -112,8 +140,8 @@ const UserLayout = () => {
                     <ul className="nav-list">
                         {menuItems.map((item, index) => (
                             <li key={index} className="nav-item">
-                                <Link 
-                                    to={item.path} 
+                                <Link
+                                    to={item.path}
                                     className={`nav-link ${isActive(item.path) ? 'active' : ''}`}
                                     title={sidebarCollapsed ? item.title : ''}
                                 >
@@ -150,13 +178,13 @@ const UserLayout = () => {
                 <header className="user-navbar">
                     <div className="navbar-left">
                         {/* Hamburger Menu for Mobile */}
-                        <button 
+                        <button
                             className="hamburger-menu"
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         >
                             <i className={`bi ${mobileMenuOpen ? 'bi-x-lg' : 'bi-list'} fs-4`}></i>
                         </button>
-                        
+
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb">
                             <ol className="breadcrumb mb-0">
@@ -173,8 +201,8 @@ const UserLayout = () => {
                     <div className="navbar-right">
                         {/* Quick Actions */}
                         <div className="quick-actions">
-                            <button 
-                                className="btn btn-icon" 
+                            <button
+                                className="btn btn-icon"
                                 type="button"
                                 title="Start Practice Interview"
                                 onClick={() => navigate('/user/practice')}
@@ -185,9 +213,9 @@ const UserLayout = () => {
 
                         {/* Notifications */}
                         <div className="dropdown">
-                            <button 
-                                className="btn btn-icon position-relative" 
-                                type="button" 
+                            <button
+                                className="btn btn-icon position-relative"
+                                type="button"
                                 data-bs-toggle="dropdown"
                             >
                                 <i className="bi bi-bell fs-5"></i>
@@ -218,21 +246,6 @@ const UserLayout = () => {
                                 </li>
                                 <li><hr className="dropdown-divider" /></li>
                                 <li>
-                                    <a className="dropdown-item" href="#!">
-                                        <div className="d-flex align-items-start">
-                                            <i className="bi bi-briefcase text-primary me-3 fs-5"></i>
-                                            <div>
-                                                <p className="mb-1 small"><strong>New Job Match</strong></p>
-                                                <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>
-                                                    5 new jobs match your profile
-                                                </p>
-                                                <small className="text-muted">1 day ago</small>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
                                     <a className="dropdown-item text-center text-primary" href="#!">
                                         View All Notifications
                                     </a>
@@ -242,17 +255,28 @@ const UserLayout = () => {
 
                         {/* User Profile Dropdown */}
                         <div className="dropdown">
-                            <button 
-                                className="btn btn-profile d-flex align-items-center gap-2" 
-                                type="button" 
+                            <button
+                                className="btn btn-profile d-flex align-items-center gap-2"
+                                type="button"
                                 data-bs-toggle="dropdown"
                             >
                                 <div className="avatar">
-                                    <i className="bi bi-person-circle fs-4"></i>
+                                    {userData.avatar && userData.avatar.length > 1 ? (
+                                        <img
+                                            src={userData.avatar}
+                                            alt="Profile"
+                                            className="rounded-circle"
+                                            style={{ width: 32, height: 32, objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <div className="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle" style={{ width: 32, height: 32 }}>
+                                            {userData.avatar}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="profile-info d-none d-md-block">
-                                    <div className="profile-name">John Doe</div>
-                                    <div className="profile-role">Candidate</div>
+                                    <div className="profile-name">{userData.name}</div>
+                                    <div className="profile-role">{userData.type}</div>
                                 </div>
                                 <i className="bi bi-chevron-down"></i>
                             </button>

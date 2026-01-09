@@ -2,13 +2,24 @@ import React from 'react';
 import './UserDashboard.css';
 
 const UserDashboard = () => {
+    const [userName, setUserName] = React.useState('User');
+
+    React.useEffect(() => {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            // Start simple with username, or fetch profile if we want full name
+            setUserName(user.username || 'User');
+        }
+    }, []);
+
     return (
         <div className="dashboard-container">
             {/* Page Header */}
             <div className="page-header mb-4">
                 <div className="header-content">
                     <div className="greeting-section">
-                        <h1 className="page-title">Welcome Back, John! 👋</h1>
+                        <h1 className="page-title">Welcome Back, {userName}! 👋</h1>
                         <p className="text-muted">Ready to take the next step in your career journey?</p>
                     </div>
                     <div className="motivation-card">
@@ -237,8 +248,8 @@ const UserDashboard = () => {
                             <div className="text-center mb-3">
                                 <div className="progress-circle mx-auto mb-3" style={{ width: '120px', height: '120px' }}>
                                     <svg viewBox="0 0 120 120">
-                                        <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
-                                        <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" strokeWidth="8" strokeDasharray="339.29" strokeDashoffset="67.86" strokeLinecap="round" transform="rotate(-90 60 60)"/>
+                                        <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                                        <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" strokeWidth="8" strokeDasharray="339.29" strokeDashoffset="67.86" strokeLinecap="round" transform="rotate(-90 60 60)" />
                                     </svg>
                                     <div className="progress-text">
                                         <span className="fs-3 fw-bold text-primary">80%</span>

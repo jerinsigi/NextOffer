@@ -25,6 +25,7 @@ import InterviewMonitoring from './components/admin/pages/InterviewMonitoring';
 import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
 import JobCategories from './components/admin/pages/JobCategories';
+import Skills from './components/admin/pages/Skills';
 import ComingSoon from './components/admin/pages/ComingSoon';
 
 
@@ -39,6 +40,7 @@ import SkillDevelopment from './components/user/pages/SkillDevelopment';
 import Notifications from './components/user/pages/Notifications';
 import HelpSupport from './components/user/pages/HelpSupport';
 import UserSettings from './components/user/pages/Settings';
+import JobOpportunities from './components/user/pages/JobOpportunities';
 
 import CompanyLayout from './components/company/CompanyLayout';
 import CompanyDashboard from './components/company/pages/Dashboard';
@@ -79,6 +81,7 @@ function App() {
           <Route path="users" element={<Users />} />
           <Route path="jobs" element={<JobDescriptions />} />
           <Route path="job-categories" element={<JobCategories />} />
+          <Route path="skills" element={<Skills />} />
           <Route path="interviews" element={<InterviewMonitoring />} />
           <Route path="integrity" element={<Integrity />} />
           <Route path="reports" element={<Reports />} />
@@ -94,7 +97,7 @@ function App() {
           <Route index element={<UserDashboard />} />
           <Route path="dashboard" element={<UserDashboard />} />
           <Route path="profile" element={<UserProfile />} />
-          <Route path="jobs" element={<ComingSoon />} />
+          <Route path="jobs" element={<JobOpportunities />} />
           <Route path="applications" element={<MyApplications />} />
           <Route path="interview" element={<InterviewCenter />} />
           <Route path="practice" element={<PracticeInterview />} />

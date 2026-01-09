@@ -1,194 +1,209 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './JobDescriptions.css';
 
 const JobDescriptions = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [companyFilter, setCompanyFilter] = useState('all');
     const [selectedJob, setSelectedJob] = useState(null);
+    const [jobs, setJobs] = useState([]);
+    const [jobCategories, setJobCategories] = useState([]); // State for categories
+    const [availableSkills, setAvailableSkills] = useState([]); // State for skills autocomplete
+    const [skillInput, setSkillInput] = useState(''); // Current skill input
+    const [filteredSkills, setFilteredSkills] = useState([]); // Filtered skills for autocomplete
+    const [loading, setLoading] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false); // New state for edit mode
+    const [editJobId, setEditJobId] = useState(null); // ID of job being edited
 
+    // Form state
+    const [formData, setFormData] = useState({
+        job_title: '',
+        department: '',
+        location: '',
+        type: 'Full-time',
+        experience_required: '',
+        salary: '',
+        description: '',
+        skills: [], // Array for tag input
+        benefits: '', // Comma separated for input
+        job_status: 'Draft',
+        end_date: ''
+    });
 
-    // Sample job data
-    const jobsData = [
-        {
-            id: 1,
-            title: 'Senior Full Stack Developer',
-            company: 'TechCorp Inc.',
-            department: 'Engineering',
-            location: 'San Francisco, CA',
-            type: 'Full-time',
-            experience: '5-7 years',
-            salary: '$120k - $160k',
-            status: 'Active',
-            postedDate: '2024-11-15',
-            expiryDate: '2025-01-15',
-            applications: 147,
-            shortlisted: 12,
-            interviewed: 8,
-            hired: 0,
-            views: 1243,
-            description: 'We are looking for an experienced Full Stack Developer to join our growing team...',
-            requirements: ['React.js', 'Node.js', 'MongoDB', 'AWS', 'Docker'],
-            benefits: ['Health Insurance', '401(k)', 'Remote Work', 'Stock Options']
-        },
-        {
-            id: 2,
-            title: 'Product Manager',
-            company: 'Innovate Solutions',
-            department: 'Product',
-            location: 'New York, NY',
-            type: 'Full-time',
-            experience: '3-5 years',
-            salary: '$100k - $140k',
-            status: 'Active',
-            postedDate: '2024-11-20',
-            expiryDate: '2025-01-20',
-            applications: 89,
-            shortlisted: 15,
-            interviewed: 6,
-            hired: 1,
-            views: 876,
-            description: 'Join our product team to drive innovation and user-centric design...',
-            requirements: ['Product Strategy', 'Agile', 'User Research', 'Analytics'],
-            benefits: ['Health Insurance', 'Flexible Hours', 'Professional Development']
-        },
-        {
-            id: 3,
-            title: 'DevOps Engineer',
-            company: 'StartupX',
-            department: 'Infrastructure',
-            location: 'Austin, TX',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$110k - $150k',
-            status: 'Closed',
-            postedDate: '2024-10-05',
-            expiryDate: '2024-12-05',
-            applications: 234,
-            shortlisted: 20,
-            interviewed: 12,
-            hired: 2,
-            views: 2134,
-            description: 'Looking for a DevOps Engineer to build and maintain our infrastructure...',
-            requirements: ['Kubernetes', 'CI/CD', 'AWS', 'Terraform', 'Linux'],
-            benefits: ['Health Insurance', 'Equity', 'Unlimited PTO']
-        },
-        {
-            id: 4,
-            title: 'UX/UI Designer',
-            company: 'MegaCorp Ltd.',
-            department: 'Design',
-            location: 'Seattle, WA',
-            type: 'Contract',
-            experience: '2-4 years',
-            salary: '$80k - $110k',
-            status: 'Active',
-            postedDate: '2024-11-25',
-            expiryDate: '2025-01-25',
-            applications: 56,
-            shortlisted: 8,
-            interviewed: 3,
-            hired: 0,
-            views: 567,
-            description: 'We need a creative UX/UI Designer to craft beautiful user experiences...',
-            requirements: ['Figma', 'Adobe XD', 'User Research', 'Prototyping'],
-            benefits: ['Health Insurance', 'Remote Work', 'Design Budget']
-        },
-        {
-            id: 5,
-            title: 'Data Scientist',
-            company: 'TechVision',
-            department: 'Data Analytics',
-            location: 'Boston, MA',
-            type: 'Full-time',
-            experience: '3-5 years',
-            salary: '$115k - $155k',
-            status: 'Active',
-            postedDate: '2024-11-28',
-            expiryDate: '2025-01-28',
-            applications: 198,
-            shortlisted: 18,
-            interviewed: 10,
-            hired: 0,
-            views: 1456,
-            description: 'Join our data team to build ML models and drive data-driven decisions...',
-            requirements: ['Python', 'Machine Learning', 'SQL', 'TensorFlow', 'Statistics'],
-            benefits: ['Health Insurance', '401(k)', 'Learning Budget', 'Flexible Hours']
-        },
-        {
-            id: 6,
-            title: 'Mobile App Developer',
-            company: 'Global Industries',
-            department: 'Mobile',
-            location: 'Chicago, IL',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$105k - $145k',
-            status: 'Draft',
-            postedDate: '2024-12-01',
-            expiryDate: '2025-02-01',
-            applications: 0,
-            shortlisted: 0,
-            interviewed: 0,
-            hired: 0,
-            views: 0,
-            description: 'Seeking an experienced Mobile Developer to build cross-platform apps...',
-            requirements: ['React Native', 'iOS', 'Android', 'JavaScript', 'Firebase'],
-            benefits: ['Health Insurance', 'Stock Options', 'Remote Work']
-        },
-        {
-            id: 7,
-            title: 'Backend Engineer',
-            company: 'Future Tech',
-            department: 'Engineering',
-            location: 'Remote',
-            type: 'Full-time',
-            experience: '5-8 years',
-            salary: '$130k - $170k',
-            status: 'Active',
-            postedDate: '2024-11-10',
-            expiryDate: '2025-01-10',
-            applications: 312,
-            shortlisted: 25,
-            interviewed: 15,
-            hired: 1,
-            views: 2876,
-            description: 'Looking for a senior backend engineer to architect scalable systems...',
-            requirements: ['Go', 'Microservices', 'PostgreSQL', 'Redis', 'Kafka'],
-            benefits: ['Health Insurance', 'Remote Work', '401(k)', 'Unlimited PTO']
-        },
-        {
-            id: 8,
-            title: 'Marketing Manager',
-            company: 'Enterprise Corp',
-            department: 'Marketing',
-            location: 'Los Angeles, CA',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$95k - $130k',
-            status: 'Paused',
-            postedDate: '2024-11-01',
-            expiryDate: '2025-01-01',
-            applications: 45,
-            shortlisted: 5,
-            interviewed: 2,
-            hired: 0,
-            views: 456,
-            description: 'Lead our marketing initiatives and drive brand awareness...',
-            requirements: ['Digital Marketing', 'SEO', 'Content Strategy', 'Analytics'],
-            benefits: ['Health Insurance', 'Bonus', 'Flexible Hours']
+    const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    useEffect(() => {
+        fetchJobs();
+        fetchJobCategories(); // Fetch categories on mount
+        fetchSkills(); // Fetch skills on mount
+    }, []);
+
+    const fetchJobs = async () => {
+        if (!user || !user.email) return;
+        try {
+            const response = await fetch(`http://localhost:5000/api/job-descriptions/company/${user.email}`);
+            if (response.ok) {
+                const data = await response.json();
+                setJobs(data);
+            }
+        } catch (error) {
+            console.error('Error fetching jobs:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
-    const companies = ['All Companies', ...new Set(jobsData.map(job => job.company))];
+    const fetchJobCategories = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/job-categories');
+            if (response.ok) {
+                const data = await response.json();
+                setJobCategories(data);
+            }
+        } catch (error) {
+            console.error('Error fetching job categories:', error);
+        }
+    };
 
-    const filteredJobs = jobsData.filter(job => {
-        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.department.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
-        const matchesCompany = companyFilter === 'all' || job.company === companyFilter;
-        return matchesSearch && matchesStatus && matchesCompany;
+    const fetchSkills = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/skills');
+            if (response.ok) {
+                const data = await response.json();
+                setAvailableSkills(data);
+            }
+        } catch (error) {
+            console.error('Error fetching skills:', error);
+        }
+    };
+
+    const handleCreateClick = () => {
+        setIsEditing(false);
+        setEditJobId(null);
+        setFormData({
+            job_title: '',
+            department: '',
+            location: '',
+            type: 'Full-time',
+            experience_required: '',
+            salary: '',
+            description: '',
+            skills: [],
+            benefits: '',
+            job_status: 'Draft',
+            end_date: ''
+        });
+        setSkillInput('');
+        setShowCreateModal(true);
+    };
+
+    const handleEditJob = (job) => {
+        setIsEditing(true);
+        setEditJobId(job._id);
+        const formatDate = (dateString) => {
+            if (!dateString) return '';
+            return new Date(dateString).toISOString().split('T')[0];
+        };
+
+        setFormData({
+            job_title: job.job_title,
+            department: job.department || '',
+            location: job.location || '',
+            type: job.type || 'Full-time',
+            experience_required: job.experience_required || '',
+            salary: job.salary || '',
+            description: job.description || '',
+            skills: job.skills || [],
+            benefits: job.benefits ? job.benefits.join(', ') : '',
+            job_status: job.job_status || 'Draft',
+            end_date: formatDate(job.end_date)
+        });
+        setShowCreateModal(true);
+    };
+
+    const handleSubmitJob = async (e) => {
+        e.preventDefault();
+        if (!user || !user.email) return;
+
+        const payload = {
+            ...formData,
+            companyEmail: user.email,
+            skills: formData.skills,
+            benefits: formData.benefits.split(',').map(item => item.trim()).filter(i => i)
+        };
+
+        try {
+            const url = isEditing
+                ? `http://localhost:5000/api/job-descriptions/${editJobId}`
+                : 'http://localhost:5000/api/job-descriptions/create';
+
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const updatedJob = await response.json();
+                fetchJobs(); // Refresh list
+                setShowCreateModal(false);
+
+                // Update selected job if currently viewing the edited job
+                if (selectedJob && isEditing && selectedJob._id === editJobId) {
+                    setSelectedJob(updatedJob);
+                }
+
+                alert(isEditing ? 'Job updated successfully!' : 'Job created successfully!');
+            } else {
+                alert(isEditing ? 'Failed to update job' : 'Failed to create job');
+            }
+        } catch (error) {
+            console.error('Error saving job:', error);
+            alert('Error saving job');
+        }
+    };
+
+    const handleDeleteJob = async (id) => {
+        if (!window.confirm('Are you sure you want to delete this job?')) return;
+        try {
+            const response = await fetch(`http://localhost:5000/api/job-descriptions/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                fetchJobs();
+                if (selectedJob && selectedJob._id === id) setSelectedJob(null);
+            }
+        } catch (error) {
+            console.error('Error deleting job:', error);
+        }
+    };
+
+    const handleUpdateStatus = async (id, newStatus) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/job-descriptions/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ job_status: newStatus })
+            });
+            if (response.ok) {
+                fetchJobs();
+                if (selectedJob && selectedJob._id === id) {
+                    setSelectedJob(prev => ({ ...prev, job_status: newStatus }));
+                }
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    };
+
+    const filteredJobs = jobs.filter(job => {
+        const matchesSearch = job.job_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (job.department && job.department.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesStatus = statusFilter === 'all' || job.job_status === statusFilter;
+        return matchesSearch && matchesStatus;
     });
 
     const getStatusBadge = (status) => {
@@ -211,39 +226,8 @@ const JobDescriptions = () => {
         return badges[type] || 'type-badge-fulltime';
     };
 
-    const handleJobClick = (job) => {
-        setSelectedJob(job);
-    };
-
-    const handleEditJob = (job) => {
-        console.log('Editing job:', job);
-    };
-
-    const handleCloneJob = (jobId) => {
-        console.log('Cloning job:', jobId);
-    };
-
-    const handlePauseJob = (jobId) => {
-        console.log('Pausing job:', jobId);
-    };
-
-    const handleActivateJob = (jobId) => {
-        console.log('Activating job:', jobId);
-    };
-
-    const handleCloseJob = (jobId) => {
-        if (window.confirm('Are you sure you want to close this job posting?')) {
-            console.log('Closing job:', jobId);
-        }
-    };
-
-    const handleDeleteJob = (jobId) => {
-        if (window.confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
-            console.log('Deleting job:', jobId);
-        }
-    };
-
     const calculateDaysRemaining = (expiryDate) => {
+        if (!expiryDate) return 0;
         const today = new Date();
         const expiry = new Date(expiryDate);
         const diffTime = expiry - today;
@@ -253,12 +237,12 @@ const JobDescriptions = () => {
 
     // Stats
     const stats = {
-        total: jobsData.length,
-        active: jobsData.filter(j => j.status === 'Active').length,
-        draft: jobsData.filter(j => j.status === 'Draft').length,
-        closed: jobsData.filter(j => j.status === 'Closed').length,
-        totalApplications: jobsData.reduce((sum, j) => sum + j.applications, 0),
-        avgApplications: Math.round(jobsData.reduce((sum, j) => sum + j.applications, 0) / jobsData.length)
+        total: jobs.length,
+        active: jobs.filter(j => j.job_status === 'Active').length,
+        draft: jobs.filter(j => j.job_status === 'Draft').length,
+        closed: jobs.filter(j => j.job_status === 'Closed').length,
+        totalApplications: jobs.reduce((sum, j) => sum + (j.applications_count || 0), 0),
+        avgApplications: jobs.length ? Math.round(jobs.reduce((sum, j) => sum + (j.applications_count || 0), 0) / jobs.length) : 0
     };
 
     return (
@@ -272,7 +256,7 @@ const JobDescriptions = () => {
                     <button className="btn btn-outline-primary me-2">
                         <i className="bi bi-download me-2"></i>Export Jobs
                     </button>
-                    <button className="btn btn-primary">
+                    <button className="btn btn-primary" onClick={handleCreateClick}>
                         <i className="bi bi-plus-circle me-2"></i>Post New Job
                     </button>
                 </div>
@@ -355,16 +339,6 @@ const JobDescriptions = () => {
                         </div>
                         <select
                             className="form-select-dark"
-                            value={companyFilter}
-                            onChange={(e) => setCompanyFilter(e.target.value)}
-                        >
-                            <option value="all">All Companies</option>
-                            {companies.slice(1).map(company => (
-                                <option key={company} value={company}>{company}</option>
-                            ))}
-                        </select>
-                        <select
-                            className="form-select-dark"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                         >
@@ -377,147 +351,106 @@ const JobDescriptions = () => {
                     </div>
                 </div>
                 <div className="jobs-content">
-                    <div className="jobs-grid">
-                        {filteredJobs.map(job => {
-                            const daysRemaining = calculateDaysRemaining(job.expiryDate);
-                            return (
-                                <div
-                                    key={job.id}
-                                    className={`job-card ${selectedJob?.id === job.id ? 'selected' : ''}`}
-                                    onClick={() => handleJobClick(job)}
-                                >
-                                    <div className="job-card-header">
-                                        <div className="job-title-section">
-                                            <h5 className="job-title">{job.title}</h5>
-                                            <div className="job-meta">
-                                                <span className="company-name">
-                                                    <i className="bi bi-building"></i>
-                                                    {job.company}
-                                                </span>
-                                                <span className="job-location">
-                                                    <i className="bi bi-geo-alt"></i>
-                                                    {job.location}
-                                                </span>
+                    {loading ? (
+                        <div className="text-center py-5">
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="jobs-grid">
+                            {filteredJobs.length === 0 ? (
+                                <div className="text-center py-5 w-100">
+                                    <p className="text-muted">No jobs found.</p>
+                                </div>
+                            ) : (
+                                filteredJobs.map(job => {
+                                    const daysRemaining = calculateDaysRemaining(job.end_date);
+                                    return (
+                                        <div
+                                            key={job._id}
+                                            className={`job-card ${selectedJob?._id === job._id ? 'selected' : ''}`}
+                                            onClick={() => setSelectedJob(job)}
+                                        >
+                                            <div className="job-card-header">
+                                                <div className="job-title-section">
+                                                    <h5 className="job-title">{job.job_title}</h5>
+                                                    <div className="job-meta">
+                                                        <span className="job-location">
+                                                            <i className="bi bi-geo-alt"></i>
+                                                            {job.location || 'Remote'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="job-status-section">
+                                                    <span className={`status-badge ${getStatusBadge(job.job_status)}`}>
+                                                        {job.job_status}
+                                                    </span>
+                                                    <span className={`type-badge ${getTypeBadge(job.type)}`}>
+                                                        {job.type}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="job-details">
+                                                <div className="detail-row">
+                                                    <span className="detail-label">Department:</span>
+                                                    <span className="detail-value">{job.department || 'N/A'}</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="detail-label">Experience:</span>
+                                                    <span className="detail-value">{job.experience_required || 'N/A'}</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="detail-label">Salary:</span>
+                                                    <span className="detail-value">{job.salary || 'N/A'}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="job-metrics">
+                                                <div className="metric">
+                                                    <div className="metric-value">{job.applications_count || 0}</div>
+                                                    <div className="metric-label">Applications</div>
+                                                </div>
+                                                <div className="metric">
+                                                    <div className="metric-value">{job.shortlisted_count || 0}</div>
+                                                    <div className="metric-label">Shortlisted</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="job-footer">
+                                                <div className="job-date-info">
+                                                    <span className="posted-date">
+                                                        Posted: {new Date(job.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                    {job.job_status === 'Active' && job.end_date && (
+                                                        <span className={`expiry-info ${daysRemaining < 7 ? 'expiring-soon' : ''}`}>
+                                                            <i className="bi bi-clock"></i>
+                                                            {daysRemaining > 0
+                                                                ? `${daysRemaining} days remaining`
+                                                                : 'Expired'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="job-actions">
+                                                    <button
+                                                        className="btn-icon danger"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteJob(job._id);
+                                                        }}
+                                                        title="Delete Job"
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="job-status-section">
-                                            <span className={`status-badge ${getStatusBadge(job.status)}`}>
-                                                {job.status}
-                                            </span>
-                                            <span className={`type-badge ${getTypeBadge(job.type)}`}>
-                                                {job.type}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="job-details">
-                                        <div className="detail-row">
-                                            <span className="detail-label">Department:</span>
-                                            <span className="detail-value">{job.department}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Experience:</span>
-                                            <span className="detail-value">{job.experience}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-label">Salary:</span>
-                                            <span className="detail-value">{job.salary}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="job-metrics">
-                                        <div className="metric">
-                                            <div className="metric-value">{job.applications}</div>
-                                            <div className="metric-label">Applications</div>
-                                        </div>
-                                        <div className="metric">
-                                            <div className="metric-value">{job.shortlisted}</div>
-                                            <div className="metric-label">Shortlisted</div>
-                                        </div>
-                                        <div className="metric">
-                                            <div className="metric-value">{job.interviewed}</div>
-                                            <div className="metric-label">Interviewed</div>
-                                        </div>
-                                        <div className="metric">
-                                            <div className="metric-value">{job.hired}</div>
-                                            <div className="metric-label">Hired</div>
-                                        </div>
-                                    </div>
-
-                                    <div className="job-footer">
-                                        <div className="job-date-info">
-                                            <span className="posted-date">
-                                                Posted: {job.postedDate}
-                                            </span>
-                                            {job.status === 'Active' && (
-                                                <span className={`expiry-info ${daysRemaining < 7 ? 'expiring-soon' : ''}`}>
-                                                    <i className="bi bi-clock"></i>
-                                                    {daysRemaining > 0
-                                                        ? `${daysRemaining} days remaining`
-                                                        : 'Expired'}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="job-actions">
-                                            <button
-                                                className="btn-icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEditJob(job);
-                                                }}
-                                                title="Edit Job"
-                                            >
-                                                <i className="bi bi-pencil"></i>
-                                            </button>
-                                            <button
-                                                className="btn-icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCloneJob(job.id);
-                                                }}
-                                                title="Clone Job"
-                                            >
-                                                <i className="bi bi-files"></i>
-                                            </button>
-                                            {job.status === 'Active' ? (
-                                                <button
-                                                    className="btn-icon warning"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handlePauseJob(job.id);
-                                                    }}
-                                                    title="Pause Job"
-                                                >
-                                                    <i className="bi bi-pause-circle"></i>
-                                                </button>
-                                            ) : job.status === 'Paused' || job.status === 'Draft' ? (
-                                                <button
-                                                    className="btn-icon success"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleActivateJob(job.id);
-                                                    }}
-                                                    title="Activate Job"
-                                                >
-                                                    <i className="bi bi-play-circle"></i>
-                                                </button>
-                                            ) : null}
-                                            <button
-                                                className="btn-icon danger"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteJob(job.id);
-                                                }}
-                                                title="Delete Job"
-                                            >
-                                                <i className="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    )}
 
                     {/* Job Details Panel */}
                     {selectedJob && (
@@ -533,10 +466,10 @@ const JobDescriptions = () => {
                             </div>
                             <div className="panel-content">
                                 <div className="job-header-section">
-                                    <h4>{selectedJob.title}</h4>
+                                    <h4>{selectedJob.job_title}</h4>
                                     <div className="badges-row">
-                                        <span className={`status-badge ${getStatusBadge(selectedJob.status)}`}>
-                                            {selectedJob.status}
+                                        <span className={`status-badge ${getStatusBadge(selectedJob.job_status)}`}>
+                                            {selectedJob.job_status}
                                         </span>
                                         <span className={`type-badge ${getTypeBadge(selectedJob.type)}`}>
                                             {selectedJob.type}
@@ -545,34 +478,22 @@ const JobDescriptions = () => {
                                 </div>
 
                                 <div className="detail-section">
-                                    <h6>Company Information</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Company:</span>
-                                        <span className="detail-value">{selectedJob.company}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Department:</span>
-                                        <span className="detail-value">{selectedJob.department}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Location:</span>
-                                        <span className="detail-value">{selectedJob.location}</span>
-                                    </div>
-                                </div>
-
-                                <div className="detail-section">
                                     <h6>Position Details</h6>
                                     <div className="detail-item">
                                         <span className="detail-label">Experience Required:</span>
-                                        <span className="detail-value">{selectedJob.experience}</span>
+                                        <span className="detail-value">{selectedJob.experience_required}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Salary Range:</span>
                                         <span className="detail-value">{selectedJob.salary}</span>
                                     </div>
                                     <div className="detail-item">
-                                        <span className="detail-label">Employment Type:</span>
-                                        <span className="detail-value">{selectedJob.type}</span>
+                                        <span className="detail-label">Location:</span>
+                                        <span className="detail-value">{selectedJob.location}</span>
+                                    </div>
+                                    <div className="detail-item">
+                                        <span className="detail-label">Department:</span>
+                                        <span className="detail-value">{selectedJob.department}</span>
                                     </div>
                                 </div>
 
@@ -582,10 +503,10 @@ const JobDescriptions = () => {
                                 </div>
 
                                 <div className="detail-section">
-                                    <h6>Requirements</h6>
+                                    <h6>Skills Required</h6>
                                     <div className="tags-list">
-                                        {selectedJob.requirements.map((req, idx) => (
-                                            <span key={idx} className="skill-tag">{req}</span>
+                                        {selectedJob.skills && selectedJob.skills.map((skill, idx) => (
+                                            <span key={idx} className="skill-tag">{skill}</span>
                                         ))}
                                     </div>
                                 </div>
@@ -593,7 +514,7 @@ const JobDescriptions = () => {
                                 <div className="detail-section">
                                     <h6>Benefits</h6>
                                     <div className="benefits-list">
-                                        {selectedJob.benefits.map((benefit, idx) => (
+                                        {selectedJob.benefits && selectedJob.benefits.map((benefit, idx) => (
                                             <div key={idx} className="benefit-item">
                                                 <i className="bi bi-check-circle text-success"></i>
                                                 <span>{benefit}</span>
@@ -606,20 +527,12 @@ const JobDescriptions = () => {
                                     <h6>Statistics</h6>
                                     <div className="stats-grid">
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.views}</div>
+                                            <div className="stat-number">{selectedJob.views || 0}</div>
                                             <div className="stat-label">Views</div>
                                         </div>
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.applications}</div>
+                                            <div className="stat-number">{selectedJob.applications_count || 0}</div>
                                             <div className="stat-label">Applications</div>
-                                        </div>
-                                        <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.shortlisted}</div>
-                                            <div className="stat-label">Shortlisted</div>
-                                        </div>
-                                        <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.interviewed}</div>
-                                            <div className="stat-label">Interviewed</div>
                                         </div>
                                     </div>
                                 </div>
@@ -628,37 +541,31 @@ const JobDescriptions = () => {
                                     <h6>Timeline</h6>
                                     <div className="detail-item">
                                         <span className="detail-label">Posted Date:</span>
-                                        <span className="detail-value">{selectedJob.postedDate}</span>
+                                        <span className="detail-value">{new Date(selectedJob.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Expiry Date:</span>
-                                        <span className="detail-value">{selectedJob.expiryDate}</span>
-                                    </div>
+                                    {selectedJob.end_date && (
+                                        <div className="detail-item">
+                                            <span className="detail-label">Expiry Date:</span>
+                                            <span className="detail-value">{new Date(selectedJob.end_date).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="detail-section">
                                     <h6>Actions</h6>
                                     <button className="btn btn-sm btn-primary w-100 mb-2" onClick={() => handleEditJob(selectedJob)}>
-                                        <i className="bi bi-pencil me-2"></i>Edit Job Posting
+                                        <i className="bi bi-pencil me-2"></i>Edit Job
                                     </button>
-                                    <button className="btn btn-sm btn-secondary w-100 mb-2" onClick={() => handleCloneJob(selectedJob.id)}>
-                                        <i className="bi bi-files me-2"></i>Clone Job
-                                    </button>
-                                    {selectedJob.status === 'Active' ? (
-                                        <button className="btn btn-sm btn-warning w-100 mb-2" onClick={() => handlePauseJob(selectedJob.id)}>
+                                    {selectedJob.job_status === 'Active' ? (
+                                        <button className="btn btn-sm btn-warning w-100 mb-2" onClick={() => handleUpdateStatus(selectedJob._id, 'Paused')}>
                                             <i className="bi bi-pause-circle me-2"></i>Pause Posting
                                         </button>
-                                    ) : selectedJob.status === 'Paused' || selectedJob.status === 'Draft' ? (
-                                        <button className="btn btn-sm btn-success w-100 mb-2" onClick={() => handleActivateJob(selectedJob.id)}>
+                                    ) : (
+                                        <button className="btn btn-sm btn-success w-100 mb-2" onClick={() => handleUpdateStatus(selectedJob._id, 'Active')}>
                                             <i className="bi bi-play-circle me-2"></i>Activate Posting
                                         </button>
-                                    ) : null}
-                                    {selectedJob.status !== 'Closed' && (
-                                        <button className="btn btn-sm btn-outline-secondary w-100 mb-2" onClick={() => handleCloseJob(selectedJob.id)}>
-                                            <i className="bi bi-archive me-2"></i>Close Job
-                                        </button>
                                     )}
-                                    <button className="btn btn-sm btn-danger w-100" onClick={() => handleDeleteJob(selectedJob.id)}>
+                                    <button className="btn btn-sm btn-danger w-100" onClick={() => handleDeleteJob(selectedJob._id)}>
                                         <i className="bi bi-trash me-2"></i>Delete Job
                                     </button>
                                 </div>
@@ -667,7 +574,220 @@ const JobDescriptions = () => {
                     )}
                 </div>
             </div>
-        </div>
+
+            {/* Create Job Modal */}
+            {console.log('Rendering Modal, showCreateModal:', showCreateModal)}
+            {showCreateModal && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg custom-modal-center">
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <h5 className="modal-title">{isEditing ? 'Edit Job' : 'Post New Job'}</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => setShowCreateModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <form onSubmit={handleSubmitJob}>
+                                    <div className="row g-3">
+                                        <div className="col-md-6">
+                                            <label className="form-label">Job Title (Category)</label>
+                                            <select
+                                                className="form-select bg-dark text-light border-secondary"
+                                                value={formData.job_title}
+                                                onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                                required
+                                            >
+                                                <option value="">Select a Job Category</option>
+                                                {jobCategories.map(cat => (
+                                                    <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Department</label>
+                                            <input
+                                                type="text"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.department}
+                                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Location</label>
+                                            <input
+                                                type="text"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.location}
+                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Type</label>
+                                            <select
+                                                className="form-select bg-dark text-light border-secondary"
+                                                value={formData.type}
+                                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                            >
+                                                <option value="Full-time">Full-time</option>
+                                                <option value="Part-time">Part-time</option>
+                                                <option value="Contract">Contract</option>
+                                                <option value="Internship">Internship</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Experience Required</label>
+                                            <input
+                                                type="text"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.experience_required}
+                                                onChange={(e) => setFormData({ ...formData, experience_required: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Salary Range</label>
+                                            <input
+                                                type="text"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.salary}
+                                                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label">Description</label>
+                                            <textarea
+                                                className="form-control bg-dark text-light border-secondary"
+                                                rows="4"
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                required
+                                            ></textarea>
+                                        </div>
+
+                                        <div className="col-12">
+                                            <label className="form-label">Skills Required</label>
+                                            <div className="skills-input-container p-2 border border-secondary rounded bg-dark position-relative">
+                                                <div className="selected-skills-tags d-flex flex-wrap gap-2 mb-2">
+                                                    {formData.skills.map((skill, index) => (
+                                                        <span key={index} className="skill-tag d-flex align-items-center">
+                                                            {skill}
+                                                            <button
+                                                                type="button"
+                                                                className="btn-close-custom ms-2"
+                                                                onClick={() => {
+                                                                    const newSkills = formData.skills.filter((_, i) => i !== index);
+                                                                    setFormData({ ...formData, skills: newSkills });
+                                                                }}
+                                                            >
+                                                                <i className="bi bi-x"></i>
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                <div className="w-100 position-relative">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control bg-transparent border-0 text-light shadow-none"
+                                                        placeholder="Type a skill..."
+                                                        value={skillInput}
+                                                        onChange={(e) => {
+                                                            setSkillInput(e.target.value);
+                                                            const filtered = availableSkills
+                                                                .filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase()))
+                                                                .filter(s => !formData.skills.includes(s.name));
+                                                            setFilteredSkills(filtered);
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ',') {
+                                                                e.preventDefault();
+                                                                const val = skillInput.trim();
+                                                                if (val && !formData.skills.includes(val)) {
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        skills: [...formData.skills, val]
+                                                                    });
+                                                                    setSkillInput('');
+                                                                    setFilteredSkills([]);
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    {skillInput && filteredSkills.length > 0 && (
+                                                        <ul className="dropdown-menu show w-100 position-absolute skills-dropdown-menu">
+                                                            {filteredSkills.map(skill => (
+                                                                <li key={skill._id}>
+                                                                    <button
+                                                                        className="dropdown-item"
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (!formData.skills.includes(skill.name)) {
+                                                                                setFormData({
+                                                                                    ...formData,
+                                                                                    skills: [...formData.skills, skill.name]
+                                                                                });
+                                                                                setSkillInput('');
+                                                                                setFilteredSkills([]);
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        <i className={`${skill.icon} me-2 text-primary`}></i>
+                                                                        {skill.name}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-12">
+                                            <label className="form-label">Benefits (comma separated)</label>
+                                            <input
+                                                type="text"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.benefits}
+                                                onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Status</label>
+                                            <select
+                                                className="form-select bg-dark text-light border-secondary"
+                                                value={formData.job_status}
+                                                onChange={(e) => setFormData({ ...formData, job_status: e.target.value })}
+                                            >
+                                                <option value="Draft">Draft</option>
+                                                <option value="Active">Active</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Application End Date</label>
+                                            <input
+                                                type="date"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.end_date}
+                                                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer border-secondary mt-4">
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                                        <button type="submit" className="btn btn-primary">{isEditing ? 'Save Changes' : 'Create Job'}</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div >
+            )}
+
+        </div >
     );
 };
 

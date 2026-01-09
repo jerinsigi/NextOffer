@@ -21,6 +21,25 @@ const candidateSchema = new mongoose.Schema({
     },
     image_url: {
         type: String
+    },
+    location: {
+        type: String
+    },
+    current_role: {
+        type: String
+    },
+    bio: {
+        type: String
+    },
+    skills: [{
+        name: String,
+        level: String,
+        years: Number
+    }],
+    social_links: {
+        linkedin: String,
+        github: String,
+        portfolio: String
     }
 });
 

@@ -9,9 +9,10 @@ const CompanyProfile = () => {
 
     // Profile data derived from backend
     const [profileData, setProfileData] = useState({
-        username: '', // Added username
+        username: '',
         companyName: '',
         email: '',
+        phone: '',
         industry: '',
         location: '',
         website: '',
@@ -25,6 +26,14 @@ const CompanyProfile = () => {
         newPassword: '',
         confirmPassword: ''
     });
+
+    // Helper to resolve logo URL
+    const getLogoUrl = (logoPath) => {
+        if (!logoPath) return null;
+        if (logoPath.startsWith('data:')) return logoPath; // Base64
+        if (logoPath.startsWith('http')) return logoPath; // Absolute URL
+        return `http://localhost:5000${logoPath}`; // Relative backend path
+    };
 
     // Fetch Profile on Mount
     useEffect(() => {
@@ -43,9 +52,10 @@ const CompanyProfile = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setProfileData({
-                        username: data.username || '', // Set username
+                        username: data.username || '',
                         companyName: data.company_name,
                         email: data.email,
+                        phone: data.phone || '',
                         industry: data.industry,
                         location: data.location,
                         website: data.website || '',
@@ -99,6 +109,7 @@ const CompanyProfile = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     company_name: profileData.companyName,
+                    phone: profileData.phone,
                     industry: profileData.industry,
                     location: profileData.location,
                     website: profileData.website,
@@ -154,6 +165,8 @@ const CompanyProfile = () => {
 
     if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
 
+    const logoUrl = getLogoUrl(profileData.logo);
+
     return (
         <div className="dashboard-container">
             <div className="page-header mb-4">
@@ -181,16 +194,14 @@ const CompanyProfile = () => {
                 </div>
             </div>
 
-
-
             {/* Profile Header Card */}
             <div className="profile-header-card mb-4">
                 <div className="profile-header-content pt-5">
                     <div className="profile-avatar-section">
                         <div className="profile-avatar-large">
-                            {profileData.logo ? (
+                            {logoUrl ? (
                                 <img
-                                    src={profileData.logo}
+                                    src={logoUrl}
                                     alt={profileData.companyName}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                 />
@@ -216,6 +227,7 @@ const CompanyProfile = () => {
                         <p className="profile-role">{profileData.industry}</p>
                         <div className="profile-meta">
                             <span><i className="bi bi-envelope"></i> {profileData.email}</span>
+                            <span><i className="bi bi-phone"></i> {profileData.phone || 'N/A'}</span>
                             <span><i className="bi bi-geo-alt"></i> {profileData.location}</span>
                             {profileData.website && <span><i className="bi bi-globe"></i> {profileData.website}</span>}
                         </div>
@@ -278,6 +290,20 @@ const CompanyProfile = () => {
                                                 value={profileData.companyName}
                                                 onChange={(e) => handleProfileChange('companyName', e.target.value)}
                                                 disabled={!isEditing}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Phone</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-phone"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.phone}
+                                                onChange={(e) => handleProfileChange('phone', e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="Enter phone number"
                                             />
                                         </div>
                                     </div>

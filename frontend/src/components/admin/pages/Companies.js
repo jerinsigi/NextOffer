@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 const Companies = () => {
     const [companies, setCompanies] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [showViewModal, setShowViewModal] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
     const [currentCompany, setCurrentCompany] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -13,10 +14,12 @@ const Companies = () => {
     const [formData, setFormData] = useState({
         company_name: '',
         email: '',
+        phone: '',
         industry: '',
         location: '',
         website: '',
-        status: 'Active'
+        status: 'Active',
+        company_desc: ''
     });
 
     const API_URL = 'http://localhost:5000/api/companies';
@@ -49,10 +52,12 @@ const Companies = () => {
         setFormData({
             company_name: '',
             email: '',
+            phone: '',
             industry: '',
             location: '',
             website: '',
-            status: 'Active'
+            status: 'Active',
+            company_desc: ''
         });
         setShowModal(true);
     };
@@ -63,12 +68,19 @@ const Companies = () => {
         setFormData({
             company_name: company.company_name,
             email: company.email,
+            phone: company.phone || '',
             industry: company.industry || '',
             location: company.location || '',
             website: company.website || '',
-            status: company.status
+            status: company.status,
+            company_desc: company.company_desc || ''
         });
         setShowModal(true);
+    };
+
+    const handleViewClick = (company) => {
+        setCurrentCompany(company);
+        setShowViewModal(true);
     };
 
     const handleApproveClick = async (company) => {
@@ -209,7 +221,11 @@ const Companies = () => {
                                     <td>
                                         <div className="d-flex align-items-center">
                                             <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                {company.company_name.substring(0, 2).toUpperCase()}
+                                                {company.logo ? (
+                                                    <img src={`http://localhost:5000${company.logo}`} alt="" className="avatar-img rounded-circle" />
+                                                ) : (
+                                                    company.company_name.substring(0, 2).toUpperCase()
+                                                )}
                                             </div>
                                             <span className="fw-bold">{company.company_name}</span>
                                         </div>
@@ -225,6 +241,9 @@ const Companies = () => {
                                     <td>{new Date(company.created_at).toLocaleDateString()}</td>
                                     <td>
                                         <div className="d-flex gap-2">
+                                            <button className="btn btn-sm btn-outline-info" onClick={() => handleViewClick(company)} title="View Details">
+                                                <i className="bi bi-eye"></i>
+                                            </button>
                                             {company.status === 'Pending' && (
                                                 <button className="btn btn-sm btn-outline-success" onClick={() => handleApproveClick(company)} title="Approve Company">
                                                     <i className="bi bi-check-lg"></i>
@@ -245,7 +264,86 @@ const Companies = () => {
                 </div>
             </div>
 
-            {/* Modal */}
+            {/* View Modal */}
+            {showViewModal && currentCompany && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg">
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <h5 className="modal-title">Company Details</h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowViewModal(false)}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="row">
+                                    <div className="col-md-4 text-center mb-4 mb-md-0">
+                                        <div className="d-flex flex-column align-items-center">
+                                            <div className="avatar-xl bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '120px', height: '120px', fontSize: '2.5rem' }}>
+                                                {currentCompany.logo ? (
+                                                    <img src={`http://localhost:5000${currentCompany.logo}`} alt="Company Logo" className="img-fluid rounded-circle w-100 h-100 object-fit-cover" />
+                                                ) : (
+                                                    currentCompany.company_name.substring(0, 2).toUpperCase()
+                                                )}
+                                            </div>
+                                            <h4 className="mb-1">{currentCompany.company_name}</h4>
+                                            <span className={`badge ${currentCompany.status === 'Active' ? 'bg-success' : 'bg-warning'}`}>
+                                                {currentCompany.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-8">
+                                        <h5 className="border-bottom border-secondary pb-2 mb-3">Basic Information</h5>
+                                        <div className="row g-3 mb-4">
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Email</small>
+                                                <span>{currentCompany.email}</span>
+                                            </div>
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Phone</small>
+                                                <span>{currentCompany.phone || 'N/A'}</span>
+                                            </div>
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Industry</small>
+                                                <span>{currentCompany.industry || 'N/A'}</span>
+                                            </div>
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Location</small>
+                                                <span>{currentCompany.location || 'N/A'}</span>
+                                            </div>
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Website</small>
+                                                {currentCompany.website ? (
+                                                    <a href={currentCompany.website.startsWith('http') ? currentCompany.website : `https://${currentCompany.website}`} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none">
+                                                        {currentCompany.website} <i className="bi bi-box-arrow-up-right ms-1" style={{ fontSize: '0.8em' }}></i>
+                                                    </a>
+                                                ) : (
+                                                    <span>N/A</span>
+                                                )}
+                                            </div>
+                                            <div className="col-sm-6">
+                                                <small className="text-muted d-block">Joined Date</small>
+                                                <span>{new Date(currentCompany.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                        </div>
+
+                                        <h5 className="border-bottom border-secondary pb-2 mb-3">Description</h5>
+                                        <p className="text-light">
+                                            {currentCompany.company_desc || <span className="text-muted font-italic">No description provided.</span>}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer border-secondary">
+                                <button type="button" className="btn btn-secondary" onClick={() => setShowViewModal(false)}>Close</button>
+                                <button type="button" className="btn btn-outline-warning" onClick={() => { setShowViewModal(false); handleEditClick(currentCompany); }}>
+                                    <i className="bi bi-pencil me-2"></i>Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit/Add Modal */}
             {showModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered">
@@ -267,16 +365,28 @@ const Companies = () => {
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Email</label>
-                                        <input
-                                            type="email"
-                                            className="form-control form-control-dark"
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            required
-                                        />
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Email</label>
+                                            <input
+                                                type="email"
+                                                className="form-control form-control-dark"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Phone</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                name="phone"
+                                                value={formData.phone}
+                                                onChange={handleInputChange}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Industry</label>
@@ -307,6 +417,16 @@ const Companies = () => {
                                             value={formData.website}
                                             onChange={handleInputChange}
                                         />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Description</label>
+                                        <textarea
+                                            className="form-control form-control-dark"
+                                            name="company_desc"
+                                            rows="3"
+                                            value={formData.company_desc}
+                                            onChange={handleInputChange}
+                                        ></textarea>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Status</label>

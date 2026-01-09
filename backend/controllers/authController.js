@@ -555,7 +555,70 @@ exports.googleRegister = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Google registration error:', err);
         res.status(500).json({ message: 'Server error during Google registration', error: err.message });
+    }
+};
+
+// Get User Profile (Generic)
+exports.getProfile = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const user = await Login.findOne({ email }).select('-password -otp -otpExpires');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error('Get profile error:', err);
+        res.status(500).json({ message: 'Server error retrieving profile', error: err.message });
+    }
+};
+
+// Update User Profile (Generic - mostly for Admin/Basic info)
+exports.updateProfile = async (req, res) => {
+    try {
+        const { id, username, email } = req.body;
+
+        if (!id) {
+            return res.status(400).json({ message: 'User ID is required' });
+        }
+
+        const user = await Login.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (username) user.username = username;
+        // Note: Changing email might require re-verification in a real app, but for now we'll allow it or skip it if strictly Admin.
+        // If email is changed, check uniqueness
+        if (email && email !== user.email) {
+            const exists = await Login.findOne({ email });
+            if (exists) {
+                return res.status(400).json({ message: 'Email already currently in use' });
+            }
+            user.email = email;
+        }
+
+        await user.save();
+
+        res.json({
+            message: 'Profile updated successfully',
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                usertype: user.usertype,
+                status: user.status
+            }
+        });
+
+    } catch (err) {
+        console.error('Update profile error:', err);
+        res.status(500).json({ message: 'Server error updating profile', error: err.message });
     }
 };

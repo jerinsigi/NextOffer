@@ -1,26 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './UserProfile.css';
 
 const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isEditing, setIsEditing] = useState(false);
-    
-    // Profile data
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState({ type: '', text: '' });
+
+    // Profile data derived from backend
     const [profileData, setProfileData] = useState({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@email.com',
-        phone: '+1 234 567 8900',
-        location: 'New York, USA',
-        currentRole: 'Senior Software Developer',
-        experience: '5 years',
-        expectedSalary: '$120,000 - $150,000',
-        noticePeriod: '30 days',
-        linkedin: 'linkedin.com/in/johndoe',
-        github: 'github.com/johndoe',
-        portfolio: 'johndoe.dev',
-        bio: 'Passionate full-stack developer with 5+ years of experience building scalable web applications.',
-        avatar: 'JD'
+        username: '',
+        fullName: '',
+        email: '',
+        phone: '',
+        location: '',
+        currentRole: '',
+        bio: '',
+        avatar: '',
+        id: ''
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -29,65 +26,51 @@ const UserProfile = () => {
         confirmPassword: ''
     });
 
-    const [preferences, setPreferences] = useState({
-        emailNotifications: true,
-        smsNotifications: true,
-        jobAlerts: true,
-        interviewReminders: true,
-        applicationUpdates: true,
-        practiceReminders: false,
-        weeklyDigest: true,
-        marketingEmails: false
-    });
+    // Helper to resolve avatar URL (if we add image upload later)
+    const getAvatarUrl = (avatarPath) => {
+        if (!avatarPath) return null;
+        if (avatarPath.startsWith('data:')) return avatarPath;
+        if (avatarPath.startsWith('http')) return avatarPath;
+        return `http://localhost:5000${avatarPath}`;
+    };
 
-    // Skills
-    const [skills, setSkills] = useState([
-        { id: 1, name: 'JavaScript', level: 'Expert', years: 5 },
-        { id: 2, name: 'React', level: 'Expert', years: 4 },
-        { id: 3, name: 'Node.js', level: 'Advanced', years: 4 },
-        { id: 4, name: 'Python', level: 'Intermediate', years: 2 },
-        { id: 5, name: 'MongoDB', level: 'Advanced', years: 3 },
-        { id: 6, name: 'AWS', level: 'Intermediate', years: 2 }
-    ]);
+    // Fetch Profile on Mount
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+                if (!userStr) return;
 
-    const [newSkill, setNewSkill] = useState({ name: '', level: 'Beginner', years: 0 });
+                const user = JSON.parse(userStr);
+                const response = await fetch('http://localhost:5000/api/users/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
 
-    // Experience
-    const [experience, setExperience] = useState([
-        {
-            id: 1,
-            title: 'Senior Software Developer',
-            company: 'TechCorp Inc.',
-            location: 'New York, USA',
-            startDate: '2021-06',
-            endDate: 'Present',
-            current: true,
-            description: 'Leading development of microservices architecture and mentoring junior developers.'
-        },
-        {
-            id: 2,
-            title: 'Software Developer',
-            company: 'StartupXYZ',
-            location: 'San Francisco, USA',
-            startDate: '2019-01',
-            endDate: '2021-05',
-            current: false,
-            description: 'Developed and maintained full-stack web applications using React and Node.js.'
-        }
-    ]);
+                if (response.ok) {
+                    const data = await response.json();
+                    setProfileData({
+                        username: data.username || '',
+                        fullName: data.full_name || data.username || '',
+                        email: data.email,
+                        phone: data.phone || '',
+                        location: data.location || '',
+                        currentRole: data.current_role || '',
+                        bio: data.bio || '',
+                        avatar: data.image_url ? (data.image_url.startsWith('http') || data.image_url.startsWith('data') ? data.image_url : `http://localhost:5000${data.image_url}`) : '',
+                        id: data._id
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // Education
-    const [education, setEducation] = useState([
-        {
-            id: 1,
-            degree: 'Bachelor of Science in Computer Science',
-            institution: 'University of Technology',
-            location: 'New York, USA',
-            startDate: '2015',
-            endDate: '2019',
-            grade: '3.8 GPA'
-        }
-    ]);
+        fetchProfile();
+    }, []);
 
     const handleProfileChange = (field, value) => {
         setProfileData(prev => ({
@@ -103,473 +86,315 @@ const UserProfile = () => {
         }));
     };
 
-    const handlePreferenceChange = (field, value) => {
-        setPreferences(prev => ({
-            ...prev,
-            [field]: value
-        }));
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileData(prev => ({
+                    ...prev,
+                    avatar: reader.result,
+                    profileImageFile: file // Store the file object for upload
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
-    const handleSaveProfile = () => {
-        console.log('Saving profile:', profileData);
-        setIsEditing(false);
-        alert('Profile updated successfully');
+    const handleSaveProfile = async () => {
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+
+            // Construct FormData
+            const formData = new FormData();
+            formData.append('email', user.email);
+            formData.append('username', profileData.username); // Add username
+            formData.append('full_name', profileData.fullName);
+            if (profileData.phone) formData.append('phone', profileData.phone);
+            if (profileData.location) formData.append('location', profileData.location);
+            if (profileData.currentRole) formData.append('currentRole', profileData.currentRole);
+            if (profileData.bio) formData.append('bio', profileData.bio);
+
+            // Append file if selected
+            if (profileData.profileImageFile) {
+                formData.append('profileImage', profileData.profileImageFile);
+            }
+
+            // Send request (no Content-Type header, browser sets it with boundary for FormData)
+            const response = await fetch('http://localhost:5000/api/users/profile', {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                setMessage({ type: 'success', text: 'Profile updated successfully!' });
+                setIsEditing(false);
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+
+                // Update local storage if name changed
+                // Determine new image URL
+                // If backend returns a new URL, use it (and prefix if relative)
+                // Otherwise fallback to existing avatar
+                let newImageUrl = responseData.profile && responseData.profile.image_url
+                    ? responseData.profile.image_url
+                    : profileData.avatar;
+
+                if (newImageUrl && newImageUrl.startsWith('/uploads')) {
+                    newImageUrl = `http://localhost:5000${newImageUrl}`;
+                }
+
+                const updatedUser = {
+                    ...user,
+                    username: profileData.fullName,
+                    image_url: newImageUrl
+                };
+
+                if (localStorage.getItem('user')) localStorage.setItem('user', JSON.stringify(updatedUser));
+                else sessionStorage.setItem('user', JSON.stringify(updatedUser));
+
+                // Dispatch event to notify other components (like UserLayout) of the update
+                window.dispatchEvent(new Event('userProfileUpdated'));
+
+            } else {
+                setMessage({ type: 'error', text: 'Failed to update profile' });
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            setMessage({ type: 'error', text: 'Server error updating profile' });
+        }
     };
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert('New passwords do not match');
+            setMessage({ type: 'error', text: 'New passwords do not match' });
             return;
         }
-        console.log('Changing password');
-        setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        });
-        alert('Password changed successfully');
-    };
 
-    const handleAddSkill = () => {
-        if (newSkill.name.trim()) {
-            setSkills([...skills, { id: Date.now(), ...newSkill }]);
-            setNewSkill({ name: '', level: 'Beginner', years: 0 });
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: profileData.email,
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setMessage({ type: 'success', text: 'Password changed successfully!' });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+            } else {
+                setMessage({ type: 'error', text: data.message || 'Failed to change password' });
+            }
+        } catch (error) {
+            console.error('Password change error:', error);
+            setMessage({ type: 'error', text: 'Server error changing password' });
         }
     };
 
-    const handleRemoveSkill = (id) => {
-        setSkills(skills.filter(skill => skill.id !== id));
-    };
+    if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
+
+    const avatarUrl = getAvatarUrl(profileData.avatar);
 
     return (
-        <div className="user-profile-container">
-            {/* Profile Header Card */}
-            <div className="profile-header-card mb-4">
-                <div className="profile-banner"></div>
-                <div className="profile-header-content">
-                    <div className="profile-avatar-section">
-                        <div className="profile-avatar-large">
-                            {profileData.avatar}
-                        </div>
-                        <button className="btn-change-avatar">
-                            <i className="bi bi-camera"></i>
-                        </button>
-                    </div>
-                    <div className="profile-header-info">
-                        <h2>{profileData.firstName} {profileData.lastName}</h2>
-                        <p className="profile-role">{profileData.currentRole}</p>
-                        <div className="profile-meta">
-                            <span><i className="bi bi-geo-alt"></i> {profileData.location}</span>
-                            <span><i className="bi bi-briefcase"></i> {profileData.experience} experience</span>
-                            <span><i className="bi bi-envelope"></i> {profileData.email}</span>
-                            <span><i className="bi bi-telephone"></i> {profileData.phone}</span>
-                        </div>
-                    </div>
-                    <div className="profile-header-actions">
-                        {!isEditing ? (
+        <div className="dashboard-container">
+            <div className="page-header mb-4">
+                <div>
+                    <h1 className="page-title">My Profile</h1>
+                    <p className="text-muted">Manage your personal details and account settings</p>
+                </div>
+                <div className="header-actions">
+                    {activeTab === 'profile' && (
+                        isEditing ? (
+                            <>
+                                <button className="btn btn-outline-secondary me-2" onClick={() => setIsEditing(false)}>
+                                    <i className="bi bi-x-circle me-2"></i>Cancel
+                                </button>
+                                <button className="btn btn-primary" onClick={handleSaveProfile}>
+                                    <i className="bi bi-check-circle me-2"></i>Save Changes
+                                </button>
+                            </>
+                        ) : (
                             <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
                                 <i className="bi bi-pencil me-2"></i>Edit Profile
                             </button>
-                        ) : (
-                            <>
-                                <button className="btn btn-success" onClick={handleSaveProfile}>
-                                    <i className="bi bi-check-lg me-2"></i>Save
-                                </button>
-                                <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
-                                    <i className="bi bi-x-lg me-2"></i>Cancel
-                                </button>
-                            </>
+                        )
+                    )}
+                </div>
+            </div>
+
+            {/* Profile Header Card */}
+            <div className="profile-header-card mb-4">
+                <div className="profile-header-content pt-5">
+                    <div className="profile-avatar-section">
+                        <div className="profile-avatar-large">
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl}
+                                    alt={profileData.fullName}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                />
+                            ) : (
+                                (profileData.fullName.charAt(0) || profileData.username.charAt(0) || 'U').toUpperCase()
+                            )}
+                        </div>
+                        {isEditing && (
+                            <label className="btn-change-avatar" htmlFor="avatar-upload">
+                                <i className="bi bi-camera"></i>
+                                <input
+                                    type="file"
+                                    id="avatar-upload"
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoUpload}
+                                />
+                            </label>
                         )}
                     </div>
-                </div>
-                
-                {/* Profile Stats */}
-                <div className="profile-stats">
-                    <div className="stat-item">
-                        <div className="stat-value">12</div>
-                        <div className="stat-label">Applications</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-value">5</div>
-                        <div className="stat-label">Interviews</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-value">78%</div>
-                        <div className="stat-label">Avg Score</div>
-                    </div>
-                    <div className="stat-item">
-                        <div className="stat-value">24</div>
-                        <div className="stat-label">Practice Sessions</div>
+                    <div className="profile-header-info">
+                        <h2>{profileData.fullName}</h2>
+                        <p className="profile-role">{profileData.currentRole || 'Candidate'}</p>
+                        <div className="profile-meta">
+                            <span><i className="bi bi-envelope"></i> {profileData.email}</span>
+                            <span><i className="bi bi-phone"></i> {profileData.phone || 'N/A'}</span>
+                            <span><i className="bi bi-geo-alt"></i> {profileData.location || 'N/A'}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="profile-tabs-container">
+            <div className="dashboard-card">
                 <div className="profile-tabs">
-                    <button 
-                        className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
+                    <button
+                        className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
                         onClick={() => setActiveTab('profile')}
                     >
-                        <i className="bi bi-person me-2"></i>Personal Info
+                        <i className="bi bi-person"></i>
+                        Personal Info
                     </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'resume' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('resume')}
-                    >
-                        <i className="bi bi-file-earmark-text me-2"></i>Resume & Skills
-                    </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
+                    <button
+                        className={`profile-tab ${activeTab === 'security' ? 'active' : ''}`}
                         onClick={() => setActiveTab('security')}
                     >
-                        <i className="bi bi-shield-lock me-2"></i>Security
-                    </button>
-                    <button 
-                        className={`tab-button ${activeTab === 'preferences' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('preferences')}
-                    >
-                        <i className="bi bi-gear me-2"></i>Preferences
+                        <i className="bi bi-shield-lock"></i>
+                        Security
                     </button>
                 </div>
 
-                {/* Tab Content */}
-                <div className="tab-content">
+                <div className="profile-tab-content">
                     {/* Personal Info Tab */}
                     {activeTab === 'profile' && (
                         <div className="tab-pane">
-                            <div className="row g-4">
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>First Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.firstName}
-                                            onChange={(e) => handleProfileChange('firstName', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">General Information</h5>
+                                {/* Alert Messages for Profile */}
+                                {message.text && activeTab === 'profile' && (
+                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {message.text}
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Last Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.lastName}
-                                            onChange={(e) => handleProfileChange('lastName', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                )}
+                                <div className="row g-4">
+                                    <div className="col-md-6">
+                                        <label className="form-label">Username</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-person-badge"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.username}
+                                                onChange={(e) => handleProfileChange('username', e.target.value)}
+                                                disabled={!isEditing}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Email</label>
-                                        <input
-                                            type="email"
-                                            className="form-control"
-                                            value={profileData.email}
-                                            onChange={(e) => handleProfileChange('email', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Full Name</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-person-fill"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.fullName}
+                                                onChange={(e) => handleProfileChange('fullName', e.target.value)}
+                                                disabled={!isEditing}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Phone</label>
-                                        <input
-                                            type="tel"
-                                            className="form-control"
-                                            value={profileData.phone}
-                                            onChange={(e) => handleProfileChange('phone', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Email</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-envelope-fill"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.email}
+                                                readOnly
+                                                disabled
+                                            />
+                                            <span className="input-group-text"><i className="bi bi-lock-fill"></i></span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Location</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.location}
-                                            onChange={(e) => handleProfileChange('location', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Phone</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-phone"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.phone}
+                                                onChange={(e) => handleProfileChange('phone', e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="Enter phone number"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Current Role</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.currentRole}
-                                            onChange={(e) => handleProfileChange('currentRole', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Location</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-geo-alt"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.location}
+                                                onChange={(e) => handleProfileChange('location', e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="City, Country"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Total Experience</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.experience}
-                                            onChange={(e) => handleProfileChange('experience', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Current Role</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-briefcase"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.currentRole}
+                                                onChange={(e) => handleProfileChange('currentRole', e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="e.g. Software Engineer"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Expected Salary</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.expectedSalary}
-                                            onChange={(e) => handleProfileChange('expectedSalary', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Notice Period</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.noticePeriod}
-                                            onChange={(e) => handleProfileChange('noticePeriod', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>LinkedIn</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.linkedin}
-                                            onChange={(e) => handleProfileChange('linkedin', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>GitHub</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.github}
-                                            onChange={(e) => handleProfileChange('github', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Portfolio</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={profileData.portfolio}
-                                            onChange={(e) => handleProfileChange('portfolio', e.target.value)}
-                                            disabled={!isEditing}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="col-12">
-                                    <div className="form-group">
-                                        <label>Bio</label>
+                                    <div className="col-12">
+                                        <label className="form-label">Bio</label>
                                         <textarea
-                                            className="form-control"
+                                            className="form-control form-control-dark"
                                             rows="4"
                                             value={profileData.bio}
                                             onChange={(e) => handleProfileChange('bio', e.target.value)}
                                             disabled={!isEditing}
+                                            placeholder="Tell us about yourself..."
                                         ></textarea>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Resume & Skills Tab */}
-                    {activeTab === 'resume' && (
-                        <div className="tab-pane">
-                            {/* Resume Upload */}
-                            <div className="section-card mb-4">
-                                <h5 className="section-title">
-                                    <i className="bi bi-file-earmark-arrow-up me-2"></i>Resume
-                                </h5>
-                                <div className="resume-upload-area">
-                                    <i className="bi bi-cloud-upload fs-1 text-primary mb-3"></i>
-                                    <p className="mb-2">Current Resume: <strong>John_Doe_Resume.pdf</strong></p>
-                                    <p className="text-muted mb-3">Uploaded on Dec 1, 2025</p>
-                                    <div className="d-flex gap-2 justify-content-center">
-                                        <button className="btn btn-outline-primary">
-                                            <i className="bi bi-download me-2"></i>Download
-                                        </button>
-                                        <button className="btn btn-primary">
-                                            <i className="bi bi-upload me-2"></i>Upload New
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Skills */}
-                            <div className="section-card mb-4">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 className="section-title mb-0">
-                                        <i className="bi bi-code-slash me-2"></i>Skills
-                                    </h5>
-                                </div>
-                                
-                                {/* Add New Skill */}
-                                <div className="add-skill-form mb-4">
-                                    <div className="row g-2">
-                                        <div className="col-md-5">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                placeholder="Skill name"
-                                                value={newSkill.name}
-                                                onChange={(e) => setNewSkill({...newSkill, name: e.target.value})}
-                                            />
-                                        </div>
-                                        <div className="col-md-3">
-                                            <select
-                                                className="form-select"
-                                                value={newSkill.level}
-                                                onChange={(e) => setNewSkill({...newSkill, level: e.target.value})}
-                                            >
-                                                <option value="Beginner">Beginner</option>
-                                                <option value="Intermediate">Intermediate</option>
-                                                <option value="Advanced">Advanced</option>
-                                                <option value="Expert">Expert</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-2">
-                                            <input
-                                                type="number"
-                                                className="form-control"
-                                                placeholder="Years"
-                                                min="0"
-                                                value={newSkill.years}
-                                                onChange={(e) => setNewSkill({...newSkill, years: parseInt(e.target.value) || 0})}
-                                            />
-                                        </div>
-                                        <div className="col-md-2">
-                                            <button className="btn btn-primary w-100" onClick={handleAddSkill}>
-                                                <i className="bi bi-plus-lg"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Skills List */}
-                                <div className="skills-grid">
-                                    {skills.map(skill => (
-                                        <div key={skill.id} className="skill-card">
-                                            <div className="skill-header">
-                                                <h6 className="skill-name">{skill.name}</h6>
-                                                <button 
-                                                    className="btn-remove-skill"
-                                                    onClick={() => handleRemoveSkill(skill.id)}
-                                                >
-                                                    <i className="bi bi-x"></i>
-                                                </button>
-                                            </div>
-                                            <div className="skill-details">
-                                                <span className={`skill-level level-${skill.level.toLowerCase()}`}>
-                                                    {skill.level}
-                                                </span>
-                                                <span className="skill-years">{skill.years} years</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Experience */}
-                            <div className="section-card mb-4">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 className="section-title mb-0">
-                                        <i className="bi bi-briefcase me-2"></i>Work Experience
-                                    </h5>
-                                    <button className="btn btn-sm btn-outline-primary">
-                                        <i className="bi bi-plus-lg me-2"></i>Add Experience
-                                    </button>
-                                </div>
-                                <div className="timeline">
-                                    {experience.map(exp => (
-                                        <div key={exp.id} className="timeline-item">
-                                            <div className="timeline-marker"></div>
-                                            <div className="timeline-content">
-                                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                                    <div>
-                                                        <h6 className="mb-1">{exp.title}</h6>
-                                                        <p className="company-name">
-                                                            <i className="bi bi-building me-2"></i>{exp.company}
-                                                        </p>
-                                                    </div>
-                                                    {exp.current && (
-                                                        <span className="badge bg-success">Current</span>
-                                                    )}
-                                                </div>
-                                                <p className="text-muted mb-2">
-                                                    <i className="bi bi-geo-alt me-2"></i>{exp.location}
-                                                </p>
-                                                <p className="text-muted mb-2">
-                                                    <i className="bi bi-calendar me-2"></i>
-                                                    {exp.startDate} - {exp.endDate}
-                                                </p>
-                                                <p className="experience-description">{exp.description}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Education */}
-                            <div className="section-card">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 className="section-title mb-0">
-                                        <i className="bi bi-mortarboard me-2"></i>Education
-                                    </h5>
-                                    <button className="btn btn-sm btn-outline-primary">
-                                        <i className="bi bi-plus-lg me-2"></i>Add Education
-                                    </button>
-                                </div>
-                                <div className="education-list">
-                                    {education.map(edu => (
-                                        <div key={edu.id} className="education-item">
-                                            <div className="education-icon">
-                                                <i className="bi bi-mortarboard-fill"></i>
-                                            </div>
-                                            <div className="education-details">
-                                                <h6 className="mb-1">{edu.degree}</h6>
-                                                <p className="institution-name mb-1">
-                                                    <i className="bi bi-building me-2"></i>{edu.institution}
-                                                </p>
-                                                <p className="text-muted mb-1">
-                                                    <i className="bi bi-geo-alt me-2"></i>{edu.location}
-                                                </p>
-                                                <p className="text-muted mb-1">
-                                                    <i className="bi bi-calendar me-2"></i>
-                                                    {edu.startDate} - {edu.endDate}
-                                                </p>
-                                                <p className="text-muted">
-                                                    <i className="bi bi-award me-2"></i>{edu.grade}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
                                 </div>
                             </div>
                         </div>
@@ -578,185 +403,58 @@ const UserProfile = () => {
                     {/* Security Tab */}
                     {activeTab === 'security' && (
                         <div className="tab-pane">
-                            <div className="section-card mb-4">
-                                <h5 className="section-title">
-                                    <i className="bi bi-key me-2"></i>Change Password
-                                </h5>
-                                <div className="row g-3">
-                                    <div className="col-12">
-                                        <div className="form-group">
-                                            <label>Current Password</label>
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">Change Password</h5>
+                                {/* Alert Messages for Security */}
+                                {message.text && activeTab === 'security' && (
+                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {message.text}
+                                    </div>
+                                )}
+                                <div className="row g-4">
+                                    <div className="col-md-12">
+                                        <label className="form-label">Current Password</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-key"></i></span>
                                             <input
                                                 type="password"
-                                                className="form-control"
+                                                className="form-control form-control-dark"
                                                 value={passwordData.currentPassword}
                                                 onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                                                placeholder="Enter current password"
                                             />
                                         </div>
                                     </div>
-                                    <div className="col-12">
-                                        <div className="form-group">
-                                            <label>New Password</label>
+                                    <div className="col-md-6">
+                                        <label className="form-label">New Password</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-shield-lock"></i></span>
                                             <input
                                                 type="password"
-                                                className="form-control"
+                                                className="form-control form-control-dark"
                                                 value={passwordData.newPassword}
                                                 onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                                                placeholder="Enter new password"
                                             />
                                         </div>
                                     </div>
-                                    <div className="col-12">
-                                        <div className="form-group">
-                                            <label>Confirm New Password</label>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Confirm New Password</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-shield-lock-fill"></i></span>
                                             <input
                                                 type="password"
-                                                className="form-control"
+                                                className="form-control form-control-dark"
                                                 value={passwordData.confirmPassword}
                                                 onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                                                placeholder="Confirm new password"
                                             />
                                         </div>
                                     </div>
-                                    <div className="col-12">
+                                    <div className="col-md-12">
                                         <button className="btn btn-primary" onClick={handleChangePassword}>
-                                            Update Password
+                                            <i className="bi bi-check-circle me-2"></i>Update Password
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="section-card">
-                                <h5 className="section-title">
-                                    <i className="bi bi-shield-check me-2"></i>Two-Factor Authentication
-                                </h5>
-                                <p className="text-muted mb-3">
-                                    Add an extra layer of security to your account
-                                </p>
-                                <button className="btn btn-outline-primary">
-                                    <i className="bi bi-shield-plus me-2"></i>Enable 2FA
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Preferences Tab */}
-                    {activeTab === 'preferences' && (
-                        <div className="tab-pane">
-                            <div className="section-card">
-                                <h5 className="section-title">
-                                    <i className="bi bi-bell me-2"></i>Notification Preferences
-                                </h5>
-                                <div className="preferences-list">
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Email Notifications</h6>
-                                            <p className="text-muted">Receive email updates about your account</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.emailNotifications}
-                                                onChange={(e) => handlePreferenceChange('emailNotifications', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>SMS Notifications</h6>
-                                            <p className="text-muted">Receive text messages for important updates</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.smsNotifications}
-                                                onChange={(e) => handlePreferenceChange('smsNotifications', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Job Alerts</h6>
-                                            <p className="text-muted">Get notified about new job opportunities</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.jobAlerts}
-                                                onChange={(e) => handlePreferenceChange('jobAlerts', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Interview Reminders</h6>
-                                            <p className="text-muted">Reminders before scheduled interviews</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.interviewReminders}
-                                                onChange={(e) => handlePreferenceChange('interviewReminders', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Application Updates</h6>
-                                            <p className="text-muted">Status updates for your applications</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.applicationUpdates}
-                                                onChange={(e) => handlePreferenceChange('applicationUpdates', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Practice Reminders</h6>
-                                            <p className="text-muted">Reminders to complete practice interviews</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.practiceReminders}
-                                                onChange={(e) => handlePreferenceChange('practiceReminders', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Weekly Digest</h6>
-                                            <p className="text-muted">Weekly summary of your activity</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.weeklyDigest}
-                                                onChange={(e) => handlePreferenceChange('weeklyDigest', e.target.checked)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="preference-item">
-                                        <div>
-                                            <h6>Marketing Emails</h6>
-                                            <p className="text-muted">Promotional content and offers</p>
-                                        </div>
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                checked={preferences.marketingEmails}
-                                                onChange={(e) => handlePreferenceChange('marketingEmails', e.target.checked)}
-                                            />
-                                        </div>
                                     </div>
                                 </div>
                             </div>

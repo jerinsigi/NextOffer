@@ -5,13 +5,14 @@ const { sendOTP } = require('../utils/emailService');
 
 // Register a new company (public endpoint)
 exports.registerCompany = async (req, res) => {
+    let savedLogin = null;
     try {
         const { username, email, password, companyName, industry, location, website, description, logo, phone } = req.body;
 
         // Validate required fields
-        if (!username || !email || !password || !companyName || !industry || !location || !phone) {
+        if (!username || !email || !password || !companyName || !industry || !location) {
             return res.status(400).json({
-                message: 'Please provide all required fields: username, email, password, company name, industry, location, and phone'
+                message: 'Please provide all required fields: username, email, password, company name, industry, and location'
             });
         }
 
@@ -43,15 +44,12 @@ exports.registerCompany = async (req, res) => {
             email,
             password: hashedPassword,
             usertype: 'company',
-            email,
-            password: hashedPassword,
-            usertype: 'company',
             status: 'pending', // Pending email verification
             otp: Math.random().toString(36).substring(2, 8).toUpperCase(),
             otpExpires: Date.now() + 10 * 60 * 1000 // 10 minutes
         });
 
-        const savedLogin = await login.save();
+        savedLogin = await login.save();
 
         // Create Company entry
         const company = new Company({
@@ -83,6 +81,13 @@ exports.registerCompany = async (req, res) => {
 
     } catch (err) {
         console.error('Registration error:', err);
+
+        // Cleanup: Delete the created login if company creation fails
+        if (savedLogin && savedLogin._id) {
+            console.log('Rolling back Login creation due to error...');
+            await Login.findByIdAndDelete(savedLogin._id);
+        }
+
         res.status(500).json({ message: 'Server error during registration', error: err.message });
     }
 };
@@ -199,6 +204,7 @@ exports.updateCompany = async (req, res) => {
 
         if (req.body.company_name != null) company.company_name = req.body.company_name;
         if (req.body.email != null) company.email = req.body.email;
+        if (req.body.phone != null) company.phone = req.body.phone;
         if (req.body.industry != null) company.industry = req.body.industry;
         if (req.body.location != null) company.location = req.body.location;
         if (req.body.website != null) company.website = req.body.website;
@@ -230,6 +236,7 @@ exports.deleteCompany = async (req, res) => {
 exports.approveCompany = async (req, res) => {
     try {
         const companyId = req.params.id;
+        console.log(`Approving company with ID: ${companyId}`);
 
         // Find the company
         const company = await Company.findById(companyId);
@@ -263,7 +270,7 @@ exports.approveCompany = async (req, res) => {
 
     } catch (err) {
         console.error('Approval error:', err);
-        res.status(500).json({ message: 'Server error during approval', error: err.message });
+        res.status(500).json({ message: err.message || 'Server error during approval' });
     }
 };
 

@@ -35,6 +35,19 @@ app.use('/api/auth', authRouter);
 const jobCategoriesRouter = require('./routes/jobCategories');
 app.use('/api/job-categories', jobCategoriesRouter);
 
+const jobDescriptionsRouter = require('./routes/jobDescriptions');
+app.use('/api/job-descriptions', jobDescriptionsRouter);
+
+
+const usersRouter = require('./routes/users');
+app.use('/api/users', usersRouter);
+
+const applicationsRouter = require('./routes/applications');
+app.use('/api/applications', applicationsRouter);
+
+const skillsRouter = require('./routes/skills');
+app.use('/api/skills', skillsRouter);
+
 module.exports = app;
 
 // Only listen if not running on Vercel

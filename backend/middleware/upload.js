@@ -3,40 +3,42 @@ const path = require('path');
 const fs = require('fs');
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../upload');
+const uploadDir = 'upload/';
 if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+    fs.mkdirSync(uploadDir);
 }
 
-// Storage configuration
+// Set up storage engine
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir); // Save to backend/upload folder
-    },
-    filename: (req, file, cb) => {
-        // Generate unique filename: timestamp-random-originalName
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
+    destination: './upload/',
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
     }
 });
 
-// File filter (optional but recommended)
-const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+// Check file type
+function checkFileType(file, cb) {
+    // Allowed ext
+    const filetypes = /jpeg|jpg|png|gif/;
+    // Check ext
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    // Check mime
+    const mimetype = filetypes.test(file.mimetype);
 
-    if (extname && mimetype) {
-        cb(null, true);
+    if (mimetype && extname) {
+        return cb(null, true);
     } else {
-        cb(new Error('Only images are allowed (jpeg, jpg, png, gif)'));
+        cb('Error: Images Only!');
     }
-};
+}
 
+// Init upload
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: fileFilter
+    limits: { fileSize: 10000000 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+        checkFileType(file, cb);
+    }
 });
 
 module.exports = upload;

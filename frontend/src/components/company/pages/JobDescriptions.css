@@ -461,6 +461,7 @@
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -502,6 +503,7 @@
             transform: translateY(100%);
             opacity: 0;
         }
+
         to {
             transform: translateY(0);
             opacity: 1;
@@ -548,5 +550,55 @@
 
     .jobs-filters select {
         flex: 1;
+    }
+}
+
+/* New Styles for Modals and Dropdowns */
+
+/* Force modal to be centered */
+.modal.show {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-modal-center {
+    margin: 1.75rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 800px;
+}
+
+/* Override Bootstrap modal-dialog-centered */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+}
+
+.skills-dropdown-menu {
+    top: 100%;
+    left: 200;
+    width: 100%;
+    background-color: #1a1d2d !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    border-radius: 0.375rem;
+    margin-top: 0.125rem;
+    z-index: 1056;
+    /* Higher z-index to show above modal content */
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+}
+
+.skills-dropdown-menu .dropdown-item {
+    color: #e2e8f0 !important;
+    background-color: transparent;
+    padding: 0.5rem 1rem;
+
+    .skills-dropdown-menu .dropdown-item:hover {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: #fff;
     }
 }
