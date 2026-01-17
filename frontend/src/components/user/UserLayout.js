@@ -12,18 +12,55 @@ const UserLayout = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const loadUserData = () => {
+        const loadUserData = async () => {
             const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
             if (userStr) {
                 const user = JSON.parse(userStr);
-                setUserData({
-                    name: user.username || 'User',
-                    type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
-                    // Use image_url from localStorage if available, otherwise just initials
-                    avatar: user.image_url ?
-                        (user.image_url.startsWith('http') || user.image_url.startsWith('data') ? user.image_url : `http://localhost:5000${user.image_url}`)
-                        : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
-                });
+
+                // Try to fetch latest profile data from backend
+                try {
+                    const response = await fetch('http://localhost:5000/api/users/profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email })
+                    });
+
+                    if (response.ok) {
+                        const profileData = await response.json();
+                        setUserData({
+                            name: profileData.full_name || user.username || 'User',
+                            type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                            avatar: profileData.image_url ?
+                                (profileData.image_url.startsWith('http') || profileData.image_url.startsWith('data')
+                                    ? profileData.image_url
+                                    : `http://localhost:5000${profileData.image_url}`)
+                                : (profileData.full_name ? profileData.full_name.charAt(0).toUpperCase() : 'U')
+                        });
+                    } else {
+                        // Fallback to localStorage data if API fails
+                        setUserData({
+                            name: user.username || 'User',
+                            type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                            avatar: user.image_url ?
+                                (user.image_url.startsWith('http') || user.image_url.startsWith('data')
+                                    ? user.image_url
+                                    : `http://localhost:5000${user.image_url}`)
+                                : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                    // Fallback to localStorage data
+                    setUserData({
+                        name: user.username || 'User',
+                        type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                        avatar: user.image_url ?
+                            (user.image_url.startsWith('http') || user.image_url.startsWith('data')
+                                ? user.image_url
+                                : `http://localhost:5000${user.image_url}`)
+                            : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
+                    });
+                }
             }
         };
 

@@ -303,3 +303,51 @@ exports.getCompanyByEmail = async (req, res) => {
         res.status(500).json({ message: 'Server error retrieving profile', error: err.message });
     }
 };
+
+// Update company profile with file upload support
+exports.updateCompanyProfile = async (req, res) => {
+    try {
+        const { email, company_name, phone, industry, location, website, company_desc } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Find company to verify it exists
+        const company = await Company.findOne({ email });
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        // Prepare update data
+        const updateData = {};
+
+        if (company_name) updateData.company_name = company_name;
+        if (phone) updateData.phone = phone;
+        if (industry) updateData.industry = industry;
+        if (location) updateData.location = location;
+        if (website) updateData.website = website;
+        if (company_desc) updateData.company_desc = company_desc;
+
+        // Handle File Upload for logo
+        if (req.file) {
+            updateData.logo = '/uploads/' + req.file.filename;
+        }
+
+        // Update company
+        const updatedCompany = await Company.findOneAndUpdate(
+            { email: email },
+            { $set: updateData },
+            { new: true }
+        );
+
+        res.json({
+            message: 'Company profile updated successfully',
+            company: updatedCompany
+        });
+
+    } catch (err) {
+        console.error('Update company profile error:', err);
+        res.status(500).json({ message: 'Server error updating profile', error: err.message });
+    }
+};

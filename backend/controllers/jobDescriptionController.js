@@ -107,7 +107,7 @@ exports.getAllActiveJobs = async (req, res) => {
 
         const jobs = await Job_Description.find(query)
             .sort({ createdAt: -1 })
-            .populate('Fk_company_id', 'companyName companyEmail logoUrl'); // Populate company details if link exists
+            .populate('Fk_company_id', 'company_name email logo'); // Populate company details if link exists
 
         res.json(jobs);
     } catch (err) {

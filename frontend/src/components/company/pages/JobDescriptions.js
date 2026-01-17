@@ -14,6 +14,10 @@ const JobDescriptions = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false); // New state for edit mode
     const [editJobId, setEditJobId] = useState(null); // ID of job being edited
+    const [showApplicantsModal, setShowApplicantsModal] = useState(false);
+    const [selectedJobForApplicants, setSelectedJobForApplicants] = useState(null);
+    const [applicants, setApplicants] = useState([]);
+    const [loadingApplicants, setLoadingApplicants] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -196,6 +200,27 @@ const JobDescriptions = () => {
             }
         } catch (error) {
             console.error('Error updating status:', error);
+        }
+    };
+
+    const handleViewApplicants = async (job) => {
+        setSelectedJobForApplicants(job);
+        setShowApplicantsModal(true);
+        setLoadingApplicants(true);
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/applications/job/${job._id}`);
+            if (response.ok) {
+                const data = await response.json();
+                setApplicants(data);
+            } else {
+                alert('Failed to fetch applicants');
+            }
+        } catch (error) {
+            console.error('Error fetching applicants:', error);
+            alert('Error fetching applicants');
+        } finally {
+            setLoadingApplicants(false);
         }
     };
 
@@ -408,7 +433,15 @@ const JobDescriptions = () => {
                                             </div>
 
                                             <div className="job-metrics">
-                                                <div className="metric">
+                                                <div
+                                                    className="metric clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewApplicants(job);
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Click to view applicants"
+                                                >
                                                     <div className="metric-value">{job.applications_count || 0}</div>
                                                     <div className="metric-label">Applications</div>
                                                 </div>
@@ -785,6 +818,146 @@ const JobDescriptions = () => {
                         </div>
                     </div>
                 </div >
+            )}
+
+            {/* Applicants Modal */}
+            {showApplicantsModal && selectedJobForApplicants && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                    <div className="modal-dialog modal-dialog-centered modal-xl" style={{ maxWidth: '90%' }}>
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <div>
+                                    <h5 className="modal-title">Applicants for {selectedJobForApplicants.job_title}</h5>
+                                    <p className="text-muted mb-0 small">Total Applications: {applicants.length}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => {
+                                        setShowApplicantsModal(false);
+                                        setSelectedJobForApplicants(null);
+                                        setApplicants([]);
+                                    }}
+                                ></button>
+                            </div>
+                            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                                {loadingApplicants ? (
+                                    <div className="text-center py-5">
+                                        <div className="spinner-border text-primary" role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p className="mt-3">Loading applicants...</p>
+                                    </div>
+                                ) : applicants.length === 0 ? (
+                                    <div className="text-center py-5">
+                                        <i className="bi bi-inbox fs-1 text-muted"></i>
+                                        <p className="text-muted mt-3">No applications yet</p>
+                                    </div>
+                                ) : (
+                                    <div className="table-responsive">
+                                        <table className="table table-dark table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Candidate</th>
+                                                    <th>Email</th>
+                                                    <th>Phone</th>
+                                                    <th>Applied On</th>
+                                                    <th>Status</th>
+                                                    <th>Resume</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {applicants.map((app, index) => (
+                                                    <tr key={app._id}>
+                                                        <td>{index + 1}</td>
+                                                        <td>
+                                                            <div className="d-flex align-items-center">
+                                                                {app.Fk_candidate_id?.image_url ? (
+                                                                    <img
+                                                                        src={app.Fk_candidate_id.image_url.startsWith('http') ? app.Fk_candidate_id.image_url : `http://localhost:5000${app.Fk_candidate_id.image_url}`}
+                                                                        alt={app.Fk_candidate_id?.full_name}
+                                                                        className="rounded-circle me-2"
+                                                                        style={{ width: '32px', height: '32px', objectFit: 'cover' }}
+                                                                    />
+                                                                ) : (
+                                                                    <div
+                                                                        className="rounded-circle bg-primary text-white me-2 d-flex align-items-center justify-content-center"
+                                                                        style={{ width: '32px', height: '32px' }}
+                                                                    >
+                                                                        {app.Fk_candidate_id?.full_name?.charAt(0).toUpperCase() || 'U'}
+                                                                    </div>
+                                                                )}
+                                                                <strong>{app.Fk_candidate_id?.full_name || 'N/A'}</strong>
+                                                            </div>
+                                                        </td>
+                                                        <td>{app.Fk_candidate_id?.email || 'N/A'}</td>
+                                                        <td>{app.Fk_candidate_id?.phone || 'N/A'}</td>
+                                                        <td>{new Date(app.createdAt).toLocaleDateString()}</td>
+                                                        <td>
+                                                            <span className={`badge bg-${app.status === 'Applied' ? 'info' : app.status === 'Shortlisted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'secondary'}`}>
+                                                                {app.status}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            {app.Fk_resume_id?.resume_path ? (
+                                                                <a
+                                                                    href={`http://localhost:5000${app.Fk_resume_id.resume_path}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="btn btn-sm btn-outline-primary"
+                                                                >
+                                                                    <i className="bi bi-file-earmark-pdf me-1"></i>
+                                                                    View
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-muted">No Resume</span>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            <div className="btn-group" role="group">
+                                                                {app.status !== 'Shortlisted' && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-success"
+                                                                        title="Shortlist"
+                                                                    >
+                                                                        <i className="bi bi-check-circle"></i>
+                                                                    </button>
+                                                                )}
+                                                                {app.status !== 'Rejected' && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-danger"
+                                                                        title="Reject"
+                                                                    >
+                                                                        <i className="bi bi-x-circle"></i>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer border-secondary">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowApplicantsModal(false);
+                                        setSelectedJobForApplicants(null);
+                                        setApplicants([]);
+                                    }}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
         </div >

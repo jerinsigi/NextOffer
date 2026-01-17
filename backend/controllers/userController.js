@@ -85,10 +85,12 @@ exports.updateProfile = async (req, res) => {
         if (skills) updateData.skills = typeof skills === 'string' ? safeParse(skills) : skills;
         if (social_links) updateData.social_links = typeof social_links === 'string' ? safeParse(social_links) : social_links;
 
-        // Handle File Upload
-        if (req.file) {
-            // Save relative path to DB. Convert backslashes to forward slashes for URL compatibility
-            updateData.image_url = '/uploads/' + req.file.filename;
+        // Handle File Uploads
+        if (req.files) {
+            // Handle profile image
+            if (req.files.profileImage) {
+                updateData.image_url = '/uploads/' + req.files.profileImage[0].filename;
+            }
         }
 
         // Use findOneAndUpdate with upsert

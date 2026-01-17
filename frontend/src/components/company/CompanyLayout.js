@@ -38,6 +38,14 @@ const CompanyLayout = () => {
         fetchCompanyProfile();
     }, []);
 
+    // Helper to resolve logo URL
+    const getLogoUrl = (logoPath) => {
+        if (!logoPath) return null;
+        if (logoPath.startsWith('data:')) return logoPath; // Base64
+        if (logoPath.startsWith('http')) return logoPath; // Absolute URL
+        return `http://localhost:5000${logoPath}`; // Relative backend path
+    };
+
     const menuItems = [
         {
             title: 'Dashboard',
@@ -253,8 +261,8 @@ const CompanyLayout = () => {
                                 data-bs-toggle="dropdown"
                             >
                                 <div className="avatar">
-                                    {companyLogo ? (
-                                        <img src={companyLogo} alt={companyName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                    {getLogoUrl(companyLogo) ? (
+                                        <img src={getLogoUrl(companyLogo)} alt={companyName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                     ) : (
                                         companyName.charAt(0).toUpperCase()
                                     )}

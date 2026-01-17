@@ -19,9 +19,9 @@ const JobOpportunities = () => {
 
     // Application Form
     const [applicationForm, setApplicationForm] = useState({
-        resumeUrl: '',
         coverLetter: ''
     });
+    const [resumeFile, setResumeFile] = useState(null);
 
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     const user = React.useMemo(() => userStr ? JSON.parse(userStr) : null, [userStr]);
@@ -63,11 +63,9 @@ const JobOpportunities = () => {
     };
 
     const fetchUserApplications = async () => {
-        if (!user || (!user._id && !user.id)) return; // Ensure we have ID
-        // Note: user object in storage might differ, typically has _id from mongo
-        const userId = user._id || user.id;
+        if (!user || !user.email) return; // Ensure we have email
         try {
-            const response = await fetch(`http://localhost:5000/api/applications/user/${userId}`);
+            const response = await fetch(`http://localhost:5000/api/applications/user/${encodeURIComponent(user.email)}`);
             if (response.ok) {
                 const data = await response.json();
                 setUserApplications(data);
@@ -88,19 +86,22 @@ const JobOpportunities = () => {
             return;
         }
 
+        if (!resumeFile) {
+            alert('Please upload your resume.');
+            return;
+        }
+
         setApplying(true);
         try {
-            const payload = {
-                candidateId: user._id || user.id,
-                jobId: selectedJob._id,
-                resumeUrl: applicationForm.resumeUrl || user.resumeUrl || '', // Fallback to profile resume if available
-                coverLetter: applicationForm.coverLetter
-            };
+            const formData = new FormData();
+            formData.append('candidateEmail', user.email); // Use email to find candidate
+            formData.append('jobId', selectedJob._id);
+            formData.append('resumeFile', resumeFile);
+            formData.append('coverLetter', applicationForm.coverLetter);
 
             const response = await fetch('http://localhost:5000/api/applications/apply', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: formData // Don't set Content-Type header, browser will set it with boundary
             });
 
             const data = await response.json();
@@ -109,7 +110,8 @@ const JobOpportunities = () => {
                 alert('Application submitted successfully!');
                 fetchUserApplications(); // Update application list
                 setShowDetailModal(false);
-                setApplicationForm({ resumeUrl: '', coverLetter: '' });
+                setApplicationForm({ coverLetter: '' });
+                setResumeFile(null);
             } else {
                 alert(data.message || 'Failed to submit application');
             }
@@ -124,15 +126,12 @@ const JobOpportunities = () => {
     const handleViewDetails = (job) => {
         setSelectedJob(job);
         setShowDetailModal(true);
-        // Pre-fill resume if user has one in profile (mock logic if user object has it)
-        if (user && user.resumeUrl) {
-            setApplicationForm(prev => ({ ...prev, resumeUrl: user.resumeUrl }));
-        }
+        setResumeFile(null); // Clear any previously selected file
     };
 
     const filteredJobs = jobs.filter(job => {
         const matchesSearch = job.job_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (job.Fk_company_id?.companyName || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (job.Fk_company_id?.company_name || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'all' || job.type === typeFilter;
         const matchesCategory = categoryFilter === 'all' || job.job_title === categoryFilter; // Simplistic matching
         return matchesSearch && matchesType && matchesCategory;
@@ -200,10 +199,10 @@ const JobOpportunities = () => {
                             <div key={job._id} className="user-job-card" onClick={() => handleViewDetails(job)}>
                                 <div className="job-card-top">
                                     <div className="company-logo-wrapper">
-                                        {job.Fk_company_id?.logoUrl ? (
-                                            <img src={`http://localhost:5000${job.Fk_company_id.logoUrl}`} alt="Logo" className="company-logo-img" />
+                                        {job.Fk_company_id?.logo ? (
+                                            <img src={`http://localhost:5000${job.Fk_company_id.logo}`} alt="Logo" className="company-logo-img" />
                                         ) : (
-                                            <span className="company-fallback">{job.Fk_company_id?.companyName?.[0] || 'C'}</span>
+                                            <span className="company-fallback">{job.Fk_company_id?.company_name?.[0] || 'C'}</span>
                                         )}
                                     </div>
                                     <span className="job-type-tag">{job.type}</span>
@@ -211,7 +210,7 @@ const JobOpportunities = () => {
                                 <div className="job-info">
                                     <h3>{job.job_title}</h3>
                                     <div className="company-name">
-                                        {job.Fk_company_id?.companyName || 'Unknown Company'}
+                                        {job.Fk_company_id?.company_name || 'Unknown Company'}
                                         {hasApplied(job._id) && <i className="bi bi-check-circle-fill text-success ms-2" title="Applied"></i>}
                                     </div>
                                 </div>
@@ -249,7 +248,7 @@ const JobOpportunities = () => {
                             <div className="modal-header border-secondary">
                                 <h5 className="modal-title">
                                     {selectedJob.job_title}
-                                    <span className="text-muted ms-2 fs-6">at {selectedJob.Fk_company_id?.companyName}</span>
+                                    <span className="text-muted ms-2 fs-6">at {selectedJob.Fk_company_id?.company_name}</span>
                                 </h5>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowDetailModal(false)}></button>
                             </div>
@@ -258,10 +257,10 @@ const JobOpportunities = () => {
                                 <div className="d-flex justify-content-between mb-4 flex-wrap gap-3">
                                     <div className="d-flex align-items-center gap-3">
                                         <div className="company-logo-wrapper" style={{ width: '60px', height: '60px' }}>
-                                            {selectedJob.Fk_company_id?.logoUrl ? (
-                                                <img src={`http://localhost:5000${selectedJob.Fk_company_id.logoUrl}`} alt="Logo" className="company-logo-img" />
+                                            {selectedJob.Fk_company_id?.logo ? (
+                                                <img src={`http://localhost:5000${selectedJob.Fk_company_id.logo}`} alt="Logo" className="company-logo-img" />
                                             ) : (
-                                                <span className="company-fallback fs-4">{selectedJob.Fk_company_id?.companyName?.[0] || 'C'}</span>
+                                                <span className="company-fallback fs-4">{selectedJob.Fk_company_id?.company_name?.[0] || 'C'}</span>
                                             )}
                                         </div>
                                         <div>
@@ -316,15 +315,45 @@ const JobOpportunities = () => {
                                         <h5 className="mb-3">Apply Now</h5>
                                         <form onSubmit={handleApply}>
                                             <div className="mb-3">
-                                                <label className="form-label text-muted">Resume URL (Link to your CV/Portfolio)</label>
+                                                <label className="form-label text-muted">Upload Resume (PDF, DOC, DOCX)</label>
                                                 <input
-                                                    type="url"
+                                                    type="file"
                                                     className="form-control bg-dark-input"
-                                                    placeholder="https://..."
-                                                    value={applicationForm.resumeUrl}
-                                                    onChange={(e) => setApplicationForm({ ...applicationForm, resumeUrl: e.target.value })}
+                                                    accept=".pdf,.doc,.docx"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            // Validate file size (5MB)
+                                                            if (file.size > 5000000) {
+                                                                alert('File size must be less than 5MB');
+                                                                e.target.value = '';
+                                                                return;
+                                                            }
+                                                            // Validate file type
+                                                            const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                                                            if (!validTypes.includes(file.type)) {
+                                                                alert('Please upload a PDF or Word document');
+                                                                e.target.value = '';
+                                                                return;
+                                                            }
+                                                            setResumeFile(file);
+                                                        }
+                                                    }}
                                                     required
                                                 />
+                                                {resumeFile && (
+                                                    <div className="mt-2 d-flex align-items-center gap-2">
+                                                        <i className="bi bi-file-earmark-text text-success"></i>
+                                                        <span className="text-muted small">{resumeFile.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger ms-auto"
+                                                            onClick={() => setResumeFile(null)}
+                                                        >
+                                                            <i className="bi bi-x"></i> Remove
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="mb-3">
                                                 <label className="form-label text-muted">Cover Letter (Optional)</label>

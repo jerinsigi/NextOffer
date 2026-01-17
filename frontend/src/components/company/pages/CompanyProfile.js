@@ -21,6 +21,9 @@ const CompanyProfile = () => {
         id: ''
     });
 
+    // Selected logo file for upload
+    const [selectedLogoFile, setSelectedLogoFile] = useState(null);
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -91,11 +94,15 @@ const CompanyProfile = () => {
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Store the actual file for upload
+            setSelectedLogoFile(file);
+
+            // Create a preview URL
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileData(prev => ({
                     ...prev,
-                    logo: reader.result
+                    logo: reader.result // This is just for preview
                 }));
             };
             reader.readAsDataURL(file);
@@ -104,26 +111,48 @@ const CompanyProfile = () => {
 
     const handleSaveProfile = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/companies/${profileData.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    company_name: profileData.companyName,
-                    phone: profileData.phone,
-                    industry: profileData.industry,
-                    location: profileData.location,
-                    website: profileData.website,
-                    company_desc: profileData.description,
-                    logo: profileData.logo
-                })
+            // Use FormData to send file upload
+            const formData = new FormData();
+            formData.append('email', profileData.email);
+            formData.append('company_name', profileData.companyName);
+            formData.append('phone', profileData.phone);
+            formData.append('industry', profileData.industry);
+            formData.append('location', profileData.location);
+            formData.append('website', profileData.website);
+            formData.append('company_desc', profileData.description);
+
+            // Only append logo if a new file was selected
+            if (selectedLogoFile) {
+                formData.append('logo', selectedLogoFile);
+            }
+
+            const response = await fetch('http://localhost:5000/api/companies/profile/update', {
+                method: 'POST',
+                body: formData // No Content-Type header - browser will set it with boundary
             });
 
             if (response.ok) {
+                const data = await response.json();
                 setMessage({ type: 'success', text: 'Profile updated successfully!' });
                 setIsEditing(false);
+                setSelectedLogoFile(null); // Clear the selected file
+
+                // Update the profile data with the returned data
+                setProfileData(prev => ({
+                    ...prev,
+                    companyName: data.company.company_name,
+                    phone: data.company.phone || '',
+                    industry: data.company.industry,
+                    location: data.company.location,
+                    website: data.company.website || '',
+                    description: data.company.company_desc || '',
+                    logo: data.company.logo || ''
+                }));
+
                 setTimeout(() => setMessage({ type: '', text: '' }), 3000);
             } else {
-                setMessage({ type: 'error', text: 'Failed to update profile' });
+                const errorData = await response.json();
+                setMessage({ type: 'error', text: errorData.message || 'Failed to update profile' });
             }
         } catch (error) {
             console.error('Update error:', error);

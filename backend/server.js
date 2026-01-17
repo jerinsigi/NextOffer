@@ -11,7 +11,17 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use('/uploads', express.static('upload'));
+
+// Custom middleware to serve files with proper headers for inline viewing
+app.use('/uploads', (req, res, next) => {
+    // Set Content-Disposition to inline for PDFs and documents
+    const filePath = req.path.toLowerCase();
+    if (filePath.endsWith('.pdf') || filePath.endsWith('.doc') || filePath.endsWith('.docx')) {
+        res.setHeader('Content-Disposition', 'inline');
+        res.setHeader('Content-Type', filePath.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream');
+    }
+    next();
+}, express.static('upload'));
 
 // Connect to MongoDB
 // NOTE: You must set MONGODB_URI in your Vercel Environment Variables

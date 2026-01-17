@@ -11,13 +11,14 @@ const applicationSchema = new mongoose.Schema({
         ref: 'Job_Description',
         required: true
     },
+    Fk_resume_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Resume'
+    },
     status: {
         type: String,
         enum: ['Applied', 'Shortlisted', 'Interviewing', 'Rejected', 'Hired'],
         default: 'Applied'
-    },
-    resumeUrl: {
-        type: String
     },
     coverLetter: {
         type: String

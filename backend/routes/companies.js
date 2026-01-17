@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const companyController = require('../controllers/companyController');
+const upload = require('../middleware/upload');
 
 // Register a new company (public)
 router.post('/register', companyController.registerCompany);
@@ -24,6 +25,9 @@ router.put('/:id/approve', companyController.approveCompany);
 
 // Get company profile by email
 router.post('/profile', companyController.getCompanyByEmail);
+
+// Update company profile with file upload
+router.post('/profile/update', upload.single('logo'), companyController.updateCompanyProfile);
 
 // Delete a company
 router.delete('/:id', companyController.deleteCompany);
