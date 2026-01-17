@@ -1,120 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MyApplications.css';
 
 const MyApplications = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState('date');
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Sample applications data
-    const [applications] = useState([
-        {
-            id: 1,
-            jobTitle: 'Senior Software Developer',
-            company: 'TechCorp Inc.',
-            companyLogo: 'TC',
-            location: 'New York, USA',
-            appliedDate: '2025-12-05',
-            status: 'interview_scheduled',
-            matchScore: 92,
-            salary: '$120,000 - $150,000',
-            type: 'Full-time',
-            interviewDate: '2025-12-10',
-            interviewTime: '10:00 AM',
-            resumeScore: 88,
-            skillsMatched: ['JavaScript', 'React', 'Node.js'],
-            skillsGap: ['AWS'],
-            notes: 'Great opportunity with excellent team culture'
-        },
-        {
-            id: 2,
-            jobTitle: 'Full Stack Developer',
-            company: 'StartupXYZ',
-            companyLogo: 'SX',
-            location: 'San Francisco, USA',
-            appliedDate: '2025-12-04',
-            status: 'under_review',
-            matchScore: 85,
-            salary: '$100,000 - $130,000',
-            type: 'Full-time',
-            resumeScore: 82,
-            skillsMatched: ['React', 'Node.js', 'MongoDB'],
-            skillsGap: ['Docker', 'Kubernetes'],
-            notes: 'Exciting startup with rapid growth'
-        },
-        {
-            id: 3,
-            jobTitle: 'Backend Engineer',
-            company: 'CloudTech',
-            companyLogo: 'CT',
-            location: 'Remote',
-            appliedDate: '2025-12-03',
-            status: 'screening_completed',
-            matchScore: 78,
-            salary: '$110,000 - $140,000',
-            type: 'Remote',
-            resumeScore: 75,
-            skillsMatched: ['Node.js', 'Python'],
-            skillsGap: ['Go', 'Redis'],
-            notes: 'Remote-first company'
-        },
-        {
-            id: 4,
-            jobTitle: 'DevOps Specialist',
-            company: 'DataCo',
-            companyLogo: 'DC',
-            location: 'Boston, USA',
-            appliedDate: '2025-12-01',
-            status: 'completed',
-            matchScore: 88,
-            salary: '$115,000 - $145,000',
-            type: 'Hybrid',
-            resumeScore: 90,
-            skillsMatched: ['AWS', 'Docker', 'Kubernetes'],
-            skillsGap: [],
-            notes: 'Interview went well, waiting for decision'
-        },
-        {
-            id: 5,
-            jobTitle: 'Frontend Developer',
-            company: 'DesignHub',
-            companyLogo: 'DH',
-            location: 'Los Angeles, USA',
-            appliedDate: '2025-11-28',
-            status: 'rejected',
-            matchScore: 70,
-            salary: '$90,000 - $120,000',
-            type: 'Full-time',
-            resumeScore: 68,
-            skillsMatched: ['React', 'CSS'],
-            skillsGap: ['Vue.js', 'TypeScript'],
-            notes: 'Position filled internally'
-        },
-        {
-            id: 6,
-            jobTitle: 'React Developer',
-            company: 'Innovation Labs',
-            companyLogo: 'IL',
-            location: 'Seattle, USA',
-            appliedDate: '2025-11-25',
-            status: 'withdrawn',
-            matchScore: 95,
-            salary: '$125,000 - $155,000',
-            type: 'Full-time',
-            resumeScore: 93,
-            skillsMatched: ['React', 'JavaScript', 'Node.js', 'AWS'],
-            skillsGap: [],
-            notes: 'Withdrew due to location preference'
-        }
-    ]);
+    // Fetch user applications from backend
+    useEffect(() => {
+        const fetchApplications = async () => {
+            try {
+                setLoading(true);
 
+                // Get user from localStorage or sessionStorage
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+                if (!userStr) {
+                    setError('User not logged in. Please login again.');
+                    setLoading(false);
+                    return;
+                }
+
+                const user = JSON.parse(userStr);
+                const userEmail = user.email;
+
+                if (!userEmail) {
+                    setError('User email not found. Please login again.');
+                    setLoading(false);
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:5000/api/applications/user/${userEmail}`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch applications');
+                }
+
+                const data = await response.json();
+                setApplications(data);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching applications:', err);
+                setError('Failed to load applications. Please try again later.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchApplications();
+    }, []);
+
+    // Map backend status to frontend display
     const statusConfig = {
-        interview_scheduled: { label: 'Interview Scheduled', color: 'warning', icon: 'bi-calendar-check' },
-        under_review: { label: 'Under Review', color: 'info', icon: 'bi-hourglass-split' },
-        screening_completed: { label: 'Screening Completed', color: 'primary', icon: 'bi-clipboard-check' },
-        completed: { label: 'Completed', color: 'success', icon: 'bi-check-circle' },
-        rejected: { label: 'Rejected', color: 'danger', icon: 'bi-x-circle' },
-        withdrawn: { label: 'Withdrawn', color: 'secondary', icon: 'bi-dash-circle' }
+        'Applied': { label: 'Under Review', color: 'info', icon: 'bi-hourglass-split' },
+        'Shortlisted': { label: 'Shortlisted', color: 'success', icon: 'bi-star-fill' },
+        'Scheduled': { label: 'Interview Scheduled', color: 'warning', icon: 'bi-calendar-check' },
+        'Interviewing': { label: 'Interview in Progress', color: 'primary', icon: 'bi-camera-video' },
+        'Rejected': { label: 'Rejected', color: 'danger', icon: 'bi-x-circle' },
+        'Hired': { label: 'Offer Received', color: 'success', icon: 'bi-check-circle-fill' },
+        'not_interested': { label: 'Withdrawn', color: 'secondary', icon: 'bi-dash-circle' }
     };
 
     const getFilteredApplications = () => {
@@ -128,19 +75,19 @@ const MyApplications = () => {
         // Filter by search term
         if (searchTerm) {
             filtered = filtered.filter(app =>
-                app.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.company.toLowerCase().includes(searchTerm.toLowerCase())
+                app.Fk_job_id?.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                app.Fk_job_id?.Fk_company_id?.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
         // Sort
         filtered.sort((a, b) => {
             if (sortBy === 'date') {
-                return new Date(b.appliedDate) - new Date(a.appliedDate);
-            } else if (sortBy === 'match') {
-                return b.matchScore - a.matchScore;
+                return new Date(b.createdAt) - new Date(a.createdAt);
             } else if (sortBy === 'company') {
-                return a.company.localeCompare(b.company);
+                return (a.Fk_job_id?.Fk_company_id?.company_name || '').localeCompare(
+                    b.Fk_job_id?.Fk_company_id?.company_name || ''
+                );
             }
             return 0;
         });
@@ -152,9 +99,9 @@ const MyApplications = () => {
 
     const stats = {
         total: applications.length,
-        pending: applications.filter(a => ['under_review', 'screening_completed'].includes(a.status)).length,
-        scheduled: applications.filter(a => a.status === 'interview_scheduled').length,
-        completed: applications.filter(a => a.status === 'completed').length
+        pending: applications.filter(a => a.status === 'Applied').length,
+        scheduled: applications.filter(a => ['Scheduled', 'Interviewing'].includes(a.status)).length,
+        completed: applications.filter(a => ['Shortlisted', 'Hired'].includes(a.status)).length
     };
 
     const formatDate = (dateString) => {
@@ -214,7 +161,7 @@ const MyApplications = () => {
                         </div>
                         <div className="stat-details">
                             <div className="stat-value">{stats.completed}</div>
-                            <div className="stat-label">Completed</div>
+                            <div className="stat-label">Shortlisted</div>
                         </div>
                     </div>
                 </div>
@@ -233,22 +180,22 @@ const MyApplications = () => {
                                 All
                             </button>
                             <button
-                                className={`filter-btn ${filterStatus === 'interview_scheduled' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('interview_scheduled')}
+                                className={`filter-btn ${filterStatus === 'Scheduled' ? 'active' : ''}`}
+                                onClick={() => setFilterStatus('Scheduled')}
                             >
                                 Scheduled
                             </button>
                             <button
-                                className={`filter-btn ${filterStatus === 'under_review' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('under_review')}
+                                className={`filter-btn ${filterStatus === 'Applied' ? 'active' : ''}`}
+                                onClick={() => setFilterStatus('Applied')}
                             >
                                 Review
                             </button>
                             <button
-                                className={`filter-btn ${filterStatus === 'completed' ? 'active' : ''}`}
-                                onClick={() => setFilterStatus('completed')}
+                                className={`filter-btn ${filterStatus === 'Shortlisted' ? 'active' : ''}`}
+                                onClick={() => setFilterStatus('Shortlisted')}
                             >
-                                Completed
+                                Shortlisted
                             </button>
                         </div>
                     </div>
@@ -269,7 +216,6 @@ const MyApplications = () => {
                             onChange={(e) => setSortBy(e.target.value)}
                         >
                             <option value="date">Sort by Date</option>
-                            <option value="match">Sort by Match Score</option>
                             <option value="company">Sort by Company</option>
                         </select>
                     </div>
@@ -278,139 +224,137 @@ const MyApplications = () => {
 
             {/* Applications List */}
             <div className="applications-list">
-                {filteredApplications.length === 0 ? (
+                {loading ? (
+                    <div className="empty-state">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-3 text-muted">Loading your applications...</p>
+                    </div>
+                ) : error ? (
+                    <div className="empty-state">
+                        <i className="bi bi-exclamation-triangle fs-1 mb-3 text-danger"></i>
+                        <h5>Error Loading Applications</h5>
+                        <p className="text-muted">{error}</p>
+                        <button className="btn btn-primary mt-3" onClick={() => window.location.reload()}>
+                            <i className="bi bi-arrow-clockwise me-2"></i>Retry
+                        </button>
+                    </div>
+                ) : filteredApplications.length === 0 ? (
                     <div className="empty-state">
                         <i className="bi bi-inbox fs-1 mb-3"></i>
                         <h5>No applications found</h5>
                         <p className="text-muted">Try adjusting your filters or search terms</p>
                     </div>
                 ) : (
-                    filteredApplications.map(app => (
-                        <div key={app.id} className="application-card">
-                            <div className="application-header">
-                                <div className="company-info">
-                                    <div className="company-logo">
-                                        {app.companyLogo}
-                                    </div>
-                                    <div>
-                                        <h5 className="job-title">{app.jobTitle}</h5>
-                                        <p className="company-name">
-                                            <i className="bi bi-building me-2"></i>
-                                            {app.company}
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className={`status-badge status-${statusConfig[app.status].color}`}>
-                                    <i className={`bi ${statusConfig[app.status].icon} me-2`}></i>
-                                    {statusConfig[app.status].label}
-                                </span>
-                            </div>
+                    filteredApplications.map(app => {
+                        const job = app.Fk_job_id || {};
+                        const company = job.Fk_company_id || {};
+                        const companyName = company.company_name || 'N/A';
+                        const companyInitials = companyName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-                            <div className="application-body">
-                                <div className="application-meta">
-                                    <div className="meta-item">
-                                        <i className="bi bi-geo-alt"></i>
-                                        <span>{app.location}</span>
-                                    </div>
-                                    <div className="meta-item">
-                                        <i className="bi bi-clock"></i>
-                                        <span>{app.type}</span>
-                                    </div>
-                                    <div className="meta-item">
-                                        <i className="bi bi-currency-dollar"></i>
-                                        <span>{app.salary}</span>
-                                    </div>
-                                    <div className="meta-item">
-                                        <i className="bi bi-calendar"></i>
-                                        <span>Applied: {formatDate(app.appliedDate)}</span>
-                                    </div>
-                                </div>
-
-                                {app.status === 'interview_scheduled' && (
-                                    <div className="interview-alert">
-                                        <i className="bi bi-exclamation-circle me-2"></i>
-                                        <strong>Interview Scheduled:</strong> {formatDate(app.interviewDate)} at {app.interviewTime}
-                                    </div>
-                                )}
-
-                                <div className="application-scores">
-                                    <div className="score-item">
-                                        <div className="score-label">Match Score</div>
-                                        <div className="score-bar">
-                                            <div 
-                                                className="score-fill" 
-                                                style={{ width: `${app.matchScore}%` }}
-                                            ></div>
+                        return (
+                            <div key={app._id} className="application-card">
+                                <div className="application-header">
+                                    <div className="company-info">
+                                        <div className="company-logo">
+                                            {company.logo ? (
+                                                <img src={`http://localhost:5000${company.logo}`} alt={companyName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                companyInitials
+                                            )}
                                         </div>
-                                        <div className="score-value">{app.matchScore}%</div>
-                                    </div>
-                                    <div className="score-item">
-                                        <div className="score-label">Resume Score</div>
-                                        <div className="score-bar">
-                                            <div 
-                                                className="score-fill secondary" 
-                                                style={{ width: `${app.resumeScore}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="score-value">{app.resumeScore}%</div>
-                                    </div>
-                                </div>
-
-                                <div className="skills-section">
-                                    <div className="skills-matched">
-                                        <strong>Matched Skills:</strong>
-                                        <div className="skills-tags">
-                                            {app.skillsMatched.map((skill, idx) => (
-                                                <span key={idx} className="skill-tag matched">
-                                                    <i className="bi bi-check-circle me-1"></i>
-                                                    {skill}
-                                                </span>
-                                            ))}
+                                        <div>
+                                            <h5 className="job-title">{job.job_title || 'N/A'}</h5>
+                                            <p className="company-name">
+                                                <i className="bi bi-building me-2"></i>
+                                                {companyName}
+                                            </p>
                                         </div>
                                     </div>
-                                    {app.skillsGap.length > 0 && (
-                                        <div className="skills-gap">
-                                            <strong>Skills to Improve:</strong>
-                                            <div className="skills-tags">
-                                                {app.skillsGap.map((skill, idx) => (
-                                                    <span key={idx} className="skill-tag gap">
-                                                        <i className="bi bi-exclamation-circle me-1"></i>
-                                                        {skill}
-                                                    </span>
-                                                ))}
+                                    <span className={`status-badge status-${statusConfig[app.status]?.color || 'secondary'}`}>
+                                        <i className={`bi ${statusConfig[app.status]?.icon || 'bi-circle'} me-2`}></i>
+                                        {statusConfig[app.status]?.label || app.status}
+                                    </span>
+                                </div>
+
+                                <div className="application-body">
+                                    <div className="application-meta">
+                                        <div className="meta-item">
+                                            <i className="bi bi-geo-alt"></i>
+                                            <span>{job.location || 'N/A'}</span>
+                                        </div>
+                                        <div className="meta-item">
+                                            <i className="bi bi-clock"></i>
+                                            <span>{job.type || 'N/A'}</span>
+                                        </div>
+                                        <div className="meta-item">
+                                            <i className="bi bi-currency-dollar"></i>
+                                            <span>{job.salary || 'N/A'}</span>
+                                        </div>
+                                        <div className="meta-item">
+                                            <i className="bi bi-calendar"></i>
+                                            <span>Applied: {formatDate(app.createdAt)}</span>
+                                        </div>
+                                    </div>
+
+                                    {['Scheduled', 'Interviewing'].includes(app.status) && app.interviewDetails && (
+                                        <div className="interview-alert">
+                                            <div className="d-flex align-items-center">
+                                                <i className="bi bi-calendar-event fs-4 me-3"></i>
+                                                <div>
+                                                    <h6 className="mb-1">Interview Scheduled</h6>
+                                                    <p className="mb-0 small">
+                                                        {new Date(app.interviewDetails.started_at).toLocaleDateString(undefined, { dateStyle: 'medium' })} - {new Date(app.interviewDetails.ended_at).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                                                    </p>
+                                                    <p className="mb-0 small text-muted">Please check your email for additional details.</p>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
-                                </div>
 
-                                {app.notes && (
-                                    <div className="application-notes">
-                                        <i className="bi bi-sticky me-2"></i>
-                                        <span>{app.notes}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="application-footer">
-                                <div className="action-buttons">
-                                    <button className="btn btn-outline-primary">
-                                        <i className="bi bi-eye me-2"></i>View Details
-                                    </button>
-                                    {app.status === 'interview_scheduled' && (
-                                        <button className="btn btn-primary">
-                                            <i className="bi bi-camera-video me-2"></i>Join Interview
-                                        </button>
+                                    {/* Fallback alert if no details but status is scheduled (e.g. old data) */}
+                                    {['Scheduled', 'Interviewing'].includes(app.status) && !app.interviewDetails && (
+                                        <div className="interview-alert">
+                                            <i className="bi bi-exclamation-circle me-2"></i>
+                                            <strong>Interview Scheduled</strong> - Please check your email for details
+                                        </div>
                                     )}
-                                    <button className="btn btn-outline-secondary">
-                                        <i className="bi bi-chat-dots me-2"></i>Messages
-                                    </button>
+
+                                    {app.coverLetter && (
+                                        <div className="application-notes">
+                                            <i className="bi bi-sticky me-2"></i>
+                                            <span>{app.coverLetter}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <button className="btn-more">
-                                    <i className="bi bi-three-dots-vertical"></i>
-                                </button>
+
+                                <div className="application-footer">
+                                    <div className="action-buttons">
+                                        {app.Fk_resume_id?.resume_path && (
+                                            <a
+                                                href={`http://localhost:5000${app.Fk_resume_id.resume_path}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn btn-outline-primary"
+                                            >
+                                                <i className="bi bi-file-earmark-pdf me-2"></i>View Resume
+                                            </a>
+                                        )}
+                                        {['Scheduled', 'Interviewing'].includes(app.status) && (
+                                            <a
+                                                href="/user/interview"
+                                                className="btn btn-primary"
+                                                title="Go to Interview Center"
+                                            >
+                                                <i className="bi bi-camera-video me-2"></i>Start Interview
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </div>

@@ -23,6 +23,7 @@ const InterviewCenter = () => {
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const containerRef = useRef(null);
+    const streamRef = useRef(null);
 
     // Sample interview session data
     const interviewSession = {
@@ -96,36 +97,75 @@ const InterviewCenter = () => {
         }
     ];
 
-    // System check simulation
+    // System check - perform real camera/microphone checks
     useEffect(() => {
         if (interviewStage === 'pre-check') {
+            // Check camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    stream.getTracks().forEach(track => track.stop());
+                    setSystemChecks(prev => ({
+                        ...prev,
+                        camera: { status: 'success', message: 'Camera is working' }
+                    }));
+                })
+                .catch(error => {
+                    let errorMessage = 'Camera access denied';
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'Please allow camera access';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'No camera found';
+                    }
+                    setSystemChecks(prev => ({
+                        ...prev,
+                        camera: { status: 'error', message: errorMessage }
+                    }));
+                });
+
+            // Check microphone
             setTimeout(() => {
-                setSystemChecks(prev => ({
-                    ...prev,
-                    camera: { status: 'success', message: 'Camera is working' }
-                }));
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        stream.getTracks().forEach(track => track.stop());
+                        setSystemChecks(prev => ({
+                            ...prev,
+                            microphone: { status: 'success', message: 'Microphone is working' }
+                        }));
+                    })
+                    .catch(error => {
+                        setSystemChecks(prev => ({
+                            ...prev,
+                            microphone: { status: 'error', message: 'Microphone access denied' }
+                        }));
+                    });
+            }, 500);
+
+            // Check internet connection
+            setTimeout(() => {
+                if (navigator.onLine) {
+                    setSystemChecks(prev => ({
+                        ...prev,
+                        internet: { status: 'success', message: 'Connection is stable' }
+                    }));
+                } else {
+                    setSystemChecks(prev => ({
+                        ...prev,
+                        internet: { status: 'error', message: 'No internet connection' }
+                    }));
+                }
             }, 1000);
 
+            // Check browser compatibility
             setTimeout(() => {
+                const isCompatible = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
                 setSystemChecks(prev => ({
                     ...prev,
-                    microphone: { status: 'success', message: 'Microphone is working' }
+                    browser: {
+                        status: isCompatible ? 'success' : 'error',
+                        message: isCompatible ? 'Browser is compatible' : 'Browser not supported'
+                    }
                 }));
             }, 1500);
-
-            setTimeout(() => {
-                setSystemChecks(prev => ({
-                    ...prev,
-                    internet: { status: 'success', message: 'Connection is stable' }
-                }));
-            }, 2000);
-
-            setTimeout(() => {
-                setSystemChecks(prev => ({
-                    ...prev,
-                    browser: { status: 'success', message: 'Browser is compatible' }
-                }));
-            }, 2500);
         }
     }, [interviewStage]);
 
@@ -134,13 +174,19 @@ const InterviewCenter = () => {
         if (interviewStage === 'ready' || interviewStage === 'active') {
             initializeCamera();
         }
+
+        // Cleanup function when component unmounts or stage changes
         return () => {
-            if (videoRef.current && videoRef.current.srcObject) {
-                const tracks = videoRef.current.srcObject.getTracks();
-                tracks.forEach(track => track.stop());
-            }
+            stopCamera(); // Use robust stopCamera function for cleanup
         };
     }, [interviewStage]);
+
+    // Cleanup on unmount (extra safety)
+    useEffect(() => {
+        return () => {
+            stopCamera();
+        };
+    }, []);
 
     // Monitor fullscreen changes
     useEffect(() => {
@@ -165,17 +211,67 @@ const InterviewCenter = () => {
 
     const initializeCamera = async () => {
         try {
+            // Stop any existing stream first
+            stopCamera();
+
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            streamRef.current = stream; // Store in ref for cleanup
+
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
+                // Ensure video plays
+                videoRef.current.play().catch(e => console.error('Video play error:', e));
             }
             setIntegrityStatus(prev => ({ ...prev, faceDetected: true }));
+            // Update system check to success
+            setSystemChecks(prev => ({
+                ...prev,
+                camera: { status: 'success', message: 'Camera is working' }
+            }));
         } catch (error) {
             console.error('Error accessing camera:', error);
+            // Update system check to error with helpful message
+            let errorMessage = 'Camera access denied';
+            if (error.name === 'NotAllowedError') {
+                errorMessage = 'Please allow camera access in your browser settings';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage = 'No camera device found';
+            } else if (error.name === 'NotReadableError') {
+                errorMessage = 'Camera is being used by another application';
+            }
+            setSystemChecks(prev => ({
+                ...prev,
+                camera: { status: 'error', message: errorMessage }
+            }));
         }
     };
 
     const allChecksPass = Object.values(systemChecks).every(check => check.status === 'success');
+
+    const stopCamera = () => {
+        console.log('stopCamera called');
+        try {
+            // Stop tracks from streamRef (source of truth)
+            if (streamRef.current) {
+                const tracks = streamRef.current.getTracks();
+                console.log(`Stopping ${tracks.length} media tracks from streamRef`);
+                tracks.forEach(track => {
+                    track.stop();
+                    console.log(`Track stopped: ${track.kind}`);
+                });
+                streamRef.current = null;
+            }
+
+            // Also clean up video element if it exists
+            if (videoRef.current) {
+                videoRef.current.srcObject = null;
+            }
+
+            console.log('Camera stopped successfully');
+        } catch (error) {
+            console.error('Error stopping camera:', error);
+        }
+    };
 
     const enterFullscreen = async () => {
         try {
@@ -210,9 +306,16 @@ const InterviewCenter = () => {
     };
 
     const endInterview = () => {
+        console.log('endInterview called');
+        stopCamera(); // Stop camera when interview ends
         setInterviewStage('completed');
         setIsRecording(false);
         setInterviewProgress(100);
+        // Exit fullscreen
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(err => console.error('Error exiting fullscreen:', err));
+        }
+        console.log('Interview ended, camera should be stopped');
     };
 
     const getStatusIcon = (status) => {
@@ -323,7 +426,7 @@ const InterviewCenter = () => {
                         </div>
 
                         {allChecksPass && (
-                            <button 
+                            <button
                                 className="btn btn-primary btn-lg w-100 mt-4"
                                 onClick={() => setInterviewStage('ready')}
                             >
@@ -385,7 +488,7 @@ const InterviewCenter = () => {
                                 </ul>
                             </div>
 
-                            <button 
+                            <button
                                 className="btn btn-success btn-lg w-100"
                                 onClick={startInterview}
                             >
@@ -407,8 +510,8 @@ const InterviewCenter = () => {
                                 Question {currentQuestion + 1} of {questions.length}
                             </span>
                             <div className="progress-bar-container">
-                                <div 
-                                    className="progress-bar-fill" 
+                                <div
+                                    className="progress-bar-fill"
                                     style={{ width: `${interviewProgress}%` }}
                                 ></div>
                             </div>
@@ -509,7 +612,7 @@ const InterviewCenter = () => {
                                         <i className="bi bi-skip-forward me-2"></i>
                                         Skip Question
                                     </button>
-                                    <button 
+                                    <button
                                         className="btn btn-primary"
                                         onClick={nextQuestion}
                                     >

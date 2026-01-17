@@ -26,6 +26,18 @@ const UserProfile = () => {
         confirmPassword: ''
     });
 
+    // Skills state
+    const [skills, setSkills] = useState([]);
+    const [availableSkills, setAvailableSkills] = useState([]);
+    const [newSkill, setNewSkill] = useState({
+        name: '',
+        level: 'Beginner',
+        years: 0
+    });
+    const [editingSkillIndex, setEditingSkillIndex] = useState(null);
+    const [skillSearchTerm, setSkillSearchTerm] = useState('');
+    const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+
     // Helper to resolve avatar URL (if we add image upload later)
     const getAvatarUrl = (avatarPath) => {
         if (!avatarPath) return null;
@@ -61,6 +73,8 @@ const UserProfile = () => {
                         avatar: data.image_url ? (data.image_url.startsWith('http') || data.image_url.startsWith('data') ? data.image_url : `http://localhost:5000${data.image_url}`) : '',
                         id: data._id
                     });
+                    // Load user's skills
+                    setSkills(data.skills || []);
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);
@@ -70,6 +84,22 @@ const UserProfile = () => {
         };
 
         fetchProfile();
+    }, []);
+
+    // Fetch available skills from database for autocomplete
+    useEffect(() => {
+        const fetchSkills = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/skills');
+                if (response.ok) {
+                    const data = await response.json();
+                    setAvailableSkills(data);
+                }
+            } catch (error) {
+                console.error('Error fetching skills:', error);
+            }
+        };
+        fetchSkills();
     }, []);
 
     const handleProfileChange = (field, value) => {
@@ -116,6 +146,11 @@ const UserProfile = () => {
             if (profileData.location) formData.append('location', profileData.location);
             if (profileData.currentRole) formData.append('currentRole', profileData.currentRole);
             if (profileData.bio) formData.append('bio', profileData.bio);
+
+            // Add skills as JSON string
+            if (skills && skills.length > 0) {
+                formData.append('skills', JSON.stringify(skills));
+            }
 
             // Append file if selected
             if (profileData.profileImageFile) {
@@ -199,6 +234,122 @@ const UserProfile = () => {
         }
     };
 
+    // Skills Management Handlers
+    const handleAddSkill = async () => {
+        if (!newSkill.name || !newSkill.level) {
+            setMessage({ type: 'error', text: 'Please select a skill and level' });
+            return;
+        }
+
+        // Check if skill already exists
+        if (skills.some(s => s.name.toLowerCase() === newSkill.name.toLowerCase())) {
+            setMessage({ type: 'error', text: 'This skill is already added' });
+            return;
+        }
+
+        const updatedSkills = [...skills, { ...newSkill }];
+        setSkills(updatedSkills);
+
+        // Save to backend immediately
+        await saveSkillsToBackend(updatedSkills);
+
+        // Reset form
+        setNewSkill({ name: '', level: 'Beginner', years: 0 });
+        setSkillSearchTerm('');
+        setShowSkillDropdown(false);
+        setMessage({ type: 'success', text: 'Skill added successfully!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    };
+
+    const handleEditSkill = (index) => {
+        setEditingSkillIndex(index);
+        setNewSkill({ ...skills[index] });
+    };
+
+    const handleUpdateSkill = async () => {
+        if (editingSkillIndex === null) return;
+
+        const updatedSkills = [...skills];
+        updatedSkills[editingSkillIndex] = { ...newSkill };
+        setSkills(updatedSkills);
+
+        // Save to backend
+        await saveSkillsToBackend(updatedSkills);
+
+        // Reset form
+        setEditingSkillIndex(null);
+        setNewSkill({ name: '', level: 'Beginner', years: 0 });
+        setMessage({ type: 'success', text: 'Skill updated successfully!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    };
+
+    const handleDeleteSkill = async (index) => {
+        const updatedSkills = skills.filter((_, i) => i !== index);
+        setSkills(updatedSkills);
+
+        // Save to backend
+        await saveSkillsToBackend(updatedSkills);
+
+        setMessage({ type: 'success', text: 'Skill deleted successfully!' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingSkillIndex(null);
+        setNewSkill({ name: '', level: 'Beginner', years: 0 });
+    };
+
+    const saveSkillsToBackend = async (skillsToSave) => {
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+
+            const formData = new FormData();
+            formData.append('email', user.email);
+            formData.append('skills', JSON.stringify(skillsToSave));
+
+            await fetch('http://localhost:5000/api/users/profile', {
+                method: 'PUT',
+                body: formData
+            });
+        } catch (error) {
+            console.error('Error saving skills:', error);
+        }
+    };
+
+    const handleSkillSearch = (value) => {
+        setSkillSearchTerm(value);
+        setShowSkillDropdown(value.length > 0);
+        setNewSkill({ ...newSkill, name: value });
+    };
+
+    const handleSelectSkill = (skillName) => {
+        setNewSkill({ ...newSkill, name: skillName });
+        setSkillSearchTerm(skillName);
+        setShowSkillDropdown(false);
+    };
+
+    const filteredSkills = availableSkills.filter(skill =>
+        skill.name.toLowerCase().includes(skillSearchTerm.toLowerCase()) &&
+        skill.status === 'Active'
+    );
+
+    const getSkillLevelBadgeClass = (level) => {
+        switch (level) {
+            case 'Beginner':
+                return 'bg-info';
+            case 'Intermediate':
+                return 'bg-primary';
+            case 'Advanced':
+                return 'bg-warning';
+            case 'Expert':
+                return 'bg-success';
+            default:
+                return 'bg-secondary';
+        }
+    };
+
     if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
 
     const avatarUrl = getAvatarUrl(profileData.avatar);
@@ -279,6 +430,13 @@ const UserProfile = () => {
                     >
                         <i className="bi bi-person"></i>
                         Personal Info
+                    </button>
+                    <button
+                        className={`profile-tab ${activeTab === 'skills' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('skills')}
+                    >
+                        <i className="bi bi-stars"></i>
+                        Skills
                     </button>
                     <button
                         className={`profile-tab ${activeTab === 'security' ? 'active' : ''}`}
@@ -394,6 +552,164 @@ const UserProfile = () => {
                                             disabled={!isEditing}
                                             placeholder="Tell us about yourself..."
                                         ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Skills Tab */}
+                    {activeTab === 'skills' && (
+                        <div className="tab-pane">
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">My Skills</h5>
+                                {/* Alert Messages for Skills */}
+                                {message.text && activeTab === 'skills' && (
+                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {message.text}
+                                    </div>
+                                )}
+
+                                {/* Display Existing Skills */}
+                                {skills.length > 0 && (
+                                    <div className="row g-3 mb-4">
+                                        {skills.map((skill, index) => (
+                                            <div key={index} className="col-md-6 col-lg-4">
+                                                <div className="skill-card">
+                                                    <div className="skill-card-header">
+                                                        <h6 className="skill-name">
+                                                            <i className="bi bi-stars me-2"></i>
+                                                            {skill.name}
+                                                        </h6>
+                                                        <div className="skill-actions">
+                                                            <button
+                                                                className="btn-skill-action"
+                                                                onClick={() => handleEditSkill(index)}
+                                                                title="Edit"
+                                                            >
+                                                                <i className="bi bi-pencil"></i>
+                                                            </button>
+                                                            <button
+                                                                className="btn-skill-action text-danger"
+                                                                onClick={() => handleDeleteSkill(index)}
+                                                                title="Delete"
+                                                            >
+                                                                <i className="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="skill-card-body">
+                                                        <span className={`badge ${getSkillLevelBadgeClass(skill.level)} me-2`}>
+                                                            {skill.level}
+                                                        </span>
+                                                        <span className="skill-years">
+                                                            <i className="bi bi-clock-history me-1"></i>
+                                                            {skill.years} {skill.years === 1 ? 'year' : 'years'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {skills.length === 0 && (
+                                    <div className="text-center text-muted py-4 mb-4">
+                                        <i className="bi bi-stars" style={{ fontSize: '3rem', opacity: 0.3 }}></i>
+                                        <p className="mt-2">No skills added yet. Add your first skill below!</p>
+                                    </div>
+                                )}
+
+                                {/* Add/Edit Skill Form */}
+                                <div className="add-skill-form">
+                                    <h6 className="mb-3">
+                                        {editingSkillIndex !== null ? 'Edit Skill' : 'Add New Skill'}
+                                    </h6>
+                                    <div className="row g-3">
+                                        <div className="col-md-4">
+                                            <label className="form-label">Skill Name</label>
+                                            <div className="autocomplete-wrapper" style={{ position: 'relative' }}>
+                                                <div className="input-group">
+                                                    <span className="input-group-text">
+                                                        <i className="bi bi-search"></i>
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-dark"
+                                                        value={skillSearchTerm || newSkill.name}
+                                                        onChange={(e) => handleSkillSearch(e.target.value)}
+                                                        onFocus={() => setShowSkillDropdown(skillSearchTerm.length > 0)}
+                                                        placeholder="Search or type skill name"
+                                                        disabled={editingSkillIndex !== null}
+                                                    />
+                                                </div>
+                                                {showSkillDropdown && filteredSkills.length > 0 && (
+                                                    <div className="skills-dropdown">
+                                                        {filteredSkills.slice(0, 10).map((skill, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                className="skills-dropdown-item"
+                                                                onClick={() => handleSelectSkill(skill.name)}
+                                                            >
+                                                                <i className={skill.icon || 'bi bi-stars'}></i>
+                                                                <span>{skill.name}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label">Skill Level</label>
+                                            <div className="input-group">
+                                                <span className="input-group-text">
+                                                    <i className="bi bi-bar-chart"></i>
+                                                </span>
+                                                <select
+                                                    className="form-control form-control-dark"
+                                                    value={newSkill.level}
+                                                    onChange={(e) => setNewSkill({ ...newSkill, level: e.target.value })}
+                                                >
+                                                    <option value="Beginner">Beginner</option>
+                                                    <option value="Intermediate">Intermediate</option>
+                                                    <option value="Advanced">Advanced</option>
+                                                    <option value="Expert">Expert</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-4">
+                                            <label className="form-label">Years of Experience</label>
+                                            <div className="input-group">
+                                                <span className="input-group-text">
+                                                    <i className="bi bi-calendar"></i>
+                                                </span>
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-dark"
+                                                    value={newSkill.years}
+                                                    onChange={(e) => setNewSkill({ ...newSkill, years: parseInt(e.target.value) || 0 })}
+                                                    min="0"
+                                                    max="50"
+                                                    placeholder="Years"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3">
+                                        {editingSkillIndex !== null ? (
+                                            <>
+                                                <button className="btn btn-primary me-2" onClick={handleUpdateSkill}>
+                                                    <i className="bi bi-check-circle me-2"></i>Update Skill
+                                                </button>
+                                                <button className="btn btn-outline-secondary" onClick={handleCancelEdit}>
+                                                    <i className="bi bi-x-circle me-2"></i>Cancel
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button className="btn btn-primary" onClick={handleAddSkill}>
+                                                <i className="bi bi-plus-circle me-2"></i>Add Skill
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -18,6 +18,8 @@ const JobDescriptions = () => {
     const [selectedJobForApplicants, setSelectedJobForApplicants] = useState(null);
     const [applicants, setApplicants] = useState([]);
     const [loadingApplicants, setLoadingApplicants] = useState(false);
+    const [selectedCandidates, setSelectedCandidates] = useState([]);
+    const [applicantStatusFilter, setApplicantStatusFilter] = useState(null); // null = all, 'Shortlisted' = only shortlisted
 
     // Form state
     const [formData, setFormData] = useState({
@@ -203,16 +205,20 @@ const JobDescriptions = () => {
         }
     };
 
-    const handleViewApplicants = async (job) => {
+    const handleViewApplicants = async (job, statusFilter = null) => {
         setSelectedJobForApplicants(job);
         setShowApplicantsModal(true);
         setLoadingApplicants(true);
+        setSelectedCandidates([]);
+        setApplicantStatusFilter(statusFilter);
 
         try {
             const response = await fetch(`http://localhost:5000/api/applications/job/${job._id}`);
             if (response.ok) {
                 const data = await response.json();
-                setApplicants(data);
+                // Filter based on status if provided
+                const filteredData = statusFilter ? data.filter(app => app.status === statusFilter) : data;
+                setApplicants(filteredData);
             } else {
                 alert('Failed to fetch applicants');
             }
@@ -221,6 +227,166 @@ const JobDescriptions = () => {
             alert('Error fetching applicants');
         } finally {
             setLoadingApplicants(false);
+        }
+    };
+
+    // Interview Scheduling State
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [scheduleData, setScheduleData] = useState({
+        candidateIds: [], // Always array
+        candidateNames: [], // For display
+        startedAt: '',
+        endedAt: ''
+    });
+    const [scheduling, setScheduling] = useState(false);
+
+    const handleScheduleClick = (candidate) => {
+        setScheduleData({
+            candidateIds: [candidate.Fk_candidate_id._id],
+            candidateNames: [candidate.Fk_candidate_id.full_name],
+            startedAt: '',
+            endedAt: ''
+        });
+        setShowScheduleModal(true);
+    };
+
+    const handleBulkScheduleClick = () => {
+        if (selectedCandidates.length === 0) return;
+
+        // Find names for selected IDs
+        const selectedApps = applicants.filter(app => selectedCandidates.includes(app._id));
+        const names = selectedApps.map(app => app.Fk_candidate_id.full_name);
+        // We need Candidate IDs, not Application IDs for the controller (based on my controller update)
+        // Wait, the controller expects "candidateIds". 
+        // My previous logic passed "candidateId" from "Fk_candidate_id._id".
+        // The "selectedCandidates" state in this file actually stores APPLICATION IDs (see handleSelectCandidate).
+        // So I need to map Application IDs to Candidate IDs.
+
+        const candidateIds = selectedApps.map(app => app.Fk_candidate_id._id);
+
+        setScheduleData({
+            candidateIds: candidateIds,
+            candidateNames: names,
+            startedAt: '',
+            endedAt: ''
+        });
+        setShowScheduleModal(true);
+    };
+
+    const handleConfirmSchedule = async (e) => {
+        e.preventDefault();
+        setScheduling(true);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/interviews/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidateIds: scheduleData.candidateIds,
+                    jobId: selectedJobForApplicants._id,
+                    startedAt: scheduleData.startedAt,
+                    endedAt: scheduleData.endedAt
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(`Success! Scheduled interviews for ${data.successCount} candidate(s).`);
+                setShowScheduleModal(false);
+                // Optionally refresh to show status?
+                // For now, closes modal.
+            } else {
+                alert('Failed to schedule interviews: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error scheduling interviews:', error);
+            alert('Error scheduling interviews');
+        } finally {
+            setScheduling(false);
+        }
+    };
+
+    const handleSelectCandidate = (applicantId) => {
+        setSelectedCandidates(prev => {
+            if (prev.includes(applicantId)) {
+                return prev.filter(id => id !== applicantId);
+            } else {
+                return [...prev, applicantId];
+            }
+        });
+    };
+
+    const handleSelectAllCandidates = (e) => {
+        if (e.target.checked) {
+            // Select ALL visible candidates
+            const allCandidateIds = applicants.map(app => app._id);
+            setSelectedCandidates(allCandidateIds);
+        } else {
+            setSelectedCandidates([]);
+        }
+    };
+
+    const handleBulkShortlist = async () => {
+        if (selectedCandidates.length === 0) {
+            alert('Please select candidates to shortlist');
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to shortlist ${selectedCandidates.length} candidate(s)?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/applications/shortlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ applicationIds: selectedCandidates })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(`Success! ${data.shortlistedCount} candidate(s) have been shortlisted and notified via email.`);
+                // Refresh applicants list
+                handleViewApplicants(selectedJobForApplicants);
+                // Refresh jobs list to update shortlisted count
+                fetchJobs();
+            } else {
+                alert('Failed to shortlist candidates: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error shortlisting candidates:', error);
+            alert('Error shortlisting candidates. Please try again.');
+        }
+    };
+
+    const handleIndividualShortlist = async (applicationId) => {
+        if (!window.confirm('Are you sure you want to shortlist this candidate?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/applications/shortlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ applicationIds: [applicationId] })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert('Candidate shortlisted successfully and notified via email!');
+                // Refresh applicants list
+                handleViewApplicants(selectedJobForApplicants);
+                // Refresh jobs list to update shortlisted count
+                fetchJobs();
+            } else {
+                alert('Failed to shortlist candidate: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error shortlisting candidate:', error);
+            alert('Error shortlisting candidate. Please try again.');
         }
     };
 
@@ -432,6 +598,18 @@ const JobDescriptions = () => {
                                                 </div>
                                             </div>
 
+                                            {/* Skills Section */}
+                                            {job.skills && job.skills.length > 0 && (
+                                                <div className="job-skills-preview">
+                                                    {job.skills.slice(0, 3).map((skill, idx) => (
+                                                        <span key={idx} className="skill-tag-small">{skill}</span>
+                                                    ))}
+                                                    {job.skills.length > 3 && (
+                                                        <span className="skill-tag-small skill-overflow">+{job.skills.length - 3}</span>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <div className="job-metrics">
                                                 <div
                                                     className="metric clickable"
@@ -445,9 +623,29 @@ const JobDescriptions = () => {
                                                     <div className="metric-value">{job.applications_count || 0}</div>
                                                     <div className="metric-label">Applications</div>
                                                 </div>
-                                                <div className="metric">
+                                                <div
+                                                    className="metric clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewApplicants(job, 'Shortlisted');
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Click to view shortlisted candidates"
+                                                >
                                                     <div className="metric-value">{job.shortlisted_count || 0}</div>
                                                     <div className="metric-label">Shortlisted</div>
+                                                </div>
+                                                <div
+                                                    className="metric clickable"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewApplicants(job, 'Scheduled');
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Click to view scheduled interviews"
+                                                >
+                                                    <div className="metric-value">{job.scheduled_count || 0}</div>
+                                                    <div className="metric-label">Scheduled</div>
                                                 </div>
                                             </div>
 
@@ -822,13 +1020,25 @@ const JobDescriptions = () => {
 
             {/* Applicants Modal */}
             {showApplicantsModal && selectedJobForApplicants && (
-                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-xl" style={{ maxWidth: '90%' }}>
+                <div className="modal  modal-lg fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                    <div className="modal-dialog modal-dialog-centered" >
                         <div className="modal-content bg-dark text-white">
                             <div className="modal-header border-secondary">
                                 <div>
-                                    <h5 className="modal-title">Applicants for {selectedJobForApplicants.job_title}</h5>
-                                    <p className="text-muted mb-0 small">Total Applications: {applicants.length}</p>
+                                    <h5 className="modal-title">
+                                        {applicantStatusFilter === 'Shortlisted'
+                                            ? `Shortlisted Candidates for ${selectedJobForApplicants.job_title}`
+                                            : `Applicants for ${selectedJobForApplicants.job_title}`
+                                        }
+                                    </h5>
+                                    <p className="text-muted mb-0 small">
+                                        Total Candidates: <span className="badge bg-primary">{applicants.length}</span>
+                                        {selectedCandidates.length > 0 && (
+                                            <span className="ms-2">
+                                                Selected: <span className="badge bg-success">{selectedCandidates.length}</span>
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                                 <button
                                     type="button"
@@ -837,6 +1047,7 @@ const JobDescriptions = () => {
                                         setShowApplicantsModal(false);
                                         setSelectedJobForApplicants(null);
                                         setApplicants([]);
+                                        setSelectedCandidates([]);
                                     }}
                                 ></button>
                             </div>
@@ -858,10 +1069,24 @@ const JobDescriptions = () => {
                                         <table className="table table-dark table-hover">
                                             <thead>
                                                 <tr>
+                                                    <th style={{ width: '50px' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="form-check-input"
+                                                            onChange={handleSelectAllCandidates}
+                                                            checked={
+                                                                applicants.length > 0 &&
+                                                                selectedCandidates.length === applicants.length
+                                                            }
+                                                            disabled={applicants.length === 0}
+                                                            title="Select all"
+                                                        />
+                                                    </th>
                                                     <th>#</th>
                                                     <th>Candidate</th>
                                                     <th>Email</th>
                                                     <th>Phone</th>
+                                                    <th>Skills</th>
                                                     <th>Applied On</th>
                                                     <th>Status</th>
                                                     <th>Resume</th>
@@ -871,6 +1096,20 @@ const JobDescriptions = () => {
                                             <tbody>
                                                 {applicants.map((app, index) => (
                                                     <tr key={app._id}>
+                                                        <td>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="form-check-input"
+                                                                checked={selectedCandidates.includes(app._id)}
+                                                                onChange={() => handleSelectCandidate(app._id)}
+                                                                // Allow selection for any status if we want bulk actions universally, 
+                                                                // but typically we only shortlist Applied, and schedule Shortlisted.
+                                                                // User wants to bulk select shortlisted. So remove disable or make it smarter.
+                                                                // Let's remove disable to allow flexibility, or check action compatibility later.
+                                                                disabled={false}
+                                                                title="Select candidate"
+                                                            />
+                                                        </td>
                                                         <td>{index + 1}</td>
                                                         <td>
                                                             <div className="d-flex align-items-center">
@@ -894,6 +1133,28 @@ const JobDescriptions = () => {
                                                         </td>
                                                         <td>{app.Fk_candidate_id?.email || 'N/A'}</td>
                                                         <td>{app.Fk_candidate_id?.phone || 'N/A'}</td>
+                                                        <td>
+                                                            {app.Fk_candidate_id?.skills && app.Fk_candidate_id.skills.length > 0 ? (
+                                                                <div className="d-flex flex-wrap gap-1" style={{ maxWidth: '250px' }}>
+                                                                    {app.Fk_candidate_id.skills.slice(0, 3).map((skill, idx) => (
+                                                                        <span key={idx} className="badge bg-secondary" style={{ fontSize: '0.7rem' }}>
+                                                                            {skill.name}
+                                                                            {skill.level && (
+                                                                                <span className="text-warning ms-1">• {skill.level}</span>
+                                                                            )}
+                                                                            {skill.years && (
+                                                                                <span className="text-info ms-1">({skill.years}y)</span>
+                                                                            )}
+                                                                        </span>
+                                                                    ))}
+                                                                    {app.Fk_candidate_id.skills.length > 3 && (
+                                                                        <span className="badge bg-dark" style={{ fontSize: '0.7rem' }}>+{app.Fk_candidate_id.skills.length - 3}</span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-muted">No skills listed</span>
+                                                            )}
+                                                        </td>
                                                         <td>{new Date(app.createdAt).toLocaleDateString()}</td>
                                                         <td>
                                                             <span className={`badge bg-${app.status === 'Applied' ? 'info' : app.status === 'Shortlisted' ? 'success' : app.status === 'Rejected' ? 'danger' : 'secondary'}`}>
@@ -921,6 +1182,10 @@ const JobDescriptions = () => {
                                                                     <button
                                                                         className="btn btn-sm btn-success"
                                                                         title="Shortlist"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleIndividualShortlist(app._id);
+                                                                        }}
                                                                     >
                                                                         <i className="bi bi-check-circle"></i>
                                                                     </button>
@@ -934,6 +1199,18 @@ const JobDescriptions = () => {
                                                                     </button>
                                                                 )}
                                                             </div>
+                                                            {app.status === 'Shortlisted' && (
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-warning ms-1"
+                                                                    title="Schedule Interview"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleScheduleClick(app);
+                                                                    }}
+                                                                >
+                                                                    <i className="bi bi-calendar-event"></i>
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -943,6 +1220,28 @@ const JobDescriptions = () => {
                                 )}
                             </div>
                             <div className="modal-footer border-secondary">
+                                {selectedCandidates.length > 0 && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-primary me-auto"
+                                        title="Move selected candidates to next stage"
+                                        onClick={handleBulkShortlist}
+                                    >
+                                        <i className="bi bi-arrow-right-circle me-2"></i>
+                                        Shortlist Selected ({selectedCandidates.length})
+                                    </button>
+                                )}
+                                {selectedCandidates.length > 0 && applicantStatusFilter === 'Shortlisted' && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-warning me-auto"
+                                        title="Schedule Interview for selected"
+                                        onClick={handleBulkScheduleClick}
+                                    >
+                                        <i className="bi bi-calendar-event me-2"></i>
+                                        Schedule Selected ({selectedCandidates.length})
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     className="btn btn-secondary"
@@ -950,10 +1249,72 @@ const JobDescriptions = () => {
                                         setShowApplicantsModal(false);
                                         setSelectedJobForApplicants(null);
                                         setApplicants([]);
+                                        setSelectedCandidates([]);
                                     }}
                                 >
                                     Close
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Schedule Interview Modal */}
+            {console.log('Rendering Schedule Modal, show:', showScheduleModal)}
+            {showScheduleModal && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <h5 className="modal-title">Schedule Interview</h5>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => setShowScheduleModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body">
+                                <p>Scheduling interview for <strong>{scheduleData.candidateNames.length > 1 ? `${scheduleData.candidateNames.length} Candidates` : scheduleData.candidateNames[0]}</strong></p>
+                                <p className="text-muted small"><strong>Job:</strong> {selectedJobForApplicants?.job_title}</p>
+                                <form onSubmit={handleConfirmSchedule}>
+                                    <div className="mb-3">
+                                        <label className="form-label">Start Date</label>
+                                        <input
+                                            type="date"
+                                            className="form-control bg-dark text-light border-secondary"
+                                            value={scheduleData.startedAt}
+                                            onChange={(e) => setScheduleData({ ...scheduleData, startedAt: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">End Date</label>
+                                        <input
+                                            type="date"
+                                            className="form-control bg-dark text-light border-secondary"
+                                            value={scheduleData.endedAt}
+                                            onChange={(e) => setScheduleData({ ...scheduleData, endedAt: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowScheduleModal(false)}>Cancel</button>
+                                        <button type="submit" className="btn btn-warning" disabled={scheduling}>
+                                            {scheduling ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Scheduling...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-send me-2"></i>
+                                                    Send Invitation
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>

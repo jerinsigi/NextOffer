@@ -6,5 +6,6 @@ const resumeUpload = require('../middleware/resumeUpload');
 router.post('/apply', resumeUpload.single('resumeFile'), applicationController.applyForJob);
 router.get('/user/:candidateEmail', applicationController.getUserApplications);
 router.get('/job/:jobId', applicationController.getJobApplications);
+router.post('/shortlist', applicationController.shortlistCandidates);
 
 module.exports = router;

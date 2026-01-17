@@ -23,6 +23,8 @@ exports.createJob = async (req, res) => {
     }
 };
 
+const Application = require('../models/Application');
+
 // Get all jobs for a specific company
 exports.getJobsByCompany = async (req, res) => {
     try {
@@ -33,7 +35,22 @@ exports.getJobsByCompany = async (req, res) => {
             return res.status(404).json({ message: 'Company not found' });
         }
 
-        const jobs = await Job_Description.find({ Fk_company_id: company._id }).sort({ createdAt: -1 });
+        let jobs = await Job_Description.find({ Fk_company_id: company._id }).sort({ createdAt: -1 }).lean();
+
+        // Calculate real-time counts for each job
+        jobs = await Promise.all(jobs.map(async (job) => {
+            const appsCount = await Application.countDocuments({ Fk_job_id: job._id });
+            const shortlistedCount = await Application.countDocuments({ Fk_job_id: job._id, status: 'Shortlisted' });
+            const scheduledCount = await Application.countDocuments({ Fk_job_id: job._id, status: { $in: ['Scheduled', 'Interviewing'] } });
+
+            return {
+                ...job,
+                applications_count: appsCount,
+                shortlisted_count: shortlistedCount,
+                scheduled_count: scheduledCount
+            };
+        }));
+
         res.json(jobs);
     } catch (err) {
         res.status(500).json({ message: err.message });

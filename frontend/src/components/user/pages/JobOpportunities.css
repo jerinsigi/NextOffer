@@ -171,6 +171,47 @@
     color: var(--primary-color);
 }
 
+/* Skills Tags */
+.skills-tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.skill-tag-small {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    padding: 0.25rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    white-space: nowrap;
+}
+
+.skill-tag-small.overflow-tag {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.skill-tag-modal {
+    background: rgba(99, 102, 241, 0.2);
+    color: #c7d2fe;
+    padding: 0.4rem 0.9rem;
+    border-radius: 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    transition: all 0.2s ease;
+}
+
+.skill-tag-modal:hover {
+    background: rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
 .job-card-actions {
     display: flex;
     justify-content: space-between;

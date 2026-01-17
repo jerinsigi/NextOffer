@@ -228,6 +228,17 @@ const JobOpportunities = () => {
                                         <i className="bi bi-people"></i> {job.department}
                                     </div>
                                 </div>
+                                {/* Skills Tags */}
+                                {job.skills && job.skills.length > 0 && (
+                                    <div className="skills-tags-wrapper">
+                                        {job.skills.slice(0, 3).map((skill, idx) => (
+                                            <span key={idx} className="skill-tag-small">{skill}</span>
+                                        ))}
+                                        {job.skills.length > 3 && (
+                                            <span className="skill-tag-small overflow-tag">+{job.skills.length - 3} more</span>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="job-card-actions">
                                     <span className="posted-date">Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                     <button className="btn-view-details">
@@ -279,6 +290,18 @@ const JobOpportunities = () => {
                                     <h6 className="text-primary mb-2">Description</h6>
                                     <p className="text-light opacity-75">{selectedJob.description}</p>
                                 </div>
+
+                                {/* Skills Required */}
+                                {selectedJob.skills && selectedJob.skills.length > 0 && (
+                                    <div className="mb-4">
+                                        <h6 className="text-primary mb-2">Skills Required</h6>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {selectedJob.skills.map((skill, idx) => (
+                                                <span key={idx} className="skill-tag-modal">{skill}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Requirements & Benefits Grid */}
                                 <div className="row g-4 mb-4">

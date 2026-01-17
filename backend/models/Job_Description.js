@@ -64,6 +64,10 @@ const jobDescriptionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  scheduled_count: {
+    type: Number,
+    default: 0
+  },
   hired_count: {
     type: Number,
     default: 0
