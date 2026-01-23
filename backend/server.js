@@ -61,6 +61,10 @@ app.use('/api/skills', skillsRouter);
 const interviewRouter = require('./routes/interviewRoutes');
 app.use('/api/interviews', interviewRouter);
 
+const responseRouter = require('./routes/responseRoutes');
+app.use('/api/responses', responseRouter);
+
+
 module.exports = app;
 
 // Only listen if not running on Vercel

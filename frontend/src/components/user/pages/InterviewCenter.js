@@ -31,6 +31,14 @@ const InterviewCenter = () => {
     const [error, setError] = useState(null);
     const [interviewSession, setInterviewSession] = useState(null);
     const [questions, setQuestions] = useState([]);
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef(null);
+    const [responses, setResponses] = useState([]);
+    const [speechError, setSpeechError] = useState(null);
+    const [useTextInput, setUseTextInput] = useState(false);
+    const useTextInputRef = useRef(false);
+    const retryCountRef = useRef(0);
 
     // Fetch Interview Data
     useEffect(() => {
@@ -290,15 +298,51 @@ const InterviewCenter = () => {
         setFullscreenExited(false);
     };
 
-    const nextQuestion = () => {
+    const nextQuestion = async () => {
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel(); // Stop current speech
         }
+
+        // Stop speech recognition
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+
+        // Submit current answer to backend
+        if (currentAnswer.trim()) {
+            await submitResponse(questions[currentQuestion].id, currentAnswer);
+        }
+
+        // Move to next question
         if (currentQuestion < questions.length - 1) {
+            setCurrentAnswer(''); // Reset answer for next question
             setCurrentQuestion(prev => prev + 1);
             setInterviewProgress(((currentQuestion + 2) / questions.length) * 100);
         } else {
             endInterview();
+        }
+    };
+
+    // Submit response to backend
+    const submitResponse = async (questionId, answer) => {
+        try {
+            const response = await fetch('http://localhost:5000/api/responses/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    questionId: questionId,
+                    candidateAnswer: answer
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Response submitted:', result);
+                // Store response data for completion screen
+                setResponses(prev => [...prev, result.response]);
+            }
+        } catch (error) {
+            console.error('Error submitting response:', error);
         }
     };
 
@@ -316,11 +360,182 @@ const InterviewCenter = () => {
             if (preferredVoice) utterance.voice = preferredVoice;
 
             window.speechSynthesis.speak(utterance);
+
+            // Start speech recognition after question is read (only if not using text input)
+            utterance.onend = () => {
+                // Check the ref for the most up-to-date value
+                if (!useTextInputRef.current) {
+                    console.log('Starting speech recognition (Text Input Mode: OFF)');
+
+                    // On localhost, recommend text input but allow user to enable voice
+                    const isLocalhost = window.location.hostname === 'localhost' ||
+                        window.location.hostname === '127.0.0.1';
+
+                    if (isLocalhost && !speechError) {
+                        // First time on localhost - inform user
+                        console.warn('Development mode: Speech recognition may fail due to network requirements. You can use the "Type Instead" button.');
+                        setSpeechError('💡 Tip: Speech recognition requires internet connection. Use "Type Instead" button or try voice mode.');
+                        setUseTextInput(true);
+                        useTextInputRef.current = true;
+                    } else if (!isLocalhost || speechError === null) {
+                        // Production or user explicitly wants to try voice
+                        startSpeechRecognition();
+                    }
+                } else {
+                    console.log('Skipping speech recognition (Text Input Mode: ON)');
+                }
+            };
         }
         return () => {
             if (window.speechSynthesis) window.speechSynthesis.cancel();
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
         };
-    }, [currentQuestion, interviewStage, questions]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentQuestion, interviewStage, questions]); // Removed useTextInput to prevent re-reading
+
+    // Speech Recognition Setup
+    const startSpeechRecognition = () => {
+        console.log('Starting speech recognition...');
+
+        // Check if already in text input mode - don't even try to start
+        if (useTextInputRef.current) {
+            console.log('Text input mode is active, skipping speech recognition');
+            return;
+        }
+
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            console.error('Speech recognition not supported in this browser');
+            setSpeechError('Speech recognition is not supported in your browser. Please type your answer below.');
+            setUseTextInput(true);
+            useTextInputRef.current = true;
+            return;
+        }
+
+        // Check if we're on a secure context (HTTPS or localhost)
+        const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' ||
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1';
+
+        if (!isSecureContext) {
+            console.warn('Speech recognition requires HTTPS or localhost');
+            setSpeechError('Speech recognition requires a secure connection. Please type your answer below.');
+            setUseTextInput(true);
+            useTextInputRef.current = true;
+            return;
+        }
+
+        // Stop existing recognition if any
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+                recognitionRef.current = null;
+            } catch (e) {
+                console.log('No active recognition to stop');
+            }
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            console.log('Speech recognition started successfully');
+            setIsListening(true);
+            setSpeechError(null); // Clear any previous errors
+        };
+
+        recognition.onresult = (event) => {
+            console.log('Speech recognition result received');
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            if (finalTranscript) {
+                console.log('Final transcript:', finalTranscript);
+                setCurrentAnswer(prev => prev + finalTranscript);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+
+            if (event.error === 'not-allowed') {
+                setSpeechError('Microphone access denied. Please allow microphone access or use text input below.');
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+            } else if (event.error === 'network') {
+                console.log('Network error - switching to text input permanently');
+                setSpeechError('Speech recognition service unavailable (network error). Please type your answer below.');
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+                // Clean up recognition object
+                if (recognitionRef.current) {
+                    recognitionRef.current = null;
+                }
+            } else if (event.error === 'no-speech') {
+                console.log('No speech detected, continuing to listen...');
+                // Don't stop listening or switch to text input
+                return;
+            } else if (event.error === 'audio-capture') {
+                setSpeechError('Microphone not accessible. Please check your microphone or use text input below.');
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+            } else if (event.error === 'service-not-allowed') {
+                setSpeechError('Speech recognition service not allowed. Please type your answer below.');
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+            } else {
+                console.warn(`Speech recognition error: ${event.error}`);
+                setSpeechError(`Speech recognition error (${event.error}). Please type your answer below.`);
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+            }
+
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            console.log('Speech recognition ended');
+            setIsListening(false);
+
+            // Only restart if we're still in active interview and NOT in text input mode
+            if (interviewStage === 'active' && !useTextInputRef.current) {
+                console.log('Speech recognition ended unexpectedly, attempting restart...');
+                // Add a small delay before restart to prevent rapid cycling
+                setTimeout(() => {
+                    if (!useTextInputRef.current && interviewStage === 'active') {
+                        startSpeechRecognition();
+                    }
+                }, 500);
+            }
+        };
+
+        recognitionRef.current = recognition;
+
+        try {
+            recognition.start();
+            console.log('Recognition.start() called');
+        } catch (error) {
+            console.error('Error starting recognition:', error);
+            setSpeechError('Failed to start speech recognition. Please type your answer below.');
+            setUseTextInput(true);
+            useTextInputRef.current = true;
+        }
+    };
 
     const endInterview = () => {
         console.log('endInterview called');
@@ -652,6 +867,116 @@ const InterviewCenter = () => {
                                 </div>
                             </div>
 
+                            {/* Transcript Display */}
+                            <div className="transcript-box" style={{
+                                background: '#f8f9fa',
+                                border: '2px solid #dee2e6',
+                                borderRadius: '12px',
+                                padding: '15px',
+                                margin: '15px 0',
+                                minHeight: '100px',
+                                maxHeight: '120px',
+                                overflowY: 'auto'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                                    <i className={`bi bi-mic${isListening ? '-fill' : ''}`} style={{
+                                        fontSize: '1.5rem',
+                                        color: isListening ? '#28a745' : speechError ? '#dc3545' : '#6c757d'
+                                    }}></i>
+                                    <h6 style={{ margin: 0, color: '#495057', flex: 1 }}>
+                                        {speechError ? speechError : (isListening ? 'Listening... (Your answer)' : useTextInput ? 'Type your answer below' : 'Start speaking to answer')}
+                                    </h6>
+                                    {speechError && !useTextInput && (
+                                        <button
+                                            onClick={() => {
+                                                setSpeechError(null);
+                                                retryCountRef.current = 0;
+                                                startSpeechRecognition();
+                                            }}
+                                            style={{
+                                                marginLeft: 'auto',
+                                                padding: '5px 10px',
+                                                fontSize: '0.85rem',
+                                                background: '#007bff',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '5px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Retry Voice
+                                        </button>
+                                    )}
+                                    {/* Always show toggle button */}
+                                    <button
+                                        onClick={() => {
+                                            const newValue = !useTextInput;
+                                            setUseTextInput(newValue);
+                                            useTextInputRef.current = newValue;
+
+                                            if (!newValue) {
+                                                // Switching to voice mode
+                                                setSpeechError(null);
+                                                startSpeechRecognition();
+                                            } else {
+                                                // Switching to text mode - stop recognition
+                                                if (recognitionRef.current) {
+                                                    try {
+                                                        recognitionRef.current.stop();
+                                                        recognitionRef.current = null;
+                                                    } catch (e) {
+                                                        console.log('Recognition already stopped');
+                                                    }
+                                                }
+                                                setIsListening(false);
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '5px 15px',
+                                            fontSize: '0.85rem',
+                                            background: useTextInput ? '#28a745' : '#6c757d',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '5px',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px'
+                                        }}
+                                    >
+                                        <i className={`bi bi-${useTextInput ? 'mic' : 'keyboard'}`}></i>
+                                        {useTextInput ? 'Use Voice' : 'Type Instead'}
+                                    </button>
+                                </div>
+                                {useTextInput ? (
+                                    <textarea
+                                        value={currentAnswer}
+                                        onChange={(e) => setCurrentAnswer(e.target.value)}
+                                        placeholder="Type your answer here..."
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            fontSize: '1rem',
+                                            borderRadius: '8px',
+                                            border: '1px solid #ced4da',
+                                            resize: 'vertical',
+                                            minHeight: '60px',
+                                            fontFamily: 'inherit'
+                                        }}
+                                    />
+                                ) : (
+                                    <p style={{
+                                        fontSize: '1rem',
+                                        lineHeight: '1.6',
+                                        color: currentAnswer ? '#212529' : '#6c757d',
+                                        fontStyle: currentAnswer ? 'normal' : 'italic',
+                                        margin: 0
+                                    }}>
+                                        {currentAnswer || 'Your spoken answer will appear here...'}
+                                    </p>
+                                )}
+                            </div>
+
                             <div className="answer-controls">
                                 <div className="audio-wave">
                                     <div className="wave-bar"></div>
@@ -727,6 +1052,70 @@ const InterviewCenter = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* AI Scoring Results */}
+                        {responses.length > 0 && (
+                            <div className="scoring-results" style={{
+                                background: 'white',
+                                borderRadius: '12px',
+                                padding: '25px',
+                                marginTop: '20px',
+                                border: '1px solid #dee2e6'
+                            }}>
+                                <h4 style={{ marginBottom: '20px' }}>
+                                    <i className="bi bi-graph-up me-2"></i>
+                                    AI Evaluation Scores
+                                </h4>
+                                <div style={{ marginBottom: '15px' }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '15px',
+                                        background: '#f8f9fa',
+                                        borderRadius: '8px',
+                                        marginBottom: '10px'
+                                    }}>
+                                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                            Average Score
+                                        </span>
+                                        <span style={{
+                                            fontSize: '1.5rem',
+                                            fontWeight: 'bold',
+                                            color: responses.reduce((sum, r) => sum + r.ai_score, 0) / responses.length >= 75 ? '#28a745' : '#ffc107'
+                                        }}>
+                                            {Math.round(responses.reduce((sum, r) => sum + r.ai_score, 0) / responses.length)}/100
+                                        </span>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gap: '10px' }}>
+                                    {responses.map((response, index) => (
+                                        <div key={index} style={{
+                                            padding: '12px',
+                                            background: '#f8f9fa',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <span style={{ fontSize: '0.9rem' }}>Question {index + 1}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <span style={{
+                                                    fontWeight: 'bold',
+                                                    fontSize: '1.1rem',
+                                                    color: response.ai_score >= 75 ? '#28a745' : response.ai_score >= 50 ? '#ffc107' : '#dc3545'
+                                                }}>
+                                                    {response.ai_score}/100
+                                                </span>
+                                                <span style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                                    ({response.confidenceScore}% confidence)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="next-steps">
                             <h4>What's Next?</h4>

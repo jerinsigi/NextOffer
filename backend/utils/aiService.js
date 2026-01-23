@@ -89,4 +89,74 @@ const getMockQuestions = (count = 5) => {
     return allMocks.slice(0, count);
 };
 
-module.exports = { extractTextFromPDF, generateInterviewQuestions };
+/**
+ * Score a candidate's interview response using AI
+ * @param {string} questionText - The interview question
+ * @param {string} candidateAnswer - The candidate's answer
+ * @param {string} expectedTopic - Expected topic/area (e.g., 'JavaScript', 'Leadership')
+ * @param {string} difficultyLevel - Question difficulty (Easy, Medium, Hard)
+ * @returns {Object} - { ai_score: 0-100, confidence_score: 0-100, feedback: string }
+ */
+const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'General', difficultyLevel = 'Medium') => {
+    try {
+        console.log('=== AI Response Scoring ===');
+        console.log('Question Topic:', expectedTopic);
+        console.log('Difficulty:', difficultyLevel);
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.warn('GEMINI_API_KEY not found. Using mock scoring.');
+            return {
+                ai_score: 75,
+                confidence_score: 80,
+                feedback: "Answer demonstrates understanding (mock evaluation)"
+            };
+        }
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const prompt = `
+            You are an expert technical interviewer evaluating a candidate's response to an interview question.
+            
+            Question: "${questionText}"
+            Expected Topic/Area: ${expectedTopic}
+            Difficulty Level: ${difficultyLevel}
+            
+            Candidate's Answer: "${candidateAnswer}"
+            
+            Evaluate the answer on these criteria:
+            1. Relevance - Does it answer the question?
+            2. Technical Accuracy - Is the information correct?
+            3. Clarity - Is it well-communicated?
+            4. Completeness - Is it thorough enough for the difficulty level?
+            
+            Provide a response in JSON format with:
+            - "ai_score": A number from 0-100 representing overall quality
+            - "confidence_score": A number from 0-100 representing your confidence in this evaluation
+            - "feedback": A brief 1-2 sentence explanation of the score
+            
+            Be fair but maintain high standards. An excellent answer should score 85+.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Clean markdown code blocks if present
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const scoringResult = JSON.parse(jsonStr);
+
+        console.log('AI Score:', scoringResult.ai_score);
+        return scoringResult;
+
+    } catch (error) {
+        console.error('Error scoring response:', error);
+        // Return neutral score on error
+        return {
+            ai_score: 70,
+            confidence_score: 50,
+            feedback: "Unable to fully evaluate. Answer recorded for manual review."
+        };
+    }
+};
+
+module.exports = { extractTextFromPDF, generateInterviewQuestions, scoreResponse };
