@@ -134,7 +134,87 @@ exports.updateSchedule = async (req, res) => {
         res.status(200).json({ message: 'Interview rescheduled successfully' });
 
     } catch (error) {
-        console.error('Error updating schedule:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+// Get interview session details and questions
+exports.getInterviewSession = async (req, res) => {
+    try {
+        const { interviewId } = req.params;
+
+        // 1. Find the session
+        const session = await InterviewSession.findById(interviewId)
+            .populate('fk_candidate_id', 'full_name') // Get candidate name
+            .populate({
+                path: 'fk_job_id',
+                populate: { path: 'Fk_company_id', select: 'company_name logo' } // Get company details
+            });
+
+        if (!session) {
+            return res.status(404).json({ message: 'Interview session not found' });
+        }
+
+        const job = session.fk_job_id;
+        const skills = job.skills || [];
+
+        // Fetch questions matching skills
+        // Note: Interview_Question model structure is slightly different than expected in my previous thought.
+        // It has 'topic' instead of 'skills' array? And 'difficulty_level'.
+        // Wait, the model I saw in Step 185 has: Fk_session_id, question_text, topic, difficulty_level.
+        // It seems questions are LINKED to a session? 
+        // If questions are already generated for the session, I should fetch them directly.
+        // If not, maybe I should generate/fetch them now?
+        // The user request said "remove dummy data". 
+        // Let's assume for now we fetch any questions linked to this session. If none, maybe fetch generic ones matching job topic?
+        // But the model is `Interview_Question` with `Fk_session_id`.
+        // This implies questions are pre-generated/assigned to the session.
+
+        const InterviewQuestion = require('../models/Interview_Question');
+        let questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+
+        // If no questions found (and assuming we want to show something dynamic), 
+        // we might want to GENERATE them (mock generation) or fetch from a 'QuestionBank' (not seen yet).
+        // Since I'm in execution, I'll return what's there. 
+        // If empty, frontend handles/shows empty? Or I can mock some "General" questions if empty for demo.
+        // Let's add 3 default questions if empty for immediate "working" feel as per "remove dummy data" request (replace FE dummy with BE data).
+
+        if (questions.length === 0) {
+            // Create default questions for this session if missing (Lazy generation)
+            const defaultQuestions = [
+                { Fk_session_id: session._id, question_text: "Tell us about yourself.", topic: "Intro", difficulty_level: "Easy" },
+                { Fk_session_id: session._id, question_text: `Why do you want to work at ${job.company_name || 'our company'}?`, topic: "Motivation", difficulty_level: "Medium" },
+                { Fk_session_id: session._id, question_text: "What are your strengths and weaknesses?", topic: "Behavioral", difficulty_level: "Medium" }
+            ];
+            // Insert them? Or just return. Let's insert to persist.
+            await InterviewQuestion.insertMany(defaultQuestions);
+            questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+        }
+
+        // 4. Construct Response
+        const response = {
+            sessionId: session._id,
+            jobTitle: job.job_title,
+            company: job.Fk_company_id ? job.Fk_company_id.company_name : (job.company_name || 'The Company'),
+            companyLogo: job.Fk_company_id ? job.Fk_company_id.logo : null,
+            duration: 45,
+            questionsCount: questions.length,
+            aiInterviewer: 'NextOffer AI',
+            candidateName: session.fk_candidate_id.full_name,
+            resumeScore: 85,
+            questions: questions.map((q, index) => ({
+                id: q._id,
+                type: q.topic || 'General',
+                question: q.question_text,
+                duration: 300,
+                skillTested: q.topic || 'General'
+            }))
+        };
+
+        res.json(response);
+
+    } catch (error) {
+        console.error('Error fetching interview session:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };

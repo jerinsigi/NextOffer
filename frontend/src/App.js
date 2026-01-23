@@ -99,7 +99,7 @@ function App() {
           <Route path="profile" element={<UserProfile />} />
           <Route path="jobs" element={<JobOpportunities />} />
           <Route path="applications" element={<MyApplications />} />
-          <Route path="interview" element={<InterviewCenter />} />
+          <Route path="interview/:interviewId" element={<InterviewCenter />} />
           <Route path="practice" element={<PracticeInterview />} />
           <Route path="results" element={<ResultsFeedback />} />
           <Route path="skills" element={<SkillDevelopment />} />

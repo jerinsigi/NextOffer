@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import './InterviewCenter.css';
 
 const InterviewCenter = () => {
@@ -25,77 +26,34 @@ const InterviewCenter = () => {
     const containerRef = useRef(null);
     const streamRef = useRef(null);
 
-    // Sample interview session data
-    const interviewSession = {
-        jobTitle: 'Senior Software Developer',
-        company: 'TechCorp Inc.',
-        companyLogo: 'TC',
-        duration: 45,
-        questionsCount: 8,
-        aiInterviewer: 'NextOffer AI',
-        candidateName: 'John Doe',
-        resumeScore: 85
-    };
+    const { interviewId } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [interviewSession, setInterviewSession] = useState(null);
+    const [questions, setQuestions] = useState([]);
 
-    // AI-generated questions based on resume
-    const questions = [
-        {
-            id: 1,
-            type: 'technical',
-            question: 'Based on your resume, you have 3 years of React experience. Can you explain the difference between useMemo and useCallback hooks and when to use each?',
-            duration: 300,
-            skillTested: 'React.js'
-        },
-        {
-            id: 2,
-            type: 'experience',
-            question: 'You mentioned leading a team of 5 developers in your previous role. Describe a challenging situation you faced and how you resolved it.',
-            duration: 300,
-            skillTested: 'Leadership'
-        },
-        {
-            id: 3,
-            type: 'technical',
-            question: 'Your resume shows proficiency in Node.js. How would you handle authentication and authorization in a REST API?',
-            duration: 300,
-            skillTested: 'Node.js'
-        },
-        {
-            id: 4,
-            type: 'problem-solving',
-            question: 'You worked on an e-commerce platform. How would you optimize database queries for a product search with millions of records?',
-            duration: 300,
-            skillTested: 'Database Optimization'
-        },
-        {
-            id: 5,
-            type: 'technical',
-            question: 'Explain your approach to state management in large-scale React applications.',
-            duration: 300,
-            skillTested: 'State Management'
-        },
-        {
-            id: 6,
-            type: 'behavioral',
-            question: 'Tell me about a time when you had to learn a new technology quickly to meet a project deadline.',
-            duration: 300,
-            skillTested: 'Adaptability'
-        },
-        {
-            id: 7,
-            type: 'technical',
-            question: 'Based on your experience with MongoDB, how do you design schemas for optimal performance?',
-            duration: 300,
-            skillTested: 'MongoDB'
-        },
-        {
-            id: 8,
-            type: 'scenario',
-            question: 'If you joined our team tomorrow, how would you approach understanding our existing codebase and contributing effectively?',
-            duration: 300,
-            skillTested: 'Onboarding Strategy'
-        }
-    ];
+    // Fetch Interview Data
+    useEffect(() => {
+        const fetchInterviewData = async () => {
+            if (!interviewId) return;
+            try {
+                const response = await fetch(`http://localhost:5000/api/interviews/${interviewId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setInterviewSession(data);
+                    setQuestions(data.questions);
+                } else {
+                    setError('Failed to load interview data');
+                }
+            } catch (err) {
+                console.error("Error fetching interview:", err);
+                setError('Error loading interview data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchInterviewData();
+    }, [interviewId]);
 
     // System check - perform real camera/microphone checks
     useEffect(() => {
@@ -331,6 +289,29 @@ const InterviewCenter = () => {
         }
     };
 
+    if (loading) {
+        return (
+            <div className="interview-center-container d-flex justify-content-center align-items-center text-white">
+                <div className="spinner-border text-primary me-3" role="status"></div>
+                <h2>Loading Interview Environment...</h2>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="interview-center-container d-flex justify-content-center align-items-center text-white">
+                <div className="text-center">
+                    <i className="bi bi-exclamation-triangle fs-1 text-danger mb-3"></i>
+                    <h2>{error}</h2>
+                    <button className="btn btn-secondary mt-3" onClick={() => window.history.back()}>
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="interview-center-container" ref={containerRef}>
             {/* Fullscreen Exit Warning */}
@@ -360,7 +341,19 @@ const InterviewCenter = () => {
                 <div className="pre-check-stage">
                     <div className="interview-header-info">
                         <div className="company-badge">
-                            <div className="company-logo">{interviewSession.companyLogo}</div>
+                            <div className="company-logo">
+                                {interviewSession.companyLogo ? (
+                                    <img 
+                                        src={interviewSession.companyLogo.startsWith('http') ? interviewSession.companyLogo : `http://localhost:5000${interviewSession.companyLogo}`} 
+                                        alt={interviewSession.company} 
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                    />
+                                ) : (
+                                    <div className="d-flex align-items-center justify-content-center w-100 h-100 bg-primary text-white rounded-circle">
+                                        {interviewSession.company.charAt(0)}
+                                    </div>
+                                )}
+                            </div>
                             <div>
                                 <h2>{interviewSession.jobTitle}</h2>
                                 <p className="text-muted">{interviewSession.company}</p>

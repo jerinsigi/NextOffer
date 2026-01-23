@@ -363,7 +363,7 @@ const MyApplications = () => {
 
                                                 return (
                                                     <a
-                                                        href={canStart ? "/user/interview" : "#"}
+                                                        href={canStart ? `/user/interview/${app.interviewDetails._id}` : "#"}
                                                         className={`btn ${canStart ? 'btn-primary' : 'btn-secondary'}`}
                                                         style={{ pointerEvents: canStart ? 'auto' : 'none', opacity: canStart ? 1 : 0.65 }}
                                                         title={canStart ? "Go to Interview Center" : (startTime ? `Interview starts on ${startTime.toLocaleString()}` : "Interview details unavailable")}
