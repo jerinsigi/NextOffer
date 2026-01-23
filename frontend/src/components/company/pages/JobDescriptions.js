@@ -33,6 +33,7 @@ const JobDescriptions = () => {
         skills: [], // Array for tag input
         benefits: '', // Comma separated for input
         job_status: 'Draft',
+        questions_count: 5,
         end_date: ''
     });
 
@@ -97,6 +98,7 @@ const JobDescriptions = () => {
             description: '',
             skills: [],
             benefits: '',
+            questions_count: 5,
             job_status: 'Draft',
             end_date: ''
         });
@@ -123,6 +125,7 @@ const JobDescriptions = () => {
             skills: job.skills || [],
             benefits: job.benefits ? job.benefits.join(', ') : '',
             job_status: job.job_status || 'Draft',
+            questions_count: job.questions_count || 5,
             end_date: formatDate(job.end_date)
         });
         setShowCreateModal(true);
@@ -1016,6 +1019,17 @@ const JobDescriptions = () => {
                                                 className="form-control bg-dark text-light border-secondary"
                                                 value={formData.benefits}
                                                 onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="form-label">Interview Questions Count</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="20"
+                                                className="form-control bg-dark text-light border-secondary"
+                                                value={formData.questions_count}
+                                                onChange={(e) => setFormData({ ...formData, questions_count: parseInt(e.target.value) || 5 })}
                                             />
                                         </div>
                                         <div className="col-md-6">

@@ -10,6 +10,10 @@ const jobDescriptionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  questions_count: {
+    type: Number,
+    default: 5
+  },
   department: {
     type: String
   },

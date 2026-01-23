@@ -173,6 +173,15 @@ exports.getInterviewSession = async (req, res) => {
         const InterviewQuestion = require('../models/Interview_Question');
         let questions = await InterviewQuestion.find({ Fk_session_id: session._id });
 
+        // Check if existing questions are the default fallback ones OR if count doesn't match config
+        // If so, delete them to try AI generation again
+        const targetCount = job.questions_count || 5;
+        if (questions.length > 0 && (questions[0].question_text === "Tell us about yourself." || questions.length !== targetCount)) {
+            console.log(`Found mismatch (Default: ${questions[0].question_text === "Tell us about yourself."}, Count: ${questions.length} vs ${targetCount}), removing to regenerate...`);
+            await InterviewQuestion.deleteMany({ Fk_session_id: session._id });
+            questions = [];
+        }
+
         // If no questions found (and assuming we want to show something dynamic), 
         // we might want to GENERATE them (mock generation) or fetch from a 'QuestionBank' (not seen yet).
         // Since I'm in execution, I'll return what's there. 
@@ -180,15 +189,51 @@ exports.getInterviewSession = async (req, res) => {
         // Let's add 3 default questions if empty for immediate "working" feel as per "remove dummy data" request (replace FE dummy with BE data).
 
         if (questions.length === 0) {
-            // Create default questions for this session if missing (Lazy generation)
-            const defaultQuestions = [
-                { Fk_session_id: session._id, question_text: "Tell us about yourself.", topic: "Intro", difficulty_level: "Easy" },
-                { Fk_session_id: session._id, question_text: `Why do you want to work at ${job.company_name || 'our company'}?`, topic: "Motivation", difficulty_level: "Medium" },
-                { Fk_session_id: session._id, question_text: "What are your strengths and weaknesses?", topic: "Behavioral", difficulty_level: "Medium" }
-            ];
-            // Insert them? Or just return. Let's insert to persist.
-            await InterviewQuestion.insertMany(defaultQuestions);
-            questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+            try {
+                // Find Application to get Resume
+                const Application = require('../models/Application');
+                const application = await Application.findOne({
+                    Fk_candidate_id: session.fk_candidate_id._id,
+                    Fk_job_id: job._id
+                }).populate('Fk_resume_id');
+
+                let resumeText = "";
+                if (application && application.Fk_resume_id && application.Fk_resume_id.resume_path) {
+                    const { extractTextFromPDF, generateInterviewQuestions } = require('../utils/aiService');
+                    resumeText = await extractTextFromPDF(application.Fk_resume_id.resume_path);
+                }
+
+                // Generate Questions via AI
+                const { generateInterviewQuestions } = require('../utils/aiService');
+                const aiQuestions = await generateInterviewQuestions(
+                    resumeText || "Candidate's resume not available.",
+                    job.job_description || job.job_title,
+                    targetCount, // Pass configured count
+                    job.skills || [] // Pass skills
+                );
+
+                // Format for DB
+                const questionsToInsert = aiQuestions.map(q => ({
+                    Fk_session_id: session._id,
+                    question_text: q.question_text,
+                    topic: q.topic,
+                    difficulty_level: q.difficulty_level,
+                    generated_by: 'AI'
+                }));
+
+                await InterviewQuestion.insertMany(questionsToInsert);
+                questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+
+            } catch (err) {
+                console.error("AI Generation Error, falling back to defaults:", err);
+                const defaultQuestions = [
+                    { Fk_session_id: session._id, question_text: "Tell us about yourself.", topic: "Intro", difficulty_level: "Easy" },
+                    { Fk_session_id: session._id, question_text: `Why do you want to work at ${job.company_name || 'our company'}?`, topic: "Motivation", difficulty_level: "Medium" },
+                    { Fk_session_id: session._id, question_text: "What are your strengths and weaknesses?", topic: "Behavioral", difficulty_level: "Medium" }
+                ];
+                await InterviewQuestion.insertMany(defaultQuestions);
+                questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+            }
         }
 
         // 4. Construct Response
