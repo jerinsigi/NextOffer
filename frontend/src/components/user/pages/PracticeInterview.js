@@ -6,7 +6,7 @@ const PracticeInterview = () => {
     const [selectedSkill, setSelectedSkill] = useState('');
     const [difficulty, setDifficulty] = useState('medium');
     const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [isRecording, setIsRecording] = useState(false);
+    // const [isRecording, setIsRecording] = useState(false); // Currently unused
     const [answers, setAnswers] = useState([]);
     const [sessionScore, setSessionScore] = useState(null);
     const videoRef = useRef(null);
@@ -108,12 +108,13 @@ const PracticeInterview = () => {
             initializeCamera();
         }
         return () => {
+            // eslint-disable-next-line react-hooks/exhaustive-deps
             if (videoRef.current && videoRef.current.srcObject) {
                 const tracks = videoRef.current.srcObject.getTracks();
                 tracks.forEach(track => track.stop());
             }
         };
-    }, [practiceStage]);
+    }, [practiceStage]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const initializeCamera = async () => {
         try {
@@ -133,7 +134,7 @@ const PracticeInterview = () => {
         }
         setPracticeStage('active');
         setCurrentQuestion(0);
-        setIsRecording(true);
+        // setIsRecording(true); // Currently unused
         setAnswers([]);
     };
 
@@ -154,7 +155,7 @@ const PracticeInterview = () => {
     };
 
     const endPractice = () => {
-        setIsRecording(false);
+        // setIsRecording(false); // Currently unused
         // Generate mock feedback
         const score = {
             overall: Math.floor(Math.random() * 30) + 70, // 70-100
@@ -325,8 +326,8 @@ const PracticeInterview = () => {
                         </div>
                         <div className="progress-indicator">
                             <div className="progress-bar">
-                                <div 
-                                    className="progress-fill" 
+                                <div
+                                    className="progress-fill"
                                     style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
                                 ></div>
                             </div>
@@ -421,13 +422,13 @@ const PracticeInterview = () => {
                         <div className="overall-score">
                             <div className="score-circle">
                                 <svg viewBox="0 0 100 100">
-                                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
-                                    <circle 
-                                        cx="50" 
-                                        cy="50" 
-                                        r="45" 
-                                        fill="none" 
-                                        stroke="url(#gradient)" 
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                                    <circle
+                                        cx="50"
+                                        cy="50"
+                                        r="45"
+                                        fill="none"
+                                        stroke="url(#gradient)"
                                         strokeWidth="8"
                                         strokeDasharray={`${sessionScore.overall * 2.827} 282.7`}
                                         strokeLinecap="round"

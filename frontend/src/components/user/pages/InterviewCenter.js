@@ -17,7 +17,7 @@ const InterviewCenter = () => {
         violations: []
     });
     const [currentQuestion, setCurrentQuestion] = useState(0);
-    const [isRecording, setIsRecording] = useState(false);
+    // const [isRecording, setIsRecording] = useState(false); // Currently unused
     const [interviewProgress, setInterviewProgress] = useState(0);
     const [fullscreenExited, setFullscreenExited] = useState(false);
     const [exitWarningCount, setExitWarningCount] = useState(0);
@@ -145,7 +145,7 @@ const InterviewCenter = () => {
         return () => {
             stopCamera(); // Use robust stopCamera function for cleanup
         };
-    }, [interviewStage]);
+    }, [interviewStage]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Cleanup on unmount (extra safety)
     useEffect(() => {
@@ -258,7 +258,7 @@ const InterviewCenter = () => {
         // Let's implement per-question recording for simplicity in analysis/storage later, or continuous. 
         // User request: "recordings" (plural).
         // Let's try to start recording when interview starts.
-        startRecording();
+        // startRecording(); // Temporarily disabled
     };
 
     const startRecording = () => {
@@ -280,7 +280,7 @@ const InterviewCenter = () => {
                 };
 
                 mediaRecorder.start();
-                setIsRecording(true);
+                // setIsRecording(true); // State variable currently unused
             } catch (e) {
                 console.error("MediaRecorder error:", e);
             }
@@ -452,16 +452,15 @@ const InterviewCenter = () => {
 
         recognition.onresult = (event) => {
             console.log('Speech recognition result received');
-            let interimTranscript = '';
+            // let interimTranscript = ''; // Currently unused
             let finalTranscript = '';
 
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
                     finalTranscript += transcript + ' ';
-                } else {
-                    interimTranscript += transcript;
                 }
+                // Interim results not currently used
             }
 
             if (finalTranscript) {
@@ -546,7 +545,7 @@ const InterviewCenter = () => {
         }
 
         setInterviewStage('completed');
-        setIsRecording(false);
+        // setIsRecording(false); // State variable currently unused
         setInterviewProgress(100);
         // Exit fullscreen
         if (document.fullscreenElement) {
