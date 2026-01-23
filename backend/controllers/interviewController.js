@@ -90,3 +90,51 @@ exports.scheduleInterview = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+// Update an interview schedule
+exports.updateSchedule = async (req, res) => {
+    try {
+        const { candidateId, jobId, startedAt, endedAt } = req.body;
+
+        if (!candidateId || !jobId || !startedAt || !endedAt) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Find the active interview session
+        const session = await InterviewSession.findOne({
+            fk_candidate_id: candidateId,
+            fk_job_id: jobId,
+            session_status: { $in: ['pending', 'ongoing'] }
+        });
+
+        if (!session) {
+            return res.status(404).json({ message: 'Interview session not found or already completed' });
+        }
+
+        // Update session
+        session.started_at = startedAt;
+        session.ended_at = endedAt;
+        await session.save();
+
+        // Send Email Notification
+        const candidate = await Candidate.findById(candidateId);
+        const job = await JobDescription.findById(jobId).populate('Fk_company_id');
+        const companyName = job.Fk_company_id ? job.Fk_company_id.company_name : (job.company_name || "The Company");
+
+        await sendInterviewEmail(
+            candidate.email,
+            candidate.full_name,
+            job.job_title,
+            companyName,
+            startedAt,
+            endedAt,
+            true // isReschedule flag
+        );
+
+        res.status(200).json({ message: 'Interview rescheduled successfully' });
+
+    } catch (error) {
+        console.error('Error updating schedule:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

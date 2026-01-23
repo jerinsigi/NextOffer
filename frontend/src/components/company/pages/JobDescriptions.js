@@ -239,29 +239,45 @@ const JobDescriptions = () => {
         endedAt: ''
     });
     const [scheduling, setScheduling] = useState(false);
+    const [isRescheduling, setIsRescheduling] = useState(false); // Track if we are editing
 
-    const handleScheduleClick = (candidate) => {
-        setScheduleData({
-            candidateIds: [candidate.Fk_candidate_id._id],
-            candidateNames: [candidate.Fk_candidate_id.full_name],
-            startedAt: '',
-            endedAt: ''
-        });
+    const handleScheduleClick = (applicant) => {
+        // applicant is the Application object from getJobApplications
+        // It has Fk_candidate_id populated
+        const candidateId = applicant.Fk_candidate_id._id;
+        const candidateName = applicant.Fk_candidate_id.full_name;
+
+        // Check if already scheduled (rescheduling)
+        if (['Scheduled', 'Interviewing'].includes(applicant.status) && applicant.interviewDetails) {
+            setIsRescheduling(true);
+            setScheduleData({
+                candidateIds: [candidateId],
+                candidateNames: [candidateName],
+                startedAt: applicant.interviewDetails.started_at ? new Date(applicant.interviewDetails.started_at).toISOString().split('T')[0] : '',
+                endedAt: applicant.interviewDetails.ended_at ? new Date(applicant.interviewDetails.ended_at).toISOString().split('T')[0] : ''
+            });
+        } else {
+            setIsRescheduling(false);
+            setScheduleData({
+                candidateIds: [candidateId],
+                candidateNames: [candidateName],
+                startedAt: '',
+                endedAt: ''
+            });
+        }
         setShowScheduleModal(true);
     };
 
     const handleBulkScheduleClick = () => {
         if (selectedCandidates.length === 0) return;
 
+        // Bulk schedule is always new schedule for simplicity, unless we want to support bulk reschedule (complex).
+        // Let's assume bulk is for new schedules.
+        setIsRescheduling(false);
+
         // Find names for selected IDs
         const selectedApps = applicants.filter(app => selectedCandidates.includes(app._id));
         const names = selectedApps.map(app => app.Fk_candidate_id.full_name);
-        // We need Candidate IDs, not Application IDs for the controller (based on my controller update)
-        // Wait, the controller expects "candidateIds". 
-        // My previous logic passed "candidateId" from "Fk_candidate_id._id".
-        // The "selectedCandidates" state in this file actually stores APPLICATION IDs (see handleSelectCandidate).
-        // So I need to map Application IDs to Candidate IDs.
-
         const candidateIds = selectedApps.map(app => app.Fk_candidate_id._id);
 
         setScheduleData({
@@ -278,26 +294,42 @@ const JobDescriptions = () => {
         setScheduling(true);
 
         try {
-            const response = await fetch('http://localhost:5000/api/interviews/schedule', {
-                method: 'POST',
+            const url = isRescheduling
+                ? 'http://localhost:5000/api/interviews/schedule' // PUT
+                : 'http://localhost:5000/api/interviews/schedule'; // POST
+
+            const method = isRescheduling ? 'PUT' : 'POST';
+
+            // For reschedule, we only support single candidate for now based on UI
+            const payload = isRescheduling ? {
+                candidateId: scheduleData.candidateIds[0], // Single ID for update
+                jobId: selectedJobForApplicants._id,
+                startedAt: scheduleData.startedAt,
+                endedAt: scheduleData.endedAt
+            } : {
+                candidateIds: scheduleData.candidateIds,
+                jobId: selectedJobForApplicants._id,
+                startedAt: scheduleData.startedAt,
+                endedAt: scheduleData.endedAt
+            };
+
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    candidateIds: scheduleData.candidateIds,
-                    jobId: selectedJobForApplicants._id,
-                    startedAt: scheduleData.startedAt,
-                    endedAt: scheduleData.endedAt
-                })
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                alert(`Success! Scheduled interviews for ${data.successCount} candidate(s).`);
+                alert(isRescheduling ? 'Interview rescheduled successfully!' : `Success! Scheduled interviews for ${data.successCount} candidate(s).`);
                 setShowScheduleModal(false);
-                // Optionally refresh to show status?
-                // For now, closes modal.
+                setScheduleData({ candidateIds: [], candidateNames: [], startedAt: '', endedAt: '' }); // Reset
+                setIsRescheduling(false);
+                // Refresh applicants to show new status/dates
+                handleViewApplicants(selectedJobForApplicants, applicantStatusFilter);
             } else {
-                alert('Failed to schedule interviews: ' + data.message);
+                alert('Failed to process: ' + data.message);
             }
         } catch (error) {
             console.error('Error scheduling interviews:', error);
@@ -1211,6 +1243,18 @@ const JobDescriptions = () => {
                                                                     <i className="bi bi-calendar-event"></i>
                                                                 </button>
                                                             )}
+                                                            {['Scheduled', 'Interviewing'].includes(app.status) && (
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-info ms-1"
+                                                                    title="Edit Schedule"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleScheduleClick(app);
+                                                                    }}
+                                                                >
+                                                                    <i className="bi bi-pencil-square"></i>
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -1267,7 +1311,7 @@ const JobDescriptions = () => {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content bg-dark text-white">
                             <div className="modal-header border-secondary">
-                                <h5 className="modal-title">Schedule Interview</h5>
+                                <h5 className="modal-title">{isRescheduling ? 'Reschedule Interview' : 'Schedule Interview'}</h5>
                                 <button
                                     type="button"
                                     className="btn-close btn-close-white"
@@ -1304,12 +1348,12 @@ const JobDescriptions = () => {
                                             {scheduling ? (
                                                 <>
                                                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                    Scheduling...
+                                                    {isRescheduling ? 'Updating...' : 'Scheduling...'}
                                                 </>
                                             ) : (
                                                 <>
                                                     <i className="bi bi-send me-2"></i>
-                                                    Send Invitation
+                                                    {isRescheduling ? 'Update Schedule' : 'Send Invitation'}
                                                 </>
                                             )}
                                         </button>

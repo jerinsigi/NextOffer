@@ -112,7 +112,28 @@ exports.getJobApplications = async (req, res) => {
         const applications = await Application.find({ Fk_job_id: jobId })
             .populate('Fk_candidate_id', 'full_name email phone image_url skills education experience_years location current_role bio')
             .populate('Fk_resume_id')
+            .lean() // Convert to plain object to attach properties
             .sort({ createdAt: -1 });
+
+        // Populate interview details for scheduled/interviewing applications
+        for (let app of applications) {
+            if (['Scheduled', 'Interviewing'].includes(app.status)) {
+                // Find latest active session
+                const session = await InterviewSession.findOne({
+                    fk_candidate_id: app.Fk_candidate_id._id,
+                    fk_job_id: jobId,
+                    session_status: { $in: ['pending', 'ongoing', 'completed'] }
+                }).sort({ started_at: -1 });
+
+                if (session) {
+                    app.interviewDetails = {
+                        started_at: session.started_at,
+                        ended_at: session.ended_at,
+                        session_status: session.session_status
+                    };
+                }
+            }
+        }
 
         res.json(applications);
     } catch (err) {

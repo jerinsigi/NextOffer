@@ -342,13 +342,38 @@ const MyApplications = () => {
                                             </a>
                                         )}
                                         {['Scheduled', 'Interviewing'].includes(app.status) && (
-                                            <a
-                                                href="/user/interview"
-                                                className="btn btn-primary"
-                                                title="Go to Interview Center"
-                                            >
-                                                <i className="bi bi-camera-video me-2"></i>Start Interview
-                                            </a>
+                                            (() => {
+                                                const now = new Date();
+                                                const startTime = app.interviewDetails ? new Date(app.interviewDetails.started_at) : null;
+                                                const isStarted = startTime && now >= startTime;
+                                                const canStart = app.status === 'Interviewing' || isStarted;
+                                                const isEnded = app.interviewDetails && now > new Date(app.interviewDetails.ended_at);
+
+                                                if (isEnded && app.status !== 'Interviewing') {
+                                                    return (
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            disabled
+                                                            title="Interview time has passed"
+                                                        >
+                                                            <i className="bi bi-clock-history me-2"></i>Expired
+                                                        </button>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <a
+                                                        href={canStart ? "/user/interview" : "#"}
+                                                        className={`btn ${canStart ? 'btn-primary' : 'btn-secondary'}`}
+                                                        style={{ pointerEvents: canStart ? 'auto' : 'none', opacity: canStart ? 1 : 0.65 }}
+                                                        title={canStart ? "Go to Interview Center" : (startTime ? `Interview starts on ${startTime.toLocaleString()}` : "Interview details unavailable")}
+                                                        onClick={(e) => !canStart && e.preventDefault()}
+                                                    >
+                                                        <i className="bi bi-camera-video me-2"></i>
+                                                        {canStart ? "Start Interview" : (startTime ? "Not Started Yet" : "Check Details")}
+                                                    </a>
+                                                );
+                                            })()
                                         )}
                                     </div>
                                 </div>
