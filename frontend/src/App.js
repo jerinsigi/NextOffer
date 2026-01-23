@@ -26,7 +26,7 @@ import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
 import JobCategories from './components/admin/pages/JobCategories';
 import Skills from './components/admin/pages/Skills';
-import ComingSoon from './components/admin/pages/ComingSoon';
+// import ComingSoon from './components/admin/pages/ComingSoon';
 
 
 import UserLayout from './components/user/UserLayout';
@@ -56,7 +56,7 @@ import CompanyJobDescriptions from './components/company/pages/JobDescriptions';
 import CompanyInterviewMonitoring from './components/company/pages/InterviewMonitoring';
 
 import CompanyDocumentation from './components/company/pages/Documentation';
-import CompanyComingSoon from './components/company/pages/ComingSoon';
+// import CompanyComingSoon from './components/company/pages/ComingSoon';
 
 
 function App() {

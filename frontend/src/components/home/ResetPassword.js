@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';

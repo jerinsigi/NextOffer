@@ -361,12 +361,7 @@ const PracticeInterview = () => {
 
                             <div className="answer-section">
                                 <div className="recording-status">
-                                    {isRecording && (
-                                        <>
-                                            <span className="rec-indicator"></span>
-                                            <span>Recording your answer...</span>
-                                        </>
-                                    )}
+                                    {/* Recording indicator removed - isRecording state variable not defined */}
                                 </div>
 
                                 <div className="tips-box">
