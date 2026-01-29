@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@mediapipe/face_detection": "^0.4.1646425229",
     "@number-flow/react": "^0.5.10",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
@@ -21,6 +22,8 @@
     "react-phone-input-2": "^2.15.1",
     "react-router-dom": "^7.10.0",
     "react-scripts": "5.0.1",
+    "react-speech-recognition": "^4.0.1",
+    "regenerator-runtime": "^0.14.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

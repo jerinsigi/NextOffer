@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import 'regenerator-runtime/runtime';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { FaceDetection } from '@mediapipe/face_detection';
 import './InterviewCenter.css';
 
 const InterviewCenter = () => {
@@ -21,10 +24,16 @@ const InterviewCenter = () => {
     const [interviewProgress, setInterviewProgress] = useState(0);
     const [fullscreenExited, setFullscreenExited] = useState(false);
     const [exitWarningCount, setExitWarningCount] = useState(0);
+    const [interviewPaused, setInterviewPaused] = useState(false);
+    const [pauseReason, setPauseReason] = useState('');
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const containerRef = useRef(null);
     const streamRef = useRef(null);
+    const faceDetectionRef = useRef(null);
+    const canvasRef = useRef(null);
+    const detectionIntervalRef = useRef(null);
+    const interviewPausedRef = useRef(false);
 
     const { interviewId } = useParams();
     const [loading, setLoading] = useState(true);
@@ -39,6 +48,14 @@ const InterviewCenter = () => {
     const [useTextInput, setUseTextInput] = useState(false);
     const useTextInputRef = useRef(false);
     const retryCountRef = useRef(0);
+
+    // React Speech Recognition Hook
+    const {
+        transcript,
+        listening,
+        resetTranscript,
+        browserSupportsSpeechRecognition
+    } = useSpeechRecognition();
 
     // Fetch Interview Data
     useEffect(() => {
@@ -175,6 +192,331 @@ const InterviewCenter = () => {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, [interviewStage]);
 
+    // Comprehensive Keyboard & Window Monitoring for Integrity
+    useEffect(() => {
+        if (interviewStage !== 'active') return;
+
+        // Record violation helper
+        const recordViolation = (type, message) => {
+            console.warn(`⚠️ INTEGRITY VIOLATION: ${message}`);
+            setIntegrityStatus(prev => ({
+                ...prev,
+                tabSwitched: true,
+                violations: [...prev.violations, {
+                    type,
+                    timestamp: new Date().toISOString(),
+                    message
+                }]
+            }));
+        };
+
+        // 1. Keyboard Event Monitoring - Detect & Prevent Suspicious Keys
+        const handleKeyDown = (e) => {
+            // F12 - DevTools
+            if (e.key === 'F12') {
+                e.preventDefault();
+                recordViolation('devtools_attempt', 'Attempted to open DevTools (F12)');
+                alert('⚠️ WARNING: Opening developer tools is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Ctrl+Shift+I - DevTools
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                recordViolation('devtools_attempt', 'Attempted to open DevTools (Ctrl+Shift+I)');
+                alert('⚠️ WARNING: Opening developer tools is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Ctrl+Shift+J - Console
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                e.preventDefault();
+                recordViolation('devtools_attempt', 'Attempted to open Console (Ctrl+Shift+J)');
+                alert('⚠️ WARNING: Opening developer console is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Ctrl+Shift+C - Inspect Element
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                recordViolation('devtools_attempt', 'Attempted to open Inspect Element (Ctrl+Shift+C)');
+                alert('⚠️ WARNING: Using inspect element is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Ctrl+U - View Source
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                recordViolation('devtools_attempt', 'Attempted to view page source (Ctrl+U)');
+                alert('⚠️ WARNING: Viewing page source is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Windows/Meta Key - Start Menu
+            if (e.key === 'Meta' || e.key === 'OS') {
+                e.preventDefault();
+                recordViolation('window_switch_attempt', 'Windows/Meta key pressed');
+                alert('⚠️ WARNING: Pressing the Windows key is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Alt+Tab - App Switching
+            if (e.altKey && e.key === 'Tab') {
+                e.preventDefault();
+                recordViolation('app_switch_attempt', 'Alt+Tab detected - Application switching attempt');
+                alert('⚠️ WARNING: Switching applications is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // Ctrl+Tab - Browser Tab Switching
+            if (e.ctrlKey && e.key === 'Tab') {
+                e.preventDefault();
+                recordViolation('tab_switch_attempt', 'Ctrl+Tab detected - Tab switching attempt');
+                alert('⚠️ WARNING: Switching browser tabs is not allowed during the interview. This violation has been recorded.');
+                return false;
+            }
+
+            // F11 - Fullscreen Toggle (don't allow manual toggle)
+            if (e.key === 'F11') {
+                e.preventDefault();
+                recordViolation('fullscreen_toggle', 'F11 pressed - Fullscreen toggle attempt');
+                return false;
+            }
+
+            // Escape - Can exit fullscreen
+            if (e.key === 'Escape' && document.fullscreenElement) {
+                // Let the fullscreen handler catch this
+                recordViolation('escape_pressed', 'Escape key pressed during interview');
+            }
+
+            // Ctrl+W or Ctrl+F4 - Close Tab
+            if ((e.ctrlKey && e.key === 'w') || (e.ctrlKey && e.key === 'F4')) {
+                e.preventDefault();
+                recordViolation('tab_close_attempt', 'Attempted to close interview tab');
+                alert('⚠️ WARNING: You cannot close the interview tab. Please complete or end the interview properly.');
+                return false;
+            }
+        };
+
+        // 2. Window Blur Detection - Catches Alt+Tab, Win+D, etc.
+        const handleWindowBlur = () => {
+            recordViolation('window_focus_lost', 'Window focus lost - Possible app/window switching');
+        };
+
+        const handleWindowFocus = () => {
+            console.log("✅ Window focus regained");
+            setIntegrityStatus(prev => ({
+                ...prev,
+                tabSwitched: false
+            }));
+        };
+
+        // 3. Page Visibility API - Backup detection
+        const handleVisibility = () => {
+            if (document.hidden) {
+                recordViolation('tab_hidden', 'Tab hidden - Switched to another tab or minimized window');
+            } else {
+                console.log("✅ Tab visible again");
+                setIntegrityStatus(prev => ({
+                    ...prev,
+                    tabSwitched: false
+                }));
+            }
+        };
+
+        // 4. Context Menu Prevention (Right-click)
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+            recordViolation('context_menu_attempt', 'Right-click context menu blocked');
+            alert('⚠️ WARNING: Right-click is disabled during the interview. This violation has been recorded.');
+            return false;
+        };
+
+        // Add all event listeners
+        document.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('blur', handleWindowBlur);
+        window.addEventListener('focus', handleWindowFocus);
+        document.addEventListener('visibilitychange', handleVisibility);
+        document.addEventListener('contextmenu', handleContextMenu);
+
+        // Cleanup
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('blur', handleWindowBlur);
+            window.removeEventListener('focus', handleWindowFocus);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            document.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, [interviewStage]);
+
+    // MediaPipe Face Detection - Detects face presence and integrity
+    useEffect(() => {
+        if (interviewStage !== 'active') return;
+
+        const initializeFaceDetection = async () => {
+            try {
+                // Initialize MediaPipe Face Detection
+                const faceDetection = new FaceDetection({
+                    locateFile: (file) =>
+                        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+                });
+
+                faceDetection.setOptions({
+                    model: 'short', // 'short' for faces within 2 meters
+                    minDetectionConfidence: 0.5
+                });
+
+                // Track previous state to avoid duplicate violations
+                let lastFaceCount = 1;
+                let noFaceWarningShown = false;
+                let multipleFacesWarningShown = false;
+
+                faceDetection.onResults((results) => {
+                    const faceCount = results.detections.length;
+
+                    // No face detected
+                    if (faceCount === 0) {
+                        console.warn("⚠️ Face not detected");
+                        setIntegrityStatus(prev => ({
+                            ...prev,
+                            faceDetected: false
+                        }));
+
+                        // Pause interview if not already paused
+                        if (!interviewPausedRef.current) {
+                            interviewPausedRef.current = true;
+                            setInterviewPaused(true);
+                            setPauseReason('No face detected. Please position yourself in front of the camera.');
+
+                            // Stop speech recognition when paused
+                            SpeechRecognition.stopListening();
+
+                            // Record violation only once per occurrence
+                            if (lastFaceCount !== 0) {
+                                setIntegrityStatus(prev => ({
+                                    ...prev,
+                                    violations: [...prev.violations, {
+                                        type: 'no_face_detected',
+                                        timestamp: new Date().toISOString(),
+                                        message: 'Face not detected in frame - Interview paused'
+                                    }]
+                                }));
+                            }
+                        }
+                    }
+                    // Multiple faces detected
+                    else if (faceCount > 1) {
+                        console.warn("⚠️ Multiple faces detected");
+                        setIntegrityStatus(prev => ({
+                            ...prev,
+                            faceDetected: true,
+                            multipleFaces: true
+                        }));
+
+                        // Pause interview if not already paused
+                        if (!interviewPausedRef.current) {
+                            interviewPausedRef.current = true;
+                            setInterviewPaused(true);
+                            setPauseReason(`Multiple faces detected (${faceCount} people). Only you should be visible.`);
+
+                            // Stop speech recognition when paused
+                            SpeechRecognition.stopListening();
+
+                            // Record violation only once per occurrence
+                            if (lastFaceCount <= 1) {
+                                setIntegrityStatus(prev => ({
+                                    ...prev,
+                                    violations: [...prev.violations, {
+                                        type: 'multiple_faces',
+                                        timestamp: new Date().toISOString(),
+                                        message: `Multiple faces detected (${faceCount} faces) - Interview paused`
+                                    }]
+                                }));
+                            }
+                        }
+                    }
+                    // Exactly one face detected (good state)
+                    else {
+                        console.log("✅ Face detected properly");
+                        setIntegrityStatus(prev => ({
+                            ...prev,
+                            faceDetected: true,
+                            multipleFaces: false
+                        }));
+
+                        // Resume interview if it was paused due to face issues
+                        if (interviewPausedRef.current && (lastFaceCount === 0 || lastFaceCount > 1)) {
+                            console.log("✅ Face integrity restored - Resuming interview");
+                            interviewPausedRef.current = false;
+                            setInterviewPaused(false);
+                            setPauseReason('');
+
+                            // Restart speech recognition if not using text input
+                            if (!useTextInputRef.current) {
+                                setTimeout(() => {
+                                    SpeechRecognition.startListening({
+                                        continuous: true,
+                                        language: 'en-US'
+                                    });
+                                }, 500);
+                            }
+                        }
+                    }
+
+                    lastFaceCount = faceCount;
+                });
+
+                faceDetectionRef.current = faceDetection;
+
+                // Process video frames at regular intervals
+                const processFrame = async () => {
+                    if (videoRef.current && videoRef.current.readyState >= 2) {
+                        // Create canvas if not exists
+                        if (!canvasRef.current) {
+                            canvasRef.current = document.createElement('canvas');
+                            canvasRef.current.width = videoRef.current.videoWidth;
+                            canvasRef.current.height = videoRef.current.videoHeight;
+                        }
+
+                        // Draw current video frame to canvas
+                        const ctx = canvasRef.current.getContext('2d');
+                        ctx.drawImage(
+                            videoRef.current,
+                            0, 0,
+                            canvasRef.current.width,
+                            canvasRef.current.height
+                        );
+
+                        // Send to MediaPipe for detection
+                        await faceDetection.send({ image: videoRef.current });
+                    }
+                };
+
+                // Run face detection every 2 seconds (adjust for performance)
+                detectionIntervalRef.current = setInterval(processFrame, 2000);
+
+                console.log("✅ MediaPipe Face Detection initialized");
+
+            } catch (error) {
+                console.error("Error initializing face detection:", error);
+            }
+        };
+
+        initializeFaceDetection();
+
+        // Cleanup on unmount or stage change
+        return () => {
+            if (detectionIntervalRef.current) {
+                clearInterval(detectionIntervalRef.current);
+                detectionIntervalRef.current = null;
+            }
+            if (faceDetectionRef.current) {
+                faceDetectionRef.current.close();
+                faceDetectionRef.current = null;
+            }
+        };
+    }, [interviewStage]);
+
     const initializeCamera = async () => {
         try {
             // Stop any existing stream first
@@ -304,9 +646,7 @@ const InterviewCenter = () => {
         }
 
         // Stop speech recognition
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
-        }
+        SpeechRecognition.stopListening();
 
         // Submit current answer to backend
         if (currentAnswer.trim()) {
@@ -367,20 +707,8 @@ const InterviewCenter = () => {
                 if (!useTextInputRef.current) {
                     console.log('Starting speech recognition (Text Input Mode: OFF)');
 
-                    // On localhost, recommend text input but allow user to enable voice
-                    const isLocalhost = window.location.hostname === 'localhost' ||
-                        window.location.hostname === '127.0.0.1';
-
-                    if (isLocalhost && !speechError) {
-                        // First time on localhost - inform user
-                        console.warn('Development mode: Speech recognition may fail due to network requirements. You can use the "Type Instead" button.');
-                        setSpeechError('💡 Tip: Speech recognition requires internet connection. Use "Type Instead" button or try voice mode.');
-                        setUseTextInput(true);
-                        useTextInputRef.current = true;
-                    } else if (!isLocalhost || speechError === null) {
-                        // Production or user explicitly wants to try voice
-                        startSpeechRecognition();
-                    }
+                    // Start speech recognition
+                    startSpeechRecognition();
                 } else {
                     console.log('Skipping speech recognition (Text Input Mode: ON)');
                 }
@@ -388,152 +716,60 @@ const InterviewCenter = () => {
         }
         return () => {
             if (window.speechSynthesis) window.speechSynthesis.cancel();
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
-            }
+            SpeechRecognition.stopListening();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentQuestion, interviewStage, questions]); // Removed useTextInput to prevent re-reading
 
     // Speech Recognition Setup
+    // Sync transcript with currentAnswer - Update currentAnswer whenever transcript changes
+    useEffect(() => {
+        console.log('Transcript useEffect:', { listening, transcript, baseText: baseTextRef.current });
+        // Update currentAnswer with base text + new transcript
+        if (transcript || listening) {
+            const newAnswer = baseTextRef.current + transcript;
+            console.log('Setting currentAnswer to:', newAnswer);
+            setCurrentAnswer(newAnswer);
+        }
+    }, [transcript, listening]);
+
+    const baseTextRef = useRef('');
+
+    // Speech Recognition using react-speech-recognition library
     const startSpeechRecognition = () => {
-        console.log('Starting speech recognition...');
+        console.log('Starting speech recognition (Library)...');
 
-        // Check if already in text input mode - don't even try to start
         if (useTextInputRef.current) {
-            console.log('Text input mode is active, skipping speech recognition');
+            console.log('Text input mode is ON, skipping speech recognition');
             return;
         }
 
-        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-            console.error('Speech recognition not supported in this browser');
-            setSpeechError('Speech recognition is not supported in your browser. Please type your answer below.');
+        if (!browserSupportsSpeechRecognition) {
+            console.error('Browser does not support speech recognition');
+            setSpeechError('Speech recognition not supported in this browser.');
             setUseTextInput(true);
             useTextInputRef.current = true;
             return;
         }
 
-        // Check if we're on a secure context (HTTPS or localhost)
-        const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' ||
-            window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1';
+        setSpeechError(null);
+        baseTextRef.current = currentAnswer;
+        resetTranscript();
 
-        if (!isSecureContext) {
-            console.warn('Speech recognition requires HTTPS or localhost');
-            setSpeechError('Speech recognition requires a secure connection. Please type your answer below.');
-            setUseTextInput(true);
-            useTextInputRef.current = true;
-            return;
-        }
-
-        // Stop existing recognition if any
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-                recognitionRef.current = null;
-            } catch (e) {
-                console.log('No active recognition to stop');
-            }
-        }
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = () => {
+        console.log('Calling SpeechRecognition.startListening...');
+        SpeechRecognition.startListening({
+            continuous: true,
+            language: 'en-US'
+        }).then(() => {
             console.log('Speech recognition started successfully');
-            setIsListening(true);
-            setSpeechError(null); // Clear any previous errors
-        };
+        }).catch(err => {
+            console.error('Error starting speech recognition:', err);
+            setSpeechError('Failed to start speech recognition. Please try again.');
+        });
+    };
 
-        recognition.onresult = (event) => {
-            console.log('Speech recognition result received');
-            // let interimTranscript = ''; // Currently unused
-            let finalTranscript = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += transcript + ' ';
-                }
-                // Interim results not currently used
-            }
-
-            if (finalTranscript) {
-                console.log('Final transcript:', finalTranscript);
-                setCurrentAnswer(prev => prev + finalTranscript);
-            }
-        };
-
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-
-            if (event.error === 'not-allowed') {
-                setSpeechError('Microphone access denied. Please allow microphone access or use text input below.');
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-            } else if (event.error === 'network') {
-                console.log('Network error - switching to text input permanently');
-                setSpeechError('Speech recognition service unavailable (network error). Please type your answer below.');
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-                // Clean up recognition object
-                if (recognitionRef.current) {
-                    recognitionRef.current = null;
-                }
-            } else if (event.error === 'no-speech') {
-                console.log('No speech detected, continuing to listen...');
-                // Don't stop listening or switch to text input
-                return;
-            } else if (event.error === 'audio-capture') {
-                setSpeechError('Microphone not accessible. Please check your microphone or use text input below.');
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-            } else if (event.error === 'service-not-allowed') {
-                setSpeechError('Speech recognition service not allowed. Please type your answer below.');
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-            } else {
-                console.warn(`Speech recognition error: ${event.error}`);
-                setSpeechError(`Speech recognition error (${event.error}). Please type your answer below.`);
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-            }
-
-            setIsListening(false);
-        };
-
-        recognition.onend = () => {
-            console.log('Speech recognition ended');
-            setIsListening(false);
-
-            // Only restart if we're still in active interview and NOT in text input mode
-            if (interviewStage === 'active' && !useTextInputRef.current) {
-                console.log('Speech recognition ended unexpectedly, attempting restart...');
-                // Add a small delay before restart to prevent rapid cycling
-                setTimeout(() => {
-                    if (!useTextInputRef.current && interviewStage === 'active') {
-                        startSpeechRecognition();
-                    }
-                }, 500);
-            }
-        };
-
-        recognitionRef.current = recognition;
-
-        try {
-            recognition.start();
-            console.log('Recognition.start() called');
-        } catch (error) {
-            console.error('Error starting recognition:', error);
-            setSpeechError('Failed to start speech recognition. Please type your answer below.');
-            setUseTextInput(true);
-            useTextInputRef.current = true;
-        }
+    const stopSpeechRecognition = () => {
+        SpeechRecognition.stopListening();
     };
 
     const endInterview = () => {
@@ -600,7 +836,7 @@ const InterviewCenter = () => {
                         <h3>⚠️ Fullscreen Mode Exited</h3>
                         <p>You have exited fullscreen mode. This action has been recorded as an integrity violation.</p>
                         <p className="violation-count">
-                            Total Violations: <strong>{exitWarningCount}</strong>
+                            Total Violations: <strong>{integrityStatus.violations.length}</strong>
                         </p>
                         <div className="warning-message">
                             <i className="bi bi-info-circle me-2"></i>
@@ -774,6 +1010,38 @@ const InterviewCenter = () => {
             {/* Active Interview Stage */}
             {interviewStage === 'active' && (
                 <div className="active-interview">
+                    {/* Interview Paused Overlay */}
+                    {interviewPaused && (
+                        <div className="interview-paused-overlay">
+                            <div className="pause-content">
+                                <div className="pause-icon">
+                                    <i className="bi bi-pause-circle-fill"></i>
+                                </div>
+                                <h2>Interview Paused</h2>
+                                <div className="pause-reason">
+                                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                                    {pauseReason}
+                                </div>
+                                <div className="pause-instructions">
+                                    <h5>To Resume:</h5>
+                                    <ul>
+                                        {!integrityStatus.faceDetected && (
+                                            <li>Position yourself in front of the camera</li>
+                                        )}
+                                        {integrityStatus.multipleFaces && (
+                                            <li>Ensure you are the only person visible in the frame</li>
+                                        )}
+                                        <li>Wait for automatic resume (face is being monitored)</li>
+                                    </ul>
+                                </div>
+                                <div className="pause-status">
+                                    <div className="spinner-border text-warning me-2" role="status"></div>
+                                    <span>Waiting for face integrity to be restored...</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Top Bar */}
                     <div className="interview-topbar">
                         <div className="interview-progress-info">
@@ -878,12 +1146,12 @@ const InterviewCenter = () => {
                                 overflowY: 'auto'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
-                                    <i className={`bi bi-mic${isListening ? '-fill' : ''}`} style={{
+                                    <i className={`bi bi-mic${listening ? '-fill' : ''}`} style={{
                                         fontSize: '1.5rem',
-                                        color: isListening ? '#28a745' : speechError ? '#dc3545' : '#6c757d'
+                                        color: listening ? '#28a745' : speechError ? '#dc3545' : '#6c757d'
                                     }}></i>
                                     <h6 style={{ margin: 0, color: '#495057', flex: 1 }}>
-                                        {speechError ? speechError : (isListening ? 'Listening... (Your answer)' : useTextInput ? 'Type your answer below' : 'Start speaking to answer')}
+                                        {speechError ? speechError : (listening ? 'Listening... (Your answer)' : useTextInput ? 'Type your answer below' : 'Start speaking to answer')}
                                     </h6>
                                     {speechError && !useTextInput && (
                                         <button
@@ -919,15 +1187,7 @@ const InterviewCenter = () => {
                                                 startSpeechRecognition();
                                             } else {
                                                 // Switching to text mode - stop recognition
-                                                if (recognitionRef.current) {
-                                                    try {
-                                                        recognitionRef.current.stop();
-                                                        recognitionRef.current = null;
-                                                    } catch (e) {
-                                                        console.log('Recognition already stopped');
-                                                    }
-                                                }
-                                                setIsListening(false);
+                                                SpeechRecognition.stopListening();
                                             }
                                         }}
                                         style={{
@@ -964,15 +1224,37 @@ const InterviewCenter = () => {
                                         }}
                                     />
                                 ) : (
-                                    <p style={{
-                                        fontSize: '1rem',
-                                        lineHeight: '1.6',
-                                        color: currentAnswer ? '#212529' : '#6c757d',
-                                        fontStyle: currentAnswer ? 'normal' : 'italic',
-                                        margin: 0
-                                    }}>
-                                        {currentAnswer || 'Your spoken answer will appear here...'}
-                                    </p>
+                                    <>
+                                        <p style={{
+                                            fontSize: '1rem',
+                                            lineHeight: '1.6',
+                                            color: currentAnswer ? '#212529' : '#6c757d',
+                                            fontStyle: currentAnswer ? 'normal' : 'italic',
+                                            margin: 0
+                                        }}>
+                                            {currentAnswer || 'Your spoken answer will appear here...'}
+                                        </p>
+                                        <p style={{ fontSize: '0.8rem', color: '#dc3545', marginTop: '10px' }}>
+                                            DEBUG - Listening: {listening.toString()} | Transcript: "{transcript}" | Current Answer: "{currentAnswer}" | Browser Support: {browserSupportsSpeechRecognition.toString()}
+                                        </p>
+                                        {!listening && (
+                                            <button
+                                                onClick={startSpeechRecognition}
+                                                style={{
+                                                    marginTop: '10px',
+                                                    padding: '8px 15px',
+                                                    background: '#007bff',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '5px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <i className="bi bi-mic-fill me-2"></i>
+                                                Start Listening Manually
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
 

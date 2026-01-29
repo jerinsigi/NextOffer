@@ -6,10 +6,15 @@ const PracticeInterview = () => {
     const [selectedSkill, setSelectedSkill] = useState('');
     const [difficulty, setDifficulty] = useState('medium');
     const [currentQuestion, setCurrentQuestion] = useState(0);
-    // const [isRecording, setIsRecording] = useState(false); // Currently unused
     const [answers, setAnswers] = useState([]);
     const [sessionScore, setSessionScore] = useState(null);
+
+    // Speech Recognition State
+    const [isListening, setIsListening] = useState(false);
+    const [currentAnswer, setCurrentAnswer] = useState('');
+    const [speechError, setSpeechError] = useState(null);
     const videoRef = useRef(null);
+    const recognitionRef = useRef(null);
 
     // Available skills for practice
     const skillCategories = [
@@ -102,19 +107,24 @@ const PracticeInterview = () => {
 
     const questions = practiceStage === 'active' ? getQuestions() : [];
 
-    // Initialize camera for practice
+    // Initialize camera and speech recognition
     useEffect(() => {
         if (practiceStage === 'active') {
             initializeCamera();
+            startSpeechRecognition();
+        } else {
+            stopSpeechRecognition();
         }
+
         return () => {
             // eslint-disable-next-line react-hooks/exhaustive-deps
             if (videoRef.current && videoRef.current.srcObject) {
                 const tracks = videoRef.current.srcObject.getTracks();
                 tracks.forEach(track => track.stop());
             }
+            stopSpeechRecognition();
         };
-    }, [practiceStage]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [practiceStage, currentQuestion]); // Restart recognition when question changes
 
     const initializeCamera = async () => {
         try {
@@ -127,6 +137,86 @@ const PracticeInterview = () => {
         }
     };
 
+    const startSpeechRecognition = () => {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            setSpeechError('Speech recognition is not supported in this browser.');
+            return;
+        }
+
+        // Stop existing recognition if any
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setSpeechError(null);
+        };
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            // Append final transcript to current answer, preserve existing edits
+            if (finalTranscript) {
+                setCurrentAnswer(prev => prev + finalTranscript);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            if (event.error === 'not-allowed') {
+                setSpeechError('Microphone access denied.');
+            } else if (event.error === 'network') {
+                setSpeechError('Network error. Speech recognition unavailable.');
+            } else if (event.error !== 'no-speech') {
+                setSpeechError(`Error: ${event.error}`);
+            }
+            setIsListening(false);
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+            // Auto restart if still in active stage and not manually stopped
+            if (practiceStage === 'active' && !speechError) {
+                // startSpeechRecognition(); 
+                // Note: Infinite restart loops can be tricky, relying on useEffect deps to restart on question change is safer
+                // but for continuous listening within a question:
+            }
+        };
+
+        recognitionRef.current = recognition;
+        try {
+            recognition.start();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const stopSpeechRecognition = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+            recognitionRef.current = null;
+        }
+        setIsListening(false);
+    };
+
     const startPractice = () => {
         if (!selectedSkill) {
             alert('Please select a skill to practice');
@@ -134,35 +224,46 @@ const PracticeInterview = () => {
         }
         setPracticeStage('active');
         setCurrentQuestion(0);
-        // setIsRecording(true); // Currently unused
         setAnswers([]);
+        setCurrentAnswer('');
+        setSpeechError(null);
     };
 
     const nextQuestion = () => {
-        // Simulate recording answer
-        const mockAnswer = {
+        stopSpeechRecognition();
+
+        // Save current answer
+        const answerData = {
             questionIndex: currentQuestion,
+            question: questions[currentQuestion].question,
+            answer: currentAnswer,
             timestamp: new Date().toISOString(),
-            duration: Math.floor(Math.random() * 120) + 60 // Random duration between 60-180s
+            duration: 0 // Could calculate actual duration
         };
-        setAnswers([...answers, mockAnswer]);
+        setAnswers([...answers, answerData]);
 
         if (currentQuestion < questions.length - 1) {
             setCurrentQuestion(prev => prev + 1);
+            setCurrentAnswer(''); // Reset for next valid question
+            // Speech recog will restart via useEffect
         } else {
             endPractice();
         }
     };
 
     const endPractice = () => {
-        // setIsRecording(false); // Currently unused
-        // Generate mock feedback
+        stopSpeechRecognition();
+
+        // Generate mock feedback based on real interaction length/content
+        const wordCount = answers.reduce((acc, ans) => acc + (ans.answer ? ans.answer.split(' ').length : 0), 0) + (currentAnswer ? currentAnswer.split(' ').length : 0);
+        const randomBase = 70;
+
         const score = {
-            overall: Math.floor(Math.random() * 30) + 70, // 70-100
-            clarity: Math.floor(Math.random() * 30) + 70,
-            confidence: Math.floor(Math.random() * 30) + 70,
-            technical: Math.floor(Math.random() * 30) + 70,
-            timeManagement: Math.floor(Math.random() * 30) + 70
+            overall: Math.min(100, Math.floor(randomBase + (wordCount > 50 ? 20 : 0) + Math.random() * 10)),
+            clarity: Math.floor(Math.random() * 20) + 80,
+            confidence: Math.floor(Math.random() * 20) + 80,
+            technical: Math.floor(Math.random() * 20) + 80,
+            timeManagement: Math.floor(Math.random() * 20) + 80
         };
         setSessionScore(score);
         setPracticeStage('feedback');
@@ -173,7 +274,9 @@ const PracticeInterview = () => {
         setSelectedSkill('');
         setCurrentQuestion(0);
         setAnswers([]);
+        setCurrentAnswer('');
         setSessionScore(null);
+        setSpeechError(null);
     };
 
     return (
@@ -181,6 +284,7 @@ const PracticeInterview = () => {
             {/* Setup Stage */}
             {practiceStage === 'setup' && (
                 <div className="practice-setup">
+                    {/* ... (Existing setup UI code) ... */}
                     <div className="setup-header">
                         <h1>
                             <i className="bi bi-trophy me-2"></i>
@@ -194,9 +298,9 @@ const PracticeInterview = () => {
                     <div className="setup-content">
                         <div className="info-cards">
                             <div className="info-card">
-                                <i className="bi bi-shield-x"></i>
-                                <h4>No Integrity Monitoring</h4>
-                                <p>Practice freely without pressure. No violations recorded.</p>
+                                <i className="bi bi-mic"></i>
+                                <h4>Speech to Text</h4>
+                                <p>Answers are transcribed automatically using browser speech recognition.</p>
                             </div>
                             <div className="info-card">
                                 <i className="bi bi-graph-up"></i>
@@ -338,7 +442,16 @@ const PracticeInterview = () => {
                         <div className="video-panel">
                             <video ref={videoRef} autoPlay muted className="practice-video"></video>
                             <div className="video-overlay">
-                                <span className="video-label">Preview</span>
+                                <span className="video-label">
+                                    {isListening ? (
+                                        <span className="text-danger">
+                                            <i className="bi bi-record-circle-fill me-1 blink"></i>
+                                            Listening...
+                                        </span>
+                                    ) : (
+                                        <span>Preview</span>
+                                    )}
+                                </span>
                             </div>
                         </div>
 
@@ -360,27 +473,45 @@ const PracticeInterview = () => {
                             </div>
 
                             <div className="answer-section">
-                                <div className="recording-status">
-                                    {/* Recording indicator removed - isRecording state variable not defined */}
+                                <div className="recording-status mb-2">
+                                    {speechError && (
+                                        <div className="alert alert-warning py-2 mb-2">
+                                            <i className="bi bi-exclamation-triangle me-2"></i>
+                                            {speechError}
+                                        </div>
+                                    )}
+                                    <h5 className="text-muted mb-2">Your Answer:</h5>
+                                    <textarea
+                                        className="form-control"
+                                        rows="6"
+                                        value={currentAnswer}
+                                        onChange={(e) => setCurrentAnswer(e.target.value)}
+                                        placeholder="Speak to see your answer transcribed here, or type manually..."
+                                    ></textarea>
                                 </div>
 
-                                <div className="tips-box">
+                                <div className="tips-box mt-3">
                                     <h5>
                                         <i className="bi bi-lightbulb me-2"></i>
                                         Quick Tips
                                     </h5>
                                     <ul>
-                                        <li>Take a moment to structure your thoughts</li>
                                         <li>Speak clearly and at a comfortable pace</li>
                                         <li>Use examples to support your answer</li>
-                                        <li>It's okay to pause and think</li>
+                                        <li>Feel free to edit the text if transcription is inaccurate</li>
                                     </ul>
                                 </div>
 
-                                <div className="action-buttons">
-                                    <button className="btn btn-outline-secondary">
-                                        <i className="bi bi-skip-forward me-2"></i>
-                                        Skip Question
+                                <div className="action-buttons mt-3">
+                                    <button
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => {
+                                            stopSpeechRecognition();
+                                            startSpeechRecognition();
+                                        }}
+                                    >
+                                        <i className="bi bi-mic-mute me-2"></i>
+                                        Restart Mic
                                     </button>
                                     <button className="btn btn-primary" onClick={nextQuestion}>
                                         {currentQuestion < questions.length - 1 ? (
