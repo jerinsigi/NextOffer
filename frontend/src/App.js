@@ -41,6 +41,8 @@ import Notifications from './components/user/pages/Notifications';
 import HelpSupport from './components/user/pages/HelpSupport';
 import UserSettings from './components/user/pages/Settings';
 import JobOpportunities from './components/user/pages/JobOpportunities';
+import SpeechTest from './components/SpeechTest';
+import NativeSpeechTest from './components/NativeSpeechTest';
 
 import CompanyLayout from './components/company/CompanyLayout';
 import CompanyDashboard from './components/company/pages/Dashboard';
@@ -72,6 +74,8 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/help" element={<Help />} />
         <Route path="/company/register" element={<CompanyRegister />} />
+        <Route path="/speech-test" element={<SpeechTest />} />
+        <Route path="/native-speech-test" element={<NativeSpeechTest />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>

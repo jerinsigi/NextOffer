@@ -91,7 +91,7 @@ const UserLayout = () => {
             title: 'Job Opportunities',
             icon: 'bi-briefcase',
             path: '/user/jobs',
-            badge: 'NEW'
+            badge: null
         },
         {
             title: 'My Applications',
@@ -99,12 +99,7 @@ const UserLayout = () => {
             path: '/user/applications',
             badge: null
         },
-        {
-            title: 'Interview Center',
-            icon: 'bi-camera-video',
-            path: '/user/interview',
-            badge: null
-        },
+
         {
             title: 'Practice Interview',
             icon: 'bi-lightbulb',

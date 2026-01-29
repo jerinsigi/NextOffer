@@ -49,13 +49,35 @@ const InterviewCenter = () => {
     const useTextInputRef = useRef(false);
     const retryCountRef = useRef(0);
 
-    // React Speech Recognition Hook
+    // React Speech Recognition Hook with event handlers
     const {
         transcript,
         listening,
         resetTranscript,
         browserSupportsSpeechRecognition
-    } = useSpeechRecognition();
+    } = useSpeechRecognition({
+        onStart: () => {
+            console.log('🎤 Speech Recognition STARTED');
+        },
+        onEnd: () => {
+            console.log('🛑 Speech Recognition ENDED');
+        },
+        onError: (event) => {
+            console.error('❌ Speech Recognition ERROR:', event);
+        },
+        onResult: (event) => {
+            console.log('📝 Speech Recognition RESULT:', event);
+        }
+    });
+
+    // Sync transcript to currentAnswer in voice mode
+    useEffect(() => {
+        // Only update currentAnswer from transcript when NOT in text input mode
+        if (!useTextInput && transcript) {
+            console.log('📝 Updating currentAnswer with transcript:', transcript);
+            setCurrentAnswer(transcript.trim());
+        }
+    }, [transcript, useTextInput]);
 
     // Fetch Interview Data
     useEffect(() => {
@@ -388,9 +410,6 @@ const InterviewCenter = () => {
                             setInterviewPaused(true);
                             setPauseReason('No face detected. Please position yourself in front of the camera.');
 
-                            // Stop speech recognition when paused
-                            SpeechRecognition.stopListening();
-
                             // Record violation only once per occurrence
                             if (lastFaceCount !== 0) {
                                 setIntegrityStatus(prev => ({
@@ -418,9 +437,6 @@ const InterviewCenter = () => {
                             interviewPausedRef.current = true;
                             setInterviewPaused(true);
                             setPauseReason(`Multiple faces detected (${faceCount} people). Only you should be visible.`);
-
-                            // Stop speech recognition when paused
-                            SpeechRecognition.stopListening();
 
                             // Record violation only once per occurrence
                             if (lastFaceCount <= 1) {
@@ -648,14 +664,16 @@ const InterviewCenter = () => {
         // Stop speech recognition
         SpeechRecognition.stopListening();
 
-        // Submit current answer to backend
-        if (currentAnswer.trim()) {
-            await submitResponse(questions[currentQuestion].id, currentAnswer);
+        // Submit current answer to backend (use transcript if in voice mode, currentAnswer if in text mode)
+        const answerToSubmit = useTextInput ? currentAnswer : transcript;
+        if (answerToSubmit.trim()) {
+            await submitResponse(questions[currentQuestion].id, answerToSubmit);
         }
 
         // Move to next question
         if (currentQuestion < questions.length - 1) {
-            setCurrentAnswer(''); // Reset answer for next question
+            setCurrentAnswer(''); // Reset typed answer for next question
+            resetTranscript(); // Reset speech transcript for next question
             setCurrentQuestion(prev => prev + 1);
             setInterviewProgress(((currentQuestion + 2) / questions.length) * 100);
         } else {
@@ -716,31 +734,23 @@ const InterviewCenter = () => {
         }
         return () => {
             if (window.speechSynthesis) window.speechSynthesis.cancel();
-            SpeechRecognition.stopListening();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentQuestion, interviewStage, questions]); // Removed useTextInput to prevent re-reading
 
-    // Speech Recognition Setup
-    // Sync transcript with currentAnswer - Update currentAnswer whenever transcript changes
-    useEffect(() => {
-        console.log('Transcript useEffect:', { listening, transcript, baseText: baseTextRef.current });
-        // Update currentAnswer with base text + new transcript
-        if (transcript || listening) {
-            const newAnswer = baseTextRef.current + transcript;
-            console.log('Setting currentAnswer to:', newAnswer);
-            setCurrentAnswer(newAnswer);
-        }
-    }, [transcript, listening]);
-
-    const baseTextRef = useRef('');
+    // Speech Recognition - transcript is displayed directly in UI
 
     // Speech Recognition using react-speech-recognition library
     const startSpeechRecognition = () => {
-        console.log('Starting speech recognition (Library)...');
+        console.log('Starting speech recognition...');
 
         if (useTextInputRef.current) {
             console.log('Text input mode is ON, skipping speech recognition');
+            return;
+        }
+
+        if (listening) {
+            console.log('Already listening, skipping duplicate start');
             return;
         }
 
@@ -753,7 +763,6 @@ const InterviewCenter = () => {
         }
 
         setSpeechError(null);
-        baseTextRef.current = currentAnswer;
         resetTranscript();
 
         console.log('Calling SpeechRecognition.startListening...');
@@ -761,10 +770,10 @@ const InterviewCenter = () => {
             continuous: true,
             language: 'en-US'
         }).then(() => {
-            console.log('Speech recognition started successfully');
+            console.log('✅ Speech recognition started successfully');
         }).catch(err => {
-            console.error('Error starting speech recognition:', err);
-            setSpeechError('Failed to start speech recognition. Please try again.');
+            console.error('❌ Error starting speech recognition:', err);
+            setSpeechError(`Failed to start speech recognition: ${err.message}`);
         });
     };
 
@@ -1235,7 +1244,7 @@ const InterviewCenter = () => {
                                             {currentAnswer || 'Your spoken answer will appear here...'}
                                         </p>
                                         <p style={{ fontSize: '0.8rem', color: '#dc3545', marginTop: '10px' }}>
-                                            DEBUG - Listening: {listening.toString()} | Transcript: "{transcript}" | Current Answer: "{currentAnswer}" | Browser Support: {browserSupportsSpeechRecognition.toString()}
+                                            DEBUG - Listening: {listening.toString()} | Transcript: "{transcript}" | Current Answer: "{currentAnswer}" | Browser Support: {browserSupportsSpeechRecognition.toString()} | Text Mode: {useTextInput.toString()}
                                         </p>
                                         {!listening && (
                                             <button
