@@ -115,7 +115,7 @@ exports.changePassword = async (req, res) => {
 // Register
 exports.register = async (req, res) => {
     try {
-        const { username, email, password, usertype, phone, education, experience_years } = req.body;
+        const { username, full_name, email, password, usertype, phone, education, experience_years } = req.body;
         let image_url = '';
 
         if (req.file) {
@@ -167,7 +167,7 @@ exports.register = async (req, res) => {
                 await Candidate.findOneAndUpdate(
                     { email: email }, // Find by email
                     {
-                        full_name: username,
+                        full_name: full_name || username, // Use full_name if provided, else fallback to username
                         email: email, // ensure email is consistent
                         phone,
                         education,
@@ -214,7 +214,7 @@ exports.register = async (req, res) => {
         // Create specific user record based on type
         if (usertype === 'candidate') {
             const newCandidate = new Candidate({
-                full_name: username,
+                full_name: full_name || username, // Use full_name if provided, else fallback to username
                 email,
                 phone,
                 education,

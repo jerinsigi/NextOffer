@@ -11,16 +11,12 @@ import { signInWithPopup } from 'firebase/auth';
 const Register = () => {
     const [formData, setFormData] = React.useState({
         username: '',
+        full_name: '',
         email: '',
         password: '',
         confirmPassword: '',
         phone: '',
         education: '',
-        experience_years: '',
-        education: '',
-        experience_years: '',
-        education: '',
-        experience_years: '',
         experience_years: '',
         profileImage: null
     });
@@ -75,6 +71,7 @@ const Register = () => {
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('username', formData.username);
+            formDataToSend.append('full_name', formData.full_name);
             formDataToSend.append('email', formData.email);
             formDataToSend.append('password', formData.password);
             formDataToSend.append('usertype', 'candidate');
@@ -298,11 +295,26 @@ const Register = () => {
                                             </label>
                                             <input
                                                 type="text"
+                                                name="full_name"
+                                                value={formData.full_name}
+                                                onChange={handleChange}
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                placeholder="Enter your full name"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <label className="form-label text-light small fw-bold mb-2">
+                                                <i className="bi bi-person-badge me-2"></i>Username
+                                            </label>
+                                            <input
+                                                type="text"
                                                 name="username"
                                                 value={formData.username}
                                                 onChange={handleChange}
                                                 className="form-control form-control-dark p-3 rounded-3"
-                                                placeholder="Enter your full name"
+                                                placeholder="Choose a username"
                                                 required
                                             />
                                         </div>
