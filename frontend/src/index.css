@@ -1,16 +1,16 @@
 :root {
-  --primary-color: #6366f1;
-  /* Indigo */
-  --secondary-color: #8b5cf6;
-  /* Violet */
-  --dark-bg: #0f172a;
-  /* Slate 900 */
-  --darker-bg: #020617;
-  /* Slate 950 */
-  --light-text: #f8fafc;
-  /* Slate 50 */
-  --muted-text: #94a3b8;
-  /* Slate 400 */
+  --primary-color: #3b82f6;
+  /* Blue 500 */
+  --secondary-color: #1d4ed8;
+  /* Blue 700 */
+  --dark-bg: #000000;
+  /* Pure Black */
+  --darker-bg: #0a0a0a;
+  /* Almost Black / Rich Gray */
+  --light-text: #ffffff;
+  /* Pure White */
+  --muted-text: #a1a1aa;
+  /* Zinc 400 */
   --radius: 0.5rem;
 }
 
@@ -30,6 +30,7 @@ h5,
 h6 {
   color: var(--light-text);
   font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .text-primary {
@@ -44,21 +45,28 @@ h6 {
 .btn-primary {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover {
   background-color: var(--secondary-color);
   border-color: var(--secondary-color);
+  transform: translateY(-1px);
 }
 
 .btn-outline-light {
   color: var(--light-text);
-  border-color: var(--light-text);
+  border-color: rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
 }
 
 .btn-outline-light:hover {
   background-color: var(--light-text);
   color: var(--dark-bg);
+  border-color: var(--light-text);
 }
 
 /* Navbar */
@@ -68,7 +76,7 @@ h6 {
 
 .navbar-dark .navbar-nav .nav-link.active,
 .navbar-dark .navbar-nav .nav-link:hover {
-  color: var(--primary-color);
+  color: var(--light-text);
 }
 
 /* Cards */
@@ -134,12 +142,12 @@ h6 {
   animation: bounce 2s ease-in-out infinite;
 }
 
-/* Organic Shapes (CSS-based) */
+/* Organic Shapes (CSS-based) - UPDATED for Professional Look */
 .shape-blob {
   position: absolute;
   filter: blur(80px);
   z-index: -1;
-  opacity: 0.6;
+  opacity: 0.4;
 }
 
 .shape-blob-1 {
@@ -147,38 +155,25 @@ h6 {
   left: -10%;
   width: 600px;
   height: 600px;
-  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  animation: blob-float 10s infinite alternate;
+  background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
+  animation: none;
+  /* Removed animation for professionalism */
 }
 
 .shape-blob-2 {
-  bottom: 10%;
-  right: -10%;
+  bottom: 0%;
+  right: -5%;
   width: 500px;
   height: 500px;
-  background: linear-gradient(45deg, var(--secondary-color), #ec4899);
-  /* Violet to Pink */
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  animation: blob-float 12s infinite alternate-reverse;
-}
-
-@keyframes blob-float {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-
-  100% {
-    transform: translate(30px, 50px) rotate(10deg);
-  }
+  background: radial-gradient(circle, var(--secondary-color) 0%, transparent 70%);
+  animation: none;
 }
 
 /* Hero Section Override */
 .hero-section {
   position: relative;
   overflow: hidden;
-  background: transparent !important;
-  /* Remove old image bg */
+  background-color: var(--dark-bg) !important;
 }
 
 /* Section Backgrounds */
@@ -188,28 +183,23 @@ h6 {
 
 .bg-light {
   background-color: var(--dark-bg) !important;
-  /* Override light sections to dark */
 }
 
-/* Section Gradients */
+/* Section Gradients - Simplified for Professional Look */
 .bg-gradient-hero {
-  background: linear-gradient(180deg, var(--darker-bg) 0%, #1e1b4b 100%);
-  /* Slate 950 to Indigo 950 */
+  background: var(--dark-bg);
 }
 
 .bg-gradient-features {
-  background: linear-gradient(180deg, #4338ca 0%, #3730a3 100%);
-  /* Indigo 700 to Indigo 800 */
+  background: var(--darker-bg);
 }
 
 .bg-gradient-benefits {
-  background: linear-gradient(180deg, #7c3aed 0%, #6d28d9 100%);
-  /* Violet 600 to Violet 700 */
+  background: linear-gradient(180deg, var(--darker-bg) 0%, #000000 100%);
 }
 
 .bg-gradient-footer {
-  background: var(--darker-bg);
-  /* Slate 950 */
+  background: var(--dark-bg);
 }
 
 /* Wave Dividers */
@@ -268,7 +258,7 @@ section {
 
 /* Glassmorphism */
 .glass-card {
-  background: rgba(2, 6, 23, 0.6);
+  background: rgba(10, 10, 10, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -276,7 +266,7 @@ section {
 }
 
 .glass-card:hover {
-  background: rgba(2, 6, 23, 0.8);
+  background: rgba(10, 10, 10, 0.8);
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-5px);
 }
@@ -315,22 +305,23 @@ section {
 }
 
 .contact-form-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(30, 30, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .form-control-dark {
-  background-color: rgba(2, 6, 23, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--light-text);
   transition: all 0.3s ease;
 }
 
 .form-control-dark:focus {
-  background-color: rgba(2, 6, 23, 1);
+  background-color: rgba(255, 255, 255, 0.12);
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
   color: var(--light-text);
 }
 
@@ -377,9 +368,9 @@ section {
 }
 
 .comparison-card.new-way {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(10, 10, 10, 0.6);
   backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3);
 }
 
 .value-card {
@@ -394,7 +385,7 @@ section {
 
 /* Admin Form Controls */
 .form-select-dark {
-  background-color: rgba(2, 6, 23, 0.8);
+  background-color: rgba(10, 10, 10, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--light-text);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
@@ -453,7 +444,7 @@ section {
 
 .testimonials-column-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 40px -10px rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 15px 40px -10px rgba(59, 130, 246, 0.3) !important;
 }
 
 @media (max-width: 768px) {
@@ -464,9 +455,9 @@ section {
 }
 
 .form-select-dark:focus {
-  background-color: rgba(2, 6, 23, 1);
+  background-color: rgba(0, 0, 0, 1);
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
   color: var(--light-text);
 }
 
@@ -481,8 +472,8 @@ section {
 }
 
 .navbar.scrolled {
-  background: rgba(15, 23, 42, 0.85) !important;
-  /* Darker slate with opacity */
+  background: rgba(0, 0, 0, 0.85) !important;
+  /* Pure Black Opacity */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

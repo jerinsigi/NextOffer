@@ -50,10 +50,10 @@
 }
 
 .dropdown-item:hover {
-  background: rgba(99, 102, 241, 0.2) !important;
+  background: rgba(59, 130, 246, 0.2) !important;
   transform: translateX(5px);
 }
 
 .dropdown-item:active {
-  background: rgba(99, 102, 241, 0.3) !important;
+  background: rgba(59, 130, 246, 0.3) !important;
 }

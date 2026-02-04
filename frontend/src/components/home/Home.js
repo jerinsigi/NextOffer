@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../logo.svg';
-import { InterviewPracticeScroll } from './HeroScrollDemo';
-import { AnimatedTestimonialsDemo } from './TestimonialsDemo';
 import { TestimonialsColumns } from './TestimonialsColumns';
 import Footer from '../common/Footer';
 import Navbar from '../common/Navbar';
@@ -22,15 +20,31 @@ class Home extends PureComponent {
         initAnimations();
         window.addEventListener('scroll', this.handleScroll);
 
-        // Handle initial hash scroll
+        // Handle initial hash scroll with retry
         if (this.props.location && this.props.location.hash) {
             const id = this.props.location.hash.substring(1);
-            setTimeout(() => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 100); // Small delay to ensure render
+            this.scrollToSection(id);
+        }
+    }
+
+    scrollToSection = (id, attempt = 0) => {
+        // Max retries: 5 times (approx 1.5s total)
+        if (attempt > 5) return;
+
+        const element = document.getElementById(id);
+        if (element) {
+            // Offset for fixed navbar (approx 100px)
+            const headerOffset = 100;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
+        } else {
+            // Retry after small delay to allow render
+            setTimeout(() => this.scrollToSection(id, attempt + 1), 300);
         }
     }
 
@@ -83,9 +97,7 @@ class Home extends PureComponent {
         const { activeSection } = this.state;
         return (
             <div className="d-flex flex-column min-vh-100 position-relative overflow-hidden">
-                {/* Background Shapes */}
-                <div className="shape-blob shape-blob-1"></div>
-                <div className="shape-blob shape-blob-2"></div>
+                
 
                 {/* Navbar */}
                 <Navbar
@@ -97,88 +109,52 @@ class Home extends PureComponent {
                 {/* Main Content */}
                 <main className="flex-grow-1">
                     {/* Hero Section */}
-                    <section className="hero-section d-flex align-items-center text-center text-light bg-gradient-hero position-relative" style={{ minHeight: '100vh', paddingTop: '120px' }}>
-                        <div className="container">
+                    <section className="hero-section d-flex align-items-center text-center position-relative" style={{ minHeight: '100vh', paddingTop: '120px' }}>
+                        <div className="container position-relative z-2">
                             <div className="row justify-content-center">
                                 <div className="col-lg-10">
-                                    {/* Feature Badges */}
-                                    <div className="d-flex justify-content-center gap-3 mb-4 flex-wrap animate-on-scroll">
-                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
-                                            <i className="bi bi-check-circle me-2"></i>AI Resume Screening
-                                        </span>
-                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
-                                            <i className="bi bi-check-circle me-2"></i>Live Voice Interviews
-                                        </span>
-                                        <span className="badge bg-white bg-opacity-10 text-light px-3 py-2 rounded-pill border border-light border-opacity-25">
-                                            <i className="bi bi-check-circle me-2"></i>Integrity Monitoring
-                                        </span>
-                                    </div>
+                                    <div className="py-5">
+                                        <div className="mb-4">
+                                            <span className="badge bg-primary bg-opacity-10 text-white border border-primary border-opacity-25 rounded-pill px-3 py-2 animate-on-scroll">
+                                                <i className="bi bi-stars me-2"></i>AI-Powered Career Intelligence
+                                            </span>
+                                        </div>
 
-                                    <h1 className="display-1 fw-bold mb-4 animate-on-scroll">
-                                        AI-Powered Pre-Screening <br />
-                                        That <span className="text-primary">Eliminates Hiring Guesswork</span>
-                                    </h1>
-                                    <p className="lead mb-4 text-light opacity-75 animate-on-scroll" style={{ fontSize: '1.3rem' }}>
-                                        Replace manual resume reviews with AI-driven screening, multimodal interviews, <br />
-                                        and integrity enforcement—all in one automated platform.
-                                    </p>
+                                        <h1 className="display-2 fw-bold mb-4 animate-on-scroll tracking-tight text-white">
+                                            Ace Your Interview. <br />
+                                            <span className="text-primary">Land Your Dream Job.</span>
+                                        </h1>
+                                        <p className="lead mb-5 text-muted animate-on-scroll mx-auto" style={{ fontSize: '1.25rem', maxWidth: '700px', lineHeight: '1.8' }}>
+                                            The personal interview coach for everyone. Practice with real-time AI feedback on your speech, body language, and answers—tailored for any role.
+                                        </p>
 
-                                    {/* Key Statistics */}
-                                    <div className="row g-4 mb-5 mt-4 animate-on-scroll">
-                                        <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
-                                                <h2 className="display-4 fw-bold text-white mb-2">90%</h2>
-                                                <p className="text-light mb-0">Reduced Time-to-Hire</p>
+                                        {/* CTAs */}
+                                        <div className="d-flex justify-content-center gap-3 animate-on-scroll mb-5">
+                                            <button className="btn btn-primary btn-lg rounded-pill px-5 py-3" onClick={() => this.props.navigate('/register?type=user')}>
+                                                Start Practice
+                                            </button>
+                                            <button className="btn btn-outline-light btn-lg rounded-pill px-5 py-3" onClick={() => this.props.navigate('/company/register')}>
+                                                For Companies
+                                            </button>
+                                        </div>
+
+                                        <div className="pt-5 border-top border-white border-opacity-10 animate-on-scroll">
+                                            <p className="text-muted small text-uppercase spacing-wide mb-4">Candidates have landed offers at</p>
+                                            <div className="d-flex justify-content-center gap-5 align-items-center opacity-50 flex-wrap">
+                                                <span className="h5 mb-0 fw-bold text-white">Google</span>
+                                                <span className="h5 mb-0 fw-bold text-white">Microsoft</span>
+                                                <span className="h5 mb-0 fw-bold text-white">Amazon</span>
+                                                <span className="h5 mb-0 fw-bold text-white">Netflix</span>
+                                                <span className="h5 mb-0 fw-bold text-white h4">Uber</span>
                                             </div>
                                         </div>
-                                        <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
-                                                <h2 className="display-4 fw-bold text-white mb-2">100%</h2>
-                                                <p className="text-light mb-0">Candidate Authenticity</p>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="p-3 rounded-4 bg-primary bg-opacity-25 border border-primary border-opacity-50">
-                                                <h2 className="display-4 fw-bold text-white mb-2">3-Stage</h2>
-                                                <p className="text-light mb-0">AI Validation Pipeline</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* CTAs */}
-                                    <div className="d-flex justify-content-center gap-3 mb-5 animate-on-scroll flex-wrap">
-                                        <button className="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg">
-                                            <i className="bi bi-play-circle me-2"></i>Schedule Demo
-                                        </button>
-                                        <button className="btn btn-outline-light btn-lg px-5 py-3 rounded-pill">
-                                            Start Free Trial
-                                        </button>
-                                    </div>
-
-                                    {/* Scroll Indicator */}
-                                    <div className="position-absolute bottom-0 start-50 translate-middle-x mb-4 animate-on-scroll">
-                                        <a href="#about" className="text-light text-decoration-none">
-                                            <div className="d-flex flex-column align-items-center">
-                                                <small className="mb-2 opacity-75">Learn More</small>
-                                                <i className="bi bi-chevron-down fs-4 animate-bounce"></i>
-                                            </div>
-                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        {/* Wave Divider */}
-                        <div className="wave-divider bottom">
-                            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="wave-fill-features"></path>
-                            </svg>
-                        </div>
                     </section>
 
-                    {/* Scroll Animation Section */}
-                    <section className="scroll-animation-section position-relative" style={{ backgroundColor: '#020617', paddingTop: '0', paddingBottom: '0' }}>
-                        <InterviewPracticeScroll />
-                    </section>
+
 
                     {/* About Us Section: Mission & Comparison */}
                     <section className="py-5 bg-gradient-features position-relative" id="about">
@@ -297,17 +273,11 @@ class Home extends PureComponent {
                                 </div>
                             </div>
                         </div>
-                        {/* Wave Divider */}
-                        <div className="wave-divider bottom" style={{ transform: 'none' }}>
-                            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                                <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" className="wave-fill-footer"></path>
-                            </svg>
-                        </div>
                     </section>
 
                     {/* Features Section */}
                     <section className="py-5 bg-darker" id="features">
-                        <div className="container">
+                        <div className="container"><br />
                             <div className="text-center mb-5 animate-on-scroll">
                                 <h2 className="display-4 fw-bold">Key Features</h2>
                                 <p className="lead text-light opacity-75">A comprehensive suite of tools to validate candidate potential.</p>
@@ -347,12 +317,6 @@ class Home extends PureComponent {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        {/* Wave Divider */}
-                        <div className="wave-divider bottom">
-                            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-                                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="wave-fill-benefits"></path>
-                            </svg>
                         </div>
                     </section>
 
@@ -525,7 +489,7 @@ class Home extends PureComponent {
                                         </div>
                                         <div>
                                             <h5 className="fw-bold mb-1">Email</h5>
-                                            <p className="mb-1 text-light">hello@example.com</p>
+                                            <p className="mb-1 text-light">team.nextoffer@gmail.com</p>
                                             <small className="text-muted">We reply within 4 hours</small>
                                         </div>
                                     </div>
@@ -535,7 +499,7 @@ class Home extends PureComponent {
                                         </div>
                                         <div>
                                             <h5 className="fw-bold mb-1">Phone</h5>
-                                            <p className="mb-1 text-light">+1 (555) 234-5678</p>
+                                            <p className="mb-1 text-light">+91 98765 43210</p>
                                             <small className="text-muted">Mon-Fri, 9AM-6PM EST</small>
                                         </div>
                                     </div>
@@ -545,7 +509,7 @@ class Home extends PureComponent {
                                         </div>
                                         <div>
                                             <h5 className="fw-bold mb-1">Office</h5>
-                                            <p className="mb-1 text-light">5632 Market Street, San Francisco, CA 94102</p>
+                                            <p className="mb-1 text-light">Electronic City, Bengaluru, Karnataka 560100, India</p>
                                             <small className="text-muted">Visit us anytime</small>
                                         </div>
                                     </div>
@@ -570,8 +534,8 @@ class Home extends PureComponent {
                             {/* Right Column: Form */}
                             <div className="col-lg-6 animate-on-scroll delay-200">
                                 <div className="contact-form-card p-5 rounded-5 h-100">
-                                    <h3 className="fw-bold mb-2">Start Your Project</h3>
-                                    <p className="text-muted mb-4">Tell us about your project and we'll get back to you with a tailored solution.</p>
+                                    <h3 className="fw-bold mb-2">Get in Touch</h3>
+                                    <p className="text-muted mb-4">Have questions about our AI interview platform? We're here to help you succeed.</p>
 
                                     <form>
                                         <div className="mb-4">

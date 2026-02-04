@@ -6,15 +6,6 @@ import './Navbar.css';
 const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeDropdown, setActiveDropdown] = useState(null);
-
-    const handleMouseEnter = (dropdownName) => {
-        setActiveDropdown(dropdownName);
-    };
-
-    const handleMouseLeave = () => {
-        setActiveDropdown(null);
-    };
 
     const handleNavClick = (e, targetId) => {
         e.preventDefault();
@@ -23,7 +14,14 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
             // Already on home page, just scroll
             const element = document.getElementById(targetId);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
+                const headerOffset = 100;
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
                 // Update URL without reload
                 window.history.pushState(null, '', `/#${targetId}`);
             } else if (targetId === 'home') {
@@ -91,15 +89,11 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                             </li>
 
                             {/* Resources Dropdown */}
-                            <li
-                                className="nav-item dropdown"
-                                onMouseEnter={() => handleMouseEnter('resources')}
-                                onMouseLeave={handleMouseLeave}
-                            >
+                            <li className="nav-item dropdown">
                                 <span className="nav-link dropdown-toggle">
                                     Resources
                                 </span>
-                                <div className={`dropdown-menu ${activeDropdown === 'resources' ? 'show' : ''}`}>
+                                <div className="dropdown-menu">
                                     <div className="dropdown-content">
                                         <a
                                             href="#blog"
@@ -170,15 +164,11 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                             </button>
 
                             {/* Get Started Dropdown */}
-                            <div
-                                className="dropdown get-started-dropdown"
-                                onMouseEnter={() => handleMouseEnter('getstarted')}
-                                onMouseLeave={handleMouseLeave}
-                            >
+                            <div className="dropdown get-started-dropdown">
                                 <button className="btn btn-primary dropdown-toggle">
                                     Get Started
                                 </button>
-                                <div className={`dropdown-menu ${activeDropdown === 'getstarted' ? 'show' : ''}`}>
+                                <div className="dropdown-menu">
                                     <div className="dropdown-content">
                                         <button
                                             onClick={() => navigate('/register?type=user')}
@@ -191,7 +181,7 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                                             </div>
                                         </button>
                                         <button
-                                            onClick={() => navigate('/register?type=company')}
+                                            onClick={() => navigate('/company/register')}
                                             className="dropdown-item"
                                         >
                                             <i className="bi bi-building"></i>
