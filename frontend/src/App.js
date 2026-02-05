@@ -57,6 +57,7 @@ import CompanyInterviewMonitoring from './components/company/pages/InterviewMoni
 
 import CompanyDocumentation from './components/company/pages/Documentation';
 // import CompanyComingSoon from './components/company/pages/ComingSoon';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 
 function App() {
@@ -76,54 +77,60 @@ function App() {
         <Route path="/native-speech-test" element={<NativeSpeechTest />} />
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="companies" element={<Companies />} />
-          <Route path="users" element={<Users />} />
-          <Route path="jobs" element={<JobDescriptions />} />
-          <Route path="job-categories" element={<JobCategories />} />
-          <Route path="skills" element={<Skills />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="logs" element={<Logs />} />
-          <Route path="support" element={<Support />} />
-          <Route path="profile" element={<AdminProfile />} />
-          <Route path="documentation" element={<Documentation />} />
+        <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="companies" element={<Companies />} />
+            <Route path="users" element={<Users />} />
+            <Route path="jobs" element={<JobDescriptions />} />
+            <Route path="job-categories" element={<JobCategories />} />
+            <Route path="skills" element={<Skills />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="logs" element={<Logs />} />
+            <Route path="support" element={<Support />} />
+            <Route path="profile" element={<AdminProfile />} />
+            <Route path="documentation" element={<Documentation />} />
+          </Route>
         </Route>
 
         {/* User Routes */}
-        <Route path="/user" element={<UserLayout />}>
-          <Route index element={<UserDashboard />} />
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="profile" element={<UserProfile />} />
-          <Route path="jobs" element={<JobOpportunities />} />
-          <Route path="applications" element={<MyApplications />} />
-          <Route path="interview/:interviewId" element={<InterviewCenter />} />
-          <Route path="practice" element={<PracticeInterview />} />
-          <Route path="results" element={<ResultsFeedback />} />
-          <Route path="skills" element={<SkillDevelopment />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="help" element={<HelpSupport />} />
-          <Route path="settings" element={<UserSettings />} />
+        <Route element={<ProtectedRoute allowedRoles={['candidate', 'user']} />}>
+          <Route path="/user" element={<UserLayout />}>
+            <Route index element={<UserDashboard />} />
+            <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="jobs" element={<JobOpportunities />} />
+            <Route path="applications" element={<MyApplications />} />
+            <Route path="interview/:interviewId" element={<InterviewCenter />} />
+            <Route path="practice" element={<PracticeInterview />} />
+            <Route path="results" element={<ResultsFeedback />} />
+            <Route path="skills" element={<SkillDevelopment />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="help" element={<HelpSupport />} />
+            <Route path="settings" element={<UserSettings />} />
+          </Route>
         </Route>
 
         {/* Company Routes */}
-        <Route path="/company" element={<CompanyLayout />}>
-          <Route index element={<CompanyDashboard />} />
-          <Route path="dashboard" element={<CompanyDashboard />} />
-          <Route path="profile" element={<CompanyProfile />} />
-          <Route path="jobs" element={<CompanyJobDescriptions />} />
+        <Route element={<ProtectedRoute allowedRoles={['company']} />}>
+          <Route path="/company" element={<CompanyLayout />}>
+            <Route index element={<CompanyDashboard />} />
+            <Route path="dashboard" element={<CompanyDashboard />} />
+            <Route path="profile" element={<CompanyProfile />} />
+            <Route path="jobs" element={<CompanyJobDescriptions />} />
 
-          <Route path="interviews" element={<CompanyInterviewMonitoring />} />
-          <Route path="integrity" element={<CompanyIntegrity />} />
-          <Route path="reports" element={<CompanyReports />} />
-          <Route path="logs" element={<CompanyLogs />} />
-          <Route path="support" element={<CompanySupport />} />
-          <Route path="documentation" element={<CompanyDocumentation />} />
-          <Route path="settings" element={<CompanySettings />} />
+            <Route path="interviews" element={<CompanyInterviewMonitoring />} />
+            <Route path="integrity" element={<CompanyIntegrity />} />
+            <Route path="reports" element={<CompanyReports />} />
+            <Route path="logs" element={<CompanyLogs />} />
+            <Route path="support" element={<CompanySupport />} />
+            <Route path="documentation" element={<CompanyDocumentation />} />
+            <Route path="settings" element={<CompanySettings />} />
 
-          <Route path="users" element={<CompanyUsers />} />
+            <Route path="users" element={<CompanyUsers />} />
+          </Route>
         </Route>
 
       </Routes>

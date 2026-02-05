@@ -84,11 +84,12 @@
     white-space: nowrap;
 }
 
-.brand-logo {
-    height: 32px;
-    width: 32px;
+.sidebar-brand .brand-logo {
+    height: 50px;
+    width: auto;
+    display: block;
+    object-fit: contain;
     flex-shrink: 0;
-    filter: brightness(0) saturate(100%) invert(52%) sepia(85%) saturate(2421%) hue-rotate(228deg) brightness(100%) contrast(92%);
 }
 
 .brand-text {

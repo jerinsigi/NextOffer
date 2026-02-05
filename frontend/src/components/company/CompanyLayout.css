@@ -61,9 +61,11 @@
     white-space: nowrap;
 }
 
-.brand-logo {
+.sidebar-brand .brand-logo {
     height: 32px;
-    width: 32px;
+    width: auto;
+    display: block;
+    object-fit: contain;
     flex-shrink: 0;
 }
 

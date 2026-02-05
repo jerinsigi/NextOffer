@@ -34,8 +34,7 @@ const Footer = () => {
                     {/* Brand Section */}
                     <div className="col-lg-4">
                         <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none text-light mb-4">
-                            <img src={logo} alt="NextOffer Logo" style={{ height: '32px', width: 'auto' }} />
-                            <span className="fs-4 fw-bold">NextOffer</span>
+                            <img src={logo} alt="NextOffer Logo" style={{ height: '40px', width: 'auto' }} />
                         </Link>
                         <p className="text-muted mb-4" style={{ maxWidth: '300px' }}>
                             Empowering recruitment with AI-driven screening, automated interviews, and integrity enforcement.

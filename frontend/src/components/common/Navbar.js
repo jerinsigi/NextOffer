@@ -7,8 +7,10 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
     const handleNavClick = (e, targetId) => {
-        e.preventDefault();
+        if (e?.preventDefault) e.preventDefault();
 
         if (location.pathname === '/') {
             // Already on home page, just scroll
@@ -38,6 +40,28 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
         }
     };
 
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 991) setMobileMenuOpen(false);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    useEffect(() => {
+        if (!mobileMenuOpen) return;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') setMobileMenuOpen(false);
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, [mobileMenuOpen]);
+
     return (
         <nav className={`enhanced-navbar fixed-top ${scrolled ? 'scrolled' : ''}`}>
             <div className="container">
@@ -54,7 +78,6 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                         }}
                     >
                         <img src={logo} alt="NextOffer Logo" className="brand-logo" />
-                        <span className="fw-bold text-white" style={{ fontSize: '1.75rem', letterSpacing: '-0.5px' }}>NextOffer</span>
                     </Link>
 
                     {/* Desktop Navigation */}
@@ -197,8 +220,81 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
                     </div>
 
                     {/* Mobile Menu Toggle */}
-                    <button className="mobile-menu-toggle" type="button">
+                    <button
+                        className={`mobile-menu-toggle ${mobileMenuOpen ? 'open' : ''}`}
+                        type="button"
+                        aria-label="Toggle navigation"
+                        aria-expanded={mobileMenuOpen}
+                        onClick={() => setMobileMenuOpen((v) => !v)}
+                    >
                         <span className="navbar-toggler-icon"></span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Mobile Drawer Menu */}
+            <div
+                className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+            />
+            <div
+                className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Mobile navigation"
+            >
+                <div className="mobile-nav-header">
+                    <span className="mobile-nav-title">Menu</span>
+                    <button
+                        type="button"
+                        className="mobile-nav-close"
+                        aria-label="Close menu"
+                        onClick={() => setMobileMenuOpen(false)}
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div className="mobile-nav-section">
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'home'); setMobileMenuOpen(false); }}>
+                        Home
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'about'); setMobileMenuOpen(false); }}>
+                        About
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'features'); setMobileMenuOpen(false); }}>
+                        Features
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'contact'); setMobileMenuOpen(false); }}>
+                        Contact
+                    </button>
+                </div>
+
+                <div className="mobile-nav-section">
+                    <div className="mobile-nav-section-title">Resources</div>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'blog'); setMobileMenuOpen(false); }}>
+                        Blog
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'documentation'); setMobileMenuOpen(false); }}>
+                        Documentation
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'case-studies'); setMobileMenuOpen(false); }}>
+                        Case Studies
+                    </button>
+                    <button className="mobile-nav-link" onClick={(e) => { handleNavClick(e, 'faq'); setMobileMenuOpen(false); }}>
+                        FAQ
+                    </button>
+                </div>
+
+                <div className="mobile-nav-actions">
+                    <button className="btn btn-login" onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}>
+                        Login
+                    </button>
+                    <button className="btn btn-primary" onClick={() => { setMobileMenuOpen(false); navigate('/register?type=user'); }}>
+                        Get Started
+                    </button>
+                    <button className="btn btn-primary" onClick={() => { setMobileMenuOpen(false); navigate('/company/register'); }}>
+                        For Companies
                     </button>
                 </div>
             </div>

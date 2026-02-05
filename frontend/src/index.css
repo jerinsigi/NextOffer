@@ -12,11 +12,6 @@
   --muted-text: #a1a1aa;
   /* Zinc 400 */
   --radius: 0.5rem;
-
-  /* Bootstrap Theme Color Overrides - Force Blue Theme */
-  --bs-primary: #3b82f6;
-  --bs-primary-rgb: 59, 130, 246;
-  --bs-blue: #3b82f6;
 }
 
 body {

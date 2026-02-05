@@ -64,7 +64,7 @@ class Home extends PureComponent {
     }
 
     scrollToTop = (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
