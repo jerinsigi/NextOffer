@@ -16,12 +16,17 @@
 }
 
 .documentation-header h1 {
-    color: var(--light-text);
+    color: #ffffff !important;
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
+    background: none !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-clip: initial !important;
 }
 
 .documentation-header h1 i {
@@ -124,11 +129,16 @@
 }
 
 .doc-section-header h2 {
-    color: var(--light-text);
+    color: #ffffff !important;
     font-size: 1.75rem;
     font-weight: 600;
     display: flex;
     align-items: center;
+    background: none !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-clip: initial !important;
 }
 
 .doc-section-header h2 i {
@@ -144,11 +154,17 @@
 }
 
 .doc-content-block h3 {
-    color: var(--light-text);
+    color: #ffffff !important;
     font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
+    background: none !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-clip: initial !important;
 }
+
 
 .content-description {
     color: var(--muted-text);
@@ -187,7 +203,7 @@
 }
 
 .doc-quick-links h4 {
-    color: var(--light-text);
+    color: #ffffff;
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 1rem;

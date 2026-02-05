@@ -46,7 +46,7 @@
 .metric-value {
     font-size: 2.5rem;
     font-weight: 700;
-    color: var(--light-text);
+    color: #ffffff;
     line-height: 1;
     margin-bottom: 0.5rem;
 }
@@ -195,7 +195,7 @@
 
 .funnel-label {
     font-size: 0.875rem;
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }

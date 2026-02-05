@@ -94,8 +94,8 @@ const Skills = () => {
     };
 
     const filteredSkills = skills.filter(skill =>
-        skill.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        skill.category.toLowerCase().includes(searchTerm.toLowerCase())
+        skill.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        skill.category?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

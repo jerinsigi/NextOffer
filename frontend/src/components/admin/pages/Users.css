@@ -1,5 +1,16 @@
 /* Users Page Styles */
 
+/* Ensure page doesn't overflow */
+.dashboard-container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Ensure dashboard card doesn't overflow */
+.dashboard-card {
+    overflow: hidden !important;
+}
+
 /* Card Header Custom */
 .card-header-custom {
     display: flex;
@@ -14,6 +25,12 @@
 .card-header-custom .card-title {
     margin: 0;
     min-width: 150px;
+    color: #ffffff !important;
+    background: none !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-clip: initial !important;
 }
 
 .users-filters {
@@ -48,16 +65,16 @@
 }
 
 .users-content {
-    display: flex;
-    gap: 0;
+    position: relative;
     height: calc(100vh - 450px);
     min-height: 500px;
 }
 
 .users-table-wrapper {
-    flex: 1;
-    overflow-x: auto;
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
+    overflow-x: auto;
 }
 
 .users-table {
@@ -119,7 +136,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -261,12 +278,18 @@
 
 /* User Details Panel */
 .user-details-panel {
-    width: 350px;
-    background: rgba(2, 6, 23, 0.6);
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 400px;
+    background: rgba(10, 10, 10, 0.98);
     border-left: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
     animation: slideInRight 0.3s ease;
+    z-index: 100;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes slideInRight {
@@ -291,7 +314,7 @@
 
 .panel-header h5 {
     margin: 0;
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 600;
 }
 
@@ -319,13 +342,15 @@
     padding-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 1.5rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .user-avatar-large {
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -336,7 +361,7 @@
 }
 
 .user-profile h4 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.25rem;
     font-size: 1.25rem;
 }
@@ -347,10 +372,11 @@
 
 .detail-section {
     margin-bottom: 1.5rem;
+    overflow-x: hidden;
 }
 
 .detail-section h6 {
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 600;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
@@ -363,17 +389,23 @@
     align-items: center;
     padding: 0.5rem 0;
     gap: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .detail-label {
     color: var(--muted-text);
     font-size: 0.875rem;
+    flex-shrink: 0;
 }
 
 .detail-value {
     color: var(--light-text);
     font-weight: 500;
     text-align: right;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 200px;
 }
 
 /* Responsive Design */
@@ -511,4 +543,18 @@
 .modal-content {
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Loading Container */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    width: 100%;
+}
+
+.loading-container .spinner-border {
+    width: 3rem;
+    height: 3rem;
 }

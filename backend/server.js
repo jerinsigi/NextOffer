@@ -64,6 +64,9 @@ app.use('/api/interviews', interviewRouter);
 const responseRouter = require('./routes/responseRoutes');
 app.use('/api/responses', responseRouter);
 
+const contactRouter = require('./routes/contactRoutes');
+app.use('/api/contact', contactRouter);
+
 
 module.exports = app;
 

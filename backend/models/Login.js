@@ -22,7 +22,7 @@ const loginSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'pending'],
+        enum: ['active', 'inactive', 'pending', 'suspended'],
         default: 'pending'
     },
     otp: {
@@ -31,6 +31,8 @@ const loginSchema = new mongoose.Schema({
     otpExpires: {
         type: Date
     }
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model('Login', loginSchema);

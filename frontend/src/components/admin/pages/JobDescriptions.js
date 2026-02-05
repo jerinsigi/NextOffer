@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './JobDescriptions.css';
 
 const JobDescriptions = () => {
@@ -6,188 +6,44 @@ const JobDescriptions = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [companyFilter, setCompanyFilter] = useState('all');
     const [selectedJob, setSelectedJob] = useState(null);
+    const [jobsData, setJobsData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
+    // Fetch jobs from database
+    useEffect(() => {
+        fetchJobs();
+    }, []);
 
-    // Sample job data
-    const jobsData = [
-        {
-            id: 1,
-            title: 'Senior Full Stack Developer',
-            company: 'TechCorp Inc.',
-            department: 'Engineering',
-            location: 'San Francisco, CA',
-            type: 'Full-time',
-            experience: '5-7 years',
-            salary: '$120k - $160k',
-            status: 'Active',
-            postedDate: '2024-11-15',
-            expiryDate: '2025-01-15',
-            applications: 147,
-            shortlisted: 12,
-            interviewed: 8,
-            hired: 0,
-            views: 1243,
-            description: 'We are looking for an experienced Full Stack Developer to join our growing team...',
-            requirements: ['React.js', 'Node.js', 'MongoDB', 'AWS', 'Docker'],
-            benefits: ['Health Insurance', '401(k)', 'Remote Work', 'Stock Options']
-        },
-        {
-            id: 2,
-            title: 'Product Manager',
-            company: 'Innovate Solutions',
-            department: 'Product',
-            location: 'New York, NY',
-            type: 'Full-time',
-            experience: '3-5 years',
-            salary: '$100k - $140k',
-            status: 'Active',
-            postedDate: '2024-11-20',
-            expiryDate: '2025-01-20',
-            applications: 89,
-            shortlisted: 15,
-            interviewed: 6,
-            hired: 1,
-            views: 876,
-            description: 'Join our product team to drive innovation and user-centric design...',
-            requirements: ['Product Strategy', 'Agile', 'User Research', 'Analytics'],
-            benefits: ['Health Insurance', 'Flexible Hours', 'Professional Development']
-        },
-        {
-            id: 3,
-            title: 'DevOps Engineer',
-            company: 'StartupX',
-            department: 'Infrastructure',
-            location: 'Austin, TX',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$110k - $150k',
-            status: 'Closed',
-            postedDate: '2024-10-05',
-            expiryDate: '2024-12-05',
-            applications: 234,
-            shortlisted: 20,
-            interviewed: 12,
-            hired: 2,
-            views: 2134,
-            description: 'Looking for a DevOps Engineer to build and maintain our infrastructure...',
-            requirements: ['Kubernetes', 'CI/CD', 'AWS', 'Terraform', 'Linux'],
-            benefits: ['Health Insurance', 'Equity', 'Unlimited PTO']
-        },
-        {
-            id: 4,
-            title: 'UX/UI Designer',
-            company: 'MegaCorp Ltd.',
-            department: 'Design',
-            location: 'Seattle, WA',
-            type: 'Contract',
-            experience: '2-4 years',
-            salary: '$80k - $110k',
-            status: 'Active',
-            postedDate: '2024-11-25',
-            expiryDate: '2025-01-25',
-            applications: 56,
-            shortlisted: 8,
-            interviewed: 3,
-            hired: 0,
-            views: 567,
-            description: 'We need a creative UX/UI Designer to craft beautiful user experiences...',
-            requirements: ['Figma', 'Adobe XD', 'User Research', 'Prototyping'],
-            benefits: ['Health Insurance', 'Remote Work', 'Design Budget']
-        },
-        {
-            id: 5,
-            title: 'Data Scientist',
-            company: 'TechVision',
-            department: 'Data Analytics',
-            location: 'Boston, MA',
-            type: 'Full-time',
-            experience: '3-5 years',
-            salary: '$115k - $155k',
-            status: 'Active',
-            postedDate: '2024-11-28',
-            expiryDate: '2025-01-28',
-            applications: 198,
-            shortlisted: 18,
-            interviewed: 10,
-            hired: 0,
-            views: 1456,
-            description: 'Join our data team to build ML models and drive data-driven decisions...',
-            requirements: ['Python', 'Machine Learning', 'SQL', 'TensorFlow', 'Statistics'],
-            benefits: ['Health Insurance', '401(k)', 'Learning Budget', 'Flexible Hours']
-        },
-        {
-            id: 6,
-            title: 'Mobile App Developer',
-            company: 'Global Industries',
-            department: 'Mobile',
-            location: 'Chicago, IL',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$105k - $145k',
-            status: 'Draft',
-            postedDate: '2024-12-01',
-            expiryDate: '2025-02-01',
-            applications: 0,
-            shortlisted: 0,
-            interviewed: 0,
-            hired: 0,
-            views: 0,
-            description: 'Seeking an experienced Mobile Developer to build cross-platform apps...',
-            requirements: ['React Native', 'iOS', 'Android', 'JavaScript', 'Firebase'],
-            benefits: ['Health Insurance', 'Stock Options', 'Remote Work']
-        },
-        {
-            id: 7,
-            title: 'Backend Engineer',
-            company: 'Future Tech',
-            department: 'Engineering',
-            location: 'Remote',
-            type: 'Full-time',
-            experience: '5-8 years',
-            salary: '$130k - $170k',
-            status: 'Active',
-            postedDate: '2024-11-10',
-            expiryDate: '2025-01-10',
-            applications: 312,
-            shortlisted: 25,
-            interviewed: 15,
-            hired: 1,
-            views: 2876,
-            description: 'Looking for a senior backend engineer to architect scalable systems...',
-            requirements: ['Go', 'Microservices', 'PostgreSQL', 'Redis', 'Kafka'],
-            benefits: ['Health Insurance', 'Remote Work', '401(k)', 'Unlimited PTO']
-        },
-        {
-            id: 8,
-            title: 'Marketing Manager',
-            company: 'Enterprise Corp',
-            department: 'Marketing',
-            location: 'Los Angeles, CA',
-            type: 'Full-time',
-            experience: '4-6 years',
-            salary: '$95k - $130k',
-            status: 'Paused',
-            postedDate: '2024-11-01',
-            expiryDate: '2025-01-01',
-            applications: 45,
-            shortlisted: 5,
-            interviewed: 2,
-            hired: 0,
-            views: 456,
-            description: 'Lead our marketing initiatives and drive brand awareness...',
-            requirements: ['Digital Marketing', 'SEO', 'Content Strategy', 'Analytics'],
-            benefits: ['Health Insurance', 'Bonus', 'Flexible Hours']
+    const fetchJobs = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('http://localhost:5000/api/job-descriptions/admin/all');
+            if (!response.ok) {
+                throw new Error('Failed to fetch jobs');
+            }
+            const data = await response.json();
+            setJobsData(data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching jobs:', err);
+            setError('Failed to load job descriptions. Please try again later.');
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
-    const companies = ['All Companies', ...new Set(jobsData.map(job => job.company))];
+    const companies = ['All Companies', ...new Set(jobsData.map(job => 
+        job.Fk_company_id?.company_name || 'Unknown Company'
+    ))];
 
     const filteredJobs = jobsData.filter(job => {
-        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.department.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
-        const matchesCompany = companyFilter === 'all' || job.company === companyFilter;
+        const companyName = job.Fk_company_id?.company_name || '';
+        const matchesSearch = job.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            job.department?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'all' || job.job_status === statusFilter;
+        const matchesCompany = companyFilter === 'all' || companyName === companyFilter;
         return matchesSearch && matchesStatus && matchesCompany;
     });
 
@@ -215,35 +71,72 @@ const JobDescriptions = () => {
         setSelectedJob(job);
     };
 
-    const handleEditJob = (job) => {
-        console.log('Editing job:', job);
-    };
 
-    const handleCloneJob = (jobId) => {
-        console.log('Cloning job:', jobId);
-    };
-
-    const handlePauseJob = (jobId) => {
-        console.log('Pausing job:', jobId);
-    };
-
-    const handleActivateJob = (jobId) => {
-        console.log('Activating job:', jobId);
-    };
-
-    const handleCloseJob = (jobId) => {
-        if (window.confirm('Are you sure you want to close this job posting?')) {
-            console.log('Closing job:', jobId);
+    const handlePauseJob = async (jobId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/job-descriptions/${jobId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ job_status: 'Paused' })
+            });
+            if (response.ok) {
+                fetchJobs(); // Refresh the list
+            }
+        } catch (err) {
+            console.error('Error pausing job:', err);
         }
     };
 
-    const handleDeleteJob = (jobId) => {
+    const handleActivateJob = async (jobId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/job-descriptions/${jobId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ job_status: 'Active' })
+            });
+            if (response.ok) {
+                fetchJobs(); // Refresh the list
+            }
+        } catch (err) {
+            console.error('Error activating job:', err);
+        }
+    };
+
+    const handleCloseJob = async (jobId) => {
+        if (window.confirm('Are you sure you want to close this job posting?')) {
+            try {
+                const response = await fetch(`http://localhost:5000/api/job-descriptions/${jobId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ job_status: 'Closed' })
+                });
+                if (response.ok) {
+                    fetchJobs(); // Refresh the list
+                }
+            } catch (err) {
+                console.error('Error closing job:', err);
+            }
+        }
+    };
+
+    const handleDeleteJob = async (jobId) => {
         if (window.confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
-            console.log('Deleting job:', jobId);
+            try {
+                const response = await fetch(`http://localhost:5000/api/job-descriptions/${jobId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    fetchJobs(); // Refresh the list
+                    setSelectedJob(null); // Clear selection
+                }
+            } catch (err) {
+                console.error('Error deleting job:', err);
+            }
         }
     };
 
     const calculateDaysRemaining = (expiryDate) => {
+        if (!expiryDate) return 'No expiry';
         const today = new Date();
         const expiry = new Date(expiryDate);
         const diffTime = expiry - today;
@@ -251,15 +144,47 @@ const JobDescriptions = () => {
         return diffDays;
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString();
+    };
+
     // Stats
     const stats = {
         total: jobsData.length,
-        active: jobsData.filter(j => j.status === 'Active').length,
-        draft: jobsData.filter(j => j.status === 'Draft').length,
-        closed: jobsData.filter(j => j.status === 'Closed').length,
-        totalApplications: jobsData.reduce((sum, j) => sum + j.applications, 0),
-        avgApplications: Math.round(jobsData.reduce((sum, j) => sum + j.applications, 0) / jobsData.length)
+        active: jobsData.filter(j => j.job_status === 'Active').length,
+        draft: jobsData.filter(j => j.job_status === 'Draft').length,
+        closed: jobsData.filter(j => j.job_status === 'Closed').length,
+        totalApplications: jobsData.reduce((sum, j) => sum + (j.applications_count || 0), 0),
+        avgApplications: jobsData.length > 0 ? Math.round(jobsData.reduce((sum, j) => sum + (j.applications_count || 0), 0) / jobsData.length) : 0
     };
+
+    if (loading) {
+        return (
+            <div className="dashboard-container">
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-3">Loading job descriptions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="dashboard-container">
+                <div className="alert alert-danger" role="alert">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    {error}
+                    <button className="btn btn-sm btn-outline-danger ms-3" onClick={fetchJobs}>
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="dashboard-container">
@@ -267,14 +192,6 @@ const JobDescriptions = () => {
                 <div>
                     <h1 className="page-title">Job Descriptions</h1>
                     <p className="text-muted">Manage all job postings and monitor applications</p>
-                </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary me-2">
-                        <i className="bi bi-download me-2"></i>Export Jobs
-                    </button>
-                    <button className="btn btn-primary">
-                        <i className="bi bi-plus-circle me-2"></i>Post New Job
-                    </button>
                 </div>
             </div>
 
@@ -288,9 +205,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Total Jobs</div>
                             <div className="stat-value">{stats.total}</div>
-                            <div className="stat-trend text-muted">
-                                {stats.active} active, {stats.draft} draft
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -302,9 +216,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Active Postings</div>
                             <div className="stat-value">{stats.active}</div>
-                            <div className="stat-trend text-success">
-                                <i className="bi bi-arrow-up"></i> Accepting applications
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -316,9 +227,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Total Applications</div>
                             <div className="stat-value">{stats.totalApplications}</div>
-                            <div className="stat-trend text-muted">
-                                Avg {stats.avgApplications} per job
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -330,9 +238,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Closed Jobs</div>
                             <div className="stat-value">{stats.closed}</div>
-                            <div className="stat-trend text-muted">
-                                Last 30 days
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -379,30 +284,30 @@ const JobDescriptions = () => {
                 <div className="jobs-content">
                     <div className="jobs-grid">
                         {filteredJobs.map(job => {
-                            const daysRemaining = calculateDaysRemaining(job.expiryDate);
+                            const daysRemaining = calculateDaysRemaining(job.end_date);
                             return (
                                 <div
-                                    key={job.id}
-                                    className={`job-card ${selectedJob?.id === job.id ? 'selected' : ''}`}
+                                    key={job._id}
+                                    className={`job-card ${selectedJob?._id === job._id ? 'selected' : ''}`}
                                     onClick={() => handleJobClick(job)}
                                 >
                                     <div className="job-card-header">
                                         <div className="job-title-section">
-                                            <h5 className="job-title">{job.title}</h5>
+                                            <h5 className="job-title">{job.job_title}</h5>
                                             <div className="job-meta">
                                                 <span className="company-name">
                                                     <i className="bi bi-building"></i>
-                                                    {job.company}
+                                                    {job.Fk_company_id?.company_name || 'Unknown Company'}
                                                 </span>
                                                 <span className="job-location">
                                                     <i className="bi bi-geo-alt"></i>
-                                                    {job.location}
+                                                    {job.location || 'N/A'}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="job-status-section">
-                                            <span className={`status-badge ${getStatusBadge(job.status)}`}>
-                                                {job.status}
+                                            <span className={`status-badge ${getStatusBadge(job.job_status)}`}>
+                                                {job.job_status}
                                             </span>
                                             <span className={`type-badge ${getTypeBadge(job.type)}`}>
                                                 {job.type}
@@ -413,33 +318,33 @@ const JobDescriptions = () => {
                                     <div className="job-details">
                                         <div className="detail-row">
                                             <span className="detail-label">Department:</span>
-                                            <span className="detail-value">{job.department}</span>
+                                            <span className="detail-value">{job.department || 'N/A'}</span>
                                         </div>
                                         <div className="detail-row">
                                             <span className="detail-label">Experience:</span>
-                                            <span className="detail-value">{job.experience}</span>
+                                            <span className="detail-value">{job.experience_required || 'N/A'}</span>
                                         </div>
                                         <div className="detail-row">
                                             <span className="detail-label">Salary:</span>
-                                            <span className="detail-value">{job.salary}</span>
+                                            <span className="detail-value">{job.salary || 'N/A'}</span>
                                         </div>
                                     </div>
 
                                     <div className="job-metrics">
                                         <div className="metric">
-                                            <div className="metric-value">{job.applications}</div>
+                                            <div className="metric-value">{job.applications_count || 0}</div>
                                             <div className="metric-label">Applications</div>
                                         </div>
                                         <div className="metric">
-                                            <div className="metric-value">{job.shortlisted}</div>
+                                            <div className="metric-value">{job.shortlisted_count || 0}</div>
                                             <div className="metric-label">Shortlisted</div>
                                         </div>
                                         <div className="metric">
-                                            <div className="metric-value">{job.interviewed}</div>
+                                            <div className="metric-value">{job.interviewed_count || 0}</div>
                                             <div className="metric-label">Interviewed</div>
                                         </div>
                                         <div className="metric">
-                                            <div className="metric-value">{job.hired}</div>
+                                            <div className="metric-value">{job.hired_count || 0}</div>
                                             <div className="metric-label">Hired</div>
                                         </div>
                                     </div>
@@ -447,9 +352,9 @@ const JobDescriptions = () => {
                                     <div className="job-footer">
                                         <div className="job-date-info">
                                             <span className="posted-date">
-                                                Posted: {job.postedDate}
+                                                Posted: {formatDate(job.start_date)}
                                             </span>
-                                            {job.status === 'Active' && (
+                                            {job.job_status === 'Active' && job.end_date && (
                                                 <span className={`expiry-info ${daysRemaining < 7 ? 'expiring-soon' : ''}`}>
                                                     <i className="bi bi-clock"></i>
                                                     {daysRemaining > 0
@@ -459,43 +364,23 @@ const JobDescriptions = () => {
                                             )}
                                         </div>
                                         <div className="job-actions">
-                                            <button
-                                                className="btn-icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEditJob(job);
-                                                }}
-                                                title="Edit Job"
-                                            >
-                                                <i className="bi bi-pencil"></i>
-                                            </button>
-                                            <button
-                                                className="btn-icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleCloneJob(job.id);
-                                                }}
-                                                title="Clone Job"
-                                            >
-                                                <i className="bi bi-files"></i>
-                                            </button>
-                                            {job.status === 'Active' ? (
+                                            {job.job_status === 'Active' ? (
                                                 <button
                                                     className="btn-icon warning"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handlePauseJob(job.id);
+                                                        handlePauseJob(job._id);
                                                     }}
                                                     title="Pause Job"
                                                 >
                                                     <i className="bi bi-pause-circle"></i>
                                                 </button>
-                                            ) : job.status === 'Paused' || job.status === 'Draft' ? (
+                                            ) : job.job_status === 'Paused' || job.job_status === 'Draft' ? (
                                                 <button
                                                     className="btn-icon success"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleActivateJob(job.id);
+                                                        handleActivateJob(job._id);
                                                     }}
                                                     title="Activate Job"
                                                 >
@@ -506,7 +391,7 @@ const JobDescriptions = () => {
                                                 className="btn-icon danger"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDeleteJob(job.id);
+                                                    handleDeleteJob(job._id);
                                                 }}
                                                 title="Delete Job"
                                             >
@@ -533,10 +418,10 @@ const JobDescriptions = () => {
                             </div>
                             <div className="panel-content">
                                 <div className="job-header-section">
-                                    <h4>{selectedJob.title}</h4>
+                                    <h4>{selectedJob.job_title}</h4>
                                     <div className="badges-row">
-                                        <span className={`status-badge ${getStatusBadge(selectedJob.status)}`}>
-                                            {selectedJob.status}
+                                        <span className={`status-badge ${getStatusBadge(selectedJob.job_status)}`}>
+                                            {selectedJob.job_status}
                                         </span>
                                         <span className={`type-badge ${getTypeBadge(selectedJob.type)}`}>
                                             {selectedJob.type}
@@ -548,15 +433,15 @@ const JobDescriptions = () => {
                                     <h6>Company Information</h6>
                                     <div className="detail-item">
                                         <span className="detail-label">Company:</span>
-                                        <span className="detail-value">{selectedJob.company}</span>
+                                        <span className="detail-value">{selectedJob.Fk_company_id?.company_name || 'N/A'}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Department:</span>
-                                        <span className="detail-value">{selectedJob.department}</span>
+                                        <span className="detail-value">{selectedJob.department || 'N/A'}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Location:</span>
-                                        <span className="detail-value">{selectedJob.location}</span>
+                                        <span className="detail-value">{selectedJob.location || 'N/A'}</span>
                                     </div>
                                 </div>
 
@@ -564,11 +449,11 @@ const JobDescriptions = () => {
                                     <h6>Position Details</h6>
                                     <div className="detail-item">
                                         <span className="detail-label">Experience Required:</span>
-                                        <span className="detail-value">{selectedJob.experience}</span>
+                                        <span className="detail-value">{selectedJob.experience_required || 'N/A'}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Salary Range:</span>
-                                        <span className="detail-value">{selectedJob.salary}</span>
+                                        <span className="detail-value">{selectedJob.salary || 'N/A'}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Employment Type:</span>
@@ -578,47 +463,51 @@ const JobDescriptions = () => {
 
                                 <div className="detail-section">
                                     <h6>Description</h6>
-                                    <p className="job-description">{selectedJob.description}</p>
+                                    <p className="job-description">{selectedJob.description || 'No description provided.'}</p>
                                 </div>
 
-                                <div className="detail-section">
-                                    <h6>Requirements</h6>
-                                    <div className="tags-list">
-                                        {selectedJob.requirements.map((req, idx) => (
-                                            <span key={idx} className="skill-tag">{req}</span>
-                                        ))}
+                                {selectedJob.skills && selectedJob.skills.length > 0 && (
+                                    <div className="detail-section">
+                                        <h6>Required Skills</h6>
+                                        <div className="tags-list">
+                                            {selectedJob.skills.map((skill, idx) => (
+                                                <span key={idx} className="skill-tag">{skill}</span>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="detail-section">
-                                    <h6>Benefits</h6>
-                                    <div className="benefits-list">
-                                        {selectedJob.benefits.map((benefit, idx) => (
-                                            <div key={idx} className="benefit-item">
-                                                <i className="bi bi-check-circle text-success"></i>
-                                                <span>{benefit}</span>
-                                            </div>
-                                        ))}
+                                {selectedJob.benefits && selectedJob.benefits.length > 0 && (
+                                    <div className="detail-section">
+                                        <h6>Benefits</h6>
+                                        <div className="benefits-list">
+                                            {selectedJob.benefits.map((benefit, idx) => (
+                                                <div key={idx} className="benefit-item">
+                                                    <i className="bi bi-check-circle text-success"></i>
+                                                    <span>{benefit}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <div className="detail-section">
                                     <h6>Statistics</h6>
                                     <div className="stats-grid">
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.views}</div>
+                                            <div className="stat-number">{selectedJob.views || 0}</div>
                                             <div className="stat-label">Views</div>
                                         </div>
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.applications}</div>
+                                            <div className="stat-number">{selectedJob.applications_count || 0}</div>
                                             <div className="stat-label">Applications</div>
                                         </div>
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.shortlisted}</div>
+                                            <div className="stat-number">{selectedJob.shortlisted_count || 0}</div>
                                             <div className="stat-label">Shortlisted</div>
                                         </div>
                                         <div className="stat-item">
-                                            <div className="stat-number">{selectedJob.interviewed}</div>
+                                            <div className="stat-number">{selectedJob.interviewed_count || 0}</div>
                                             <div className="stat-label">Interviewed</div>
                                         </div>
                                     </div>
@@ -628,37 +517,31 @@ const JobDescriptions = () => {
                                     <h6>Timeline</h6>
                                     <div className="detail-item">
                                         <span className="detail-label">Posted Date:</span>
-                                        <span className="detail-value">{selectedJob.postedDate}</span>
+                                        <span className="detail-value">{formatDate(selectedJob.start_date)}</span>
                                     </div>
                                     <div className="detail-item">
                                         <span className="detail-label">Expiry Date:</span>
-                                        <span className="detail-value">{selectedJob.expiryDate}</span>
+                                        <span className="detail-value">{formatDate(selectedJob.end_date)}</span>
                                     </div>
                                 </div>
 
                                 <div className="detail-section">
                                     <h6>Actions</h6>
-                                    <button className="btn btn-sm btn-primary w-100 mb-2" onClick={() => handleEditJob(selectedJob)}>
-                                        <i className="bi bi-pencil me-2"></i>Edit Job Posting
-                                    </button>
-                                    <button className="btn btn-sm btn-secondary w-100 mb-2" onClick={() => handleCloneJob(selectedJob.id)}>
-                                        <i className="bi bi-files me-2"></i>Clone Job
-                                    </button>
-                                    {selectedJob.status === 'Active' ? (
-                                        <button className="btn btn-sm btn-warning w-100 mb-2" onClick={() => handlePauseJob(selectedJob.id)}>
+                                    {selectedJob.job_status === 'Active' ? (
+                                        <button className="btn btn-sm btn-warning w-100 mb-2" onClick={() => handlePauseJob(selectedJob._id)}>
                                             <i className="bi bi-pause-circle me-2"></i>Pause Posting
                                         </button>
-                                    ) : selectedJob.status === 'Paused' || selectedJob.status === 'Draft' ? (
-                                        <button className="btn btn-sm btn-success w-100 mb-2" onClick={() => handleActivateJob(selectedJob.id)}>
+                                    ) : selectedJob.job_status === 'Paused' || selectedJob.job_status === 'Draft' ? (
+                                        <button className="btn btn-sm btn-success w-100 mb-2" onClick={() => handleActivateJob(selectedJob._id)}>
                                             <i className="bi bi-play-circle me-2"></i>Activate Posting
                                         </button>
                                     ) : null}
-                                    {selectedJob.status !== 'Closed' && (
-                                        <button className="btn btn-sm btn-outline-secondary w-100 mb-2" onClick={() => handleCloseJob(selectedJob.id)}>
+                                    {selectedJob.job_status !== 'Closed' && (
+                                        <button className="btn btn-sm btn-outline-secondary w-100 mb-2" onClick={() => handleCloseJob(selectedJob._id)}>
                                             <i className="bi bi-archive me-2"></i>Close Job
                                         </button>
                                     )}
-                                    <button className="btn btn-sm btn-danger w-100" onClick={() => handleDeleteJob(selectedJob.id)}>
+                                    <button className="btn btn-sm btn-danger w-100" onClick={() => handleDeleteJob(selectedJob._id)}>
                                         <i className="bi bi-trash me-2"></i>Delete Job
                                     </button>
                                 </div>

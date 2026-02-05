@@ -258,32 +258,6 @@ const AdminProfile = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Role</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-briefcase"></i></span>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-dark"
-                                                value={profileData.usertype}
-                                                readOnly
-                                                disabled
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Account Status</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-activity"></i></span>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-dark"
-                                                value={profileData.status}
-                                                readOnly
-                                                disabled
-                                            />
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>

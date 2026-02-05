@@ -12,6 +12,11 @@
   --muted-text: #a1a1aa;
   /* Zinc 400 */
   --radius: 0.5rem;
+
+  /* Bootstrap Theme Color Overrides - Force Blue Theme */
+  --bs-primary: #3b82f6;
+  --bs-primary-rgb: 59, 130, 246;
+  --bs-blue: #3b82f6;
 }
 
 body {
@@ -316,6 +321,11 @@ section {
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--light-text);
   transition: all 0.3s ease;
+}
+
+.form-control-dark::placeholder {
+  color: #a1a1aa;
+  opacity: 1;
 }
 
 .form-control-dark:focus {

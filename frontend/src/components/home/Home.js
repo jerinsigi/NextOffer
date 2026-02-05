@@ -12,7 +12,18 @@ class Home extends PureComponent {
         super(props);
         this.state = {
             scrolled: false,
-            activeSection: 'home'
+            activeSection: 'home',
+            contactForm: {
+                fullName: '',
+                email: '',
+                subject: '',
+                message: ''
+            },
+            contactStatus: {
+                loading: false,
+                success: false,
+                error: null
+            }
         };
     }
 
@@ -63,6 +74,50 @@ class Home extends PureComponent {
         window.history.pushState({}, '', '/');
     };
 
+    handleContactChange = (e) => {
+        const { name, value } = e.target;
+        this.setState(prevState => ({
+            contactForm: {
+                ...prevState.contactForm,
+                [name]: value
+            }
+        }));
+    };
+
+    handleContactSubmit = async (e) => {
+        e.preventDefault();
+        this.setState({ contactStatus: { loading: true, success: false, error: null } });
+
+        try {
+            const response = await fetch('http://localhost:5000/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(this.state.contactForm)
+            });
+
+            if (response.ok) {
+                this.setState({
+                    contactStatus: { loading: false, success: true, error: null },
+                    contactForm: { fullName: '', email: '', subject: '', message: '' }
+                });
+                setTimeout(() => {
+                    this.setState(prevState => ({
+                        contactStatus: { ...prevState.contactStatus, success: false }
+                    }));
+                }, 5000);
+            } else {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to send message');
+            }
+        } catch (error) {
+            this.setState({
+                contactStatus: { loading: false, success: false, error: error.message }
+            });
+        }
+    };
+
     handleScroll = () => {
         const scrollY = window.scrollY;
 
@@ -97,7 +152,7 @@ class Home extends PureComponent {
         const { activeSection } = this.state;
         return (
             <div className="d-flex flex-column min-vh-100 position-relative overflow-hidden">
-                
+
 
                 {/* Navbar */}
                 <Navbar
@@ -537,25 +592,68 @@ class Home extends PureComponent {
                                     <h3 className="fw-bold mb-2">Get in Touch</h3>
                                     <p className="text-muted mb-4">Have questions about our AI interview platform? We're here to help you succeed.</p>
 
-                                    <form>
+                                    <form onSubmit={this.handleContactSubmit}>
+                                        {this.state.contactStatus.success && (
+                                            <div className="alert alert-success mb-4" role="alert">
+                                                Message sent successfully! We'll get back to you soon.
+                                            </div>
+                                        )}
+                                        {this.state.contactStatus.error && (
+                                            <div className="alert alert-danger mb-4" role="alert">
+                                                {this.state.contactStatus.error}
+                                            </div>
+                                        )}
                                         <div className="mb-4">
                                             <label className="form-label text-light small fw-bold">Full Name</label>
-                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                name="fullName"
+                                                value={this.state.contactForm.fullName}
+                                                onChange={this.handleContactChange}
+                                                required
+                                            />
                                         </div>
                                         <div className="mb-4">
                                             <label className="form-label text-light small fw-bold">Email Address</label>
-                                            <input type="email" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <input
+                                                type="email"
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                name="email"
+                                                value={this.state.contactForm.email}
+                                                onChange={this.handleContactChange}
+                                                required
+                                            />
                                         </div>
                                         <div className="mb-4">
                                             <label className="form-label text-light small fw-bold">Subject</label>
-                                            <input type="text" className="form-control form-control-dark p-3 rounded-3" placeholder="" />
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                name="subject"
+                                                value={this.state.contactForm.subject}
+                                                onChange={this.handleContactChange}
+                                                required
+                                            />
                                         </div>
                                         <div className="mb-4">
                                             <label className="form-label text-light small fw-bold">Message</label>
-                                            <textarea className="form-control form-control-dark p-3 rounded-3" rows="4" placeholder=""></textarea>
+                                            <textarea
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                rows="4"
+                                                name="message"
+                                                value={this.state.contactForm.message}
+                                                onChange={this.handleContactChange}
+                                                required
+                                            ></textarea>
                                         </div>
-                                        <button type="submit" className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg">
-                                            Send Message <i className="bi bi-arrow-right ms-2"></i>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg"
+                                            disabled={this.state.contactStatus.loading}
+                                        >
+                                            {this.state.contactStatus.loading ? 'Sending...' : 'Send Message'}
+                                            {!this.state.contactStatus.loading && <i className="bi bi-arrow-right ms-2"></i>}
                                         </button>
                                     </form>
 

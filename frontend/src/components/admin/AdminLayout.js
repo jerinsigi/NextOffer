@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import './AdminLayout.css';
 import logo from '../../logo.svg';
@@ -6,8 +6,61 @@ import logo from '../../logo.svg';
 const AdminLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [notificationCount] = useState(5);
+    const [userData, setUserData] = useState({ name: 'Admin', role: 'System Administrator', avatar: null });
     const location = useLocation();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const loadUserData = async () => {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+
+                // Try to fetch latest profile data from backend
+                try {
+                    const response = await fetch('http://localhost:5000/api/users/profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: user.email })
+                    });
+
+                    if (response.ok) {
+                        const profileData = await response.json();
+                        setUserData({
+                            name: profileData.full_name || user.username || 'Admin',
+                            role: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Administrator',
+                            avatar: profileData.image_url ?
+                                (profileData.image_url.startsWith('http') || profileData.image_url.startsWith('data')
+                                    ? profileData.image_url
+                                    : `http://localhost:5000${profileData.image_url}`)
+                                : null
+                        });
+                    } else {
+                        // Fallback to localStorage data if API fails
+                        setUserData({
+                            name: user.username || 'Admin',
+                            role: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Administrator',
+                            avatar: user.image_url ?
+                                (user.image_url.startsWith('http') || user.image_url.startsWith('data')
+                                    ? user.image_url
+                                    : `http://localhost:5000${user.image_url}`)
+                                : null
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    // Use localStorage data as fallback
+                    setUserData({
+                        name: user.username || 'Admin',
+                        role: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Administrator',
+                        avatar: null
+                    });
+                }
+            }
+        };
+
+        loadUserData();
+    }, []);
 
     const menuItems = [
         {
@@ -47,18 +100,6 @@ const AdminLayout = () => {
             badge: null
         },
         {
-            title: 'Interview Monitoring',
-            icon: 'bi-camera-video',
-            path: '/admin/interviews',
-            badge: null
-        },
-        {
-            title: 'Integrity & Compliance',
-            icon: 'bi-shield-check',
-            path: '/admin/integrity',
-            badge: 12
-        },
-        {
             title: 'Reports & Analytics',
             icon: 'bi-graph-up',
             path: '/admin/reports',
@@ -87,7 +128,9 @@ const AdminLayout = () => {
     const isActive = (path) => location.pathname === path;
 
     const handleLogout = () => {
-        // Add logout logic here
+        // Clear all user session data
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         navigate('/login');
     };
 
@@ -97,9 +140,9 @@ const AdminLayout = () => {
             <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
                 {/* Logo Section */}
                 <div className="sidebar-header">
-                    <Link to="/admin/dashboard" className="sidebar-brand">
+                    <Link to="/admin/dashboard" className="sidebar-brand white-brand-text">
                         <img src={logo} alt="NextOffer" className="brand-logo" />
-                        {!sidebarCollapsed && <span className="brand-text">NextOffer</span>}
+                        {!sidebarCollapsed && <span className="brand-text white-brand-text">NextOffer</span>}
                     </Link>
                     <button
                         className="sidebar-toggle"
@@ -138,9 +181,14 @@ const AdminLayout = () => {
                 {/* Sidebar Footer */}
                 {!sidebarCollapsed && (
                     <div className="sidebar-footer">
-                        <div className="sidebar-info">
-                            <small className="text-muted">Version 1.0.0</small>
-                        </div>
+                        <button
+                            className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={handleLogout}
+                            title="Logout"
+                        >
+                            <i className="bi bi-box-arrow-left"></i>
+                            <span>Logout</span>
+                        </button>
                     </div>
                 )}
             </aside>
@@ -164,15 +212,6 @@ const AdminLayout = () => {
                     </div>
 
                     <div className="navbar-right">
-                        {/* Search Bar */}
-                        <div className="search-bar">
-                            <i className="bi bi-search search-icon"></i>
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Search users, companies, candidates..."
-                            />
-                        </div>
 
                         {/* Notifications */}
                         <div className="dropdown">
@@ -239,30 +278,28 @@ const AdminLayout = () => {
                                 data-bs-toggle="dropdown"
                             >
                                 <div className="avatar">
-                                    <i className="bi bi-person-circle fs-4"></i>
+                                    {userData.avatar ? (
+                                        <img src={userData.avatar} alt={userData.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <i className="bi bi-person-circle fs-4"></i>
+                                    )}
                                 </div>
                                 <div className="profile-info d-none d-md-block">
-                                    <div className="profile-name">Vivek Kumar</div>
-                                    <div className="profile-role">System Administrator</div>
+                                    <div className="profile-name">{userData.name}</div>
+                                    <div className="profile-role">{userData.role}</div>
                                 </div>
                                 <i className="bi bi-chevron-down"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <Link className="dropdown-item" to="/admin/profile">
+                                    <Link className="dropdown-item d-flex align-items-center" to="/admin/profile">
                                         <i className="bi bi-person me-2"></i>My Profile
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link className="dropdown-item" to="/admin/settings">
+                                    <Link className="dropdown-item d-flex align-items-center" to="/admin/settings">
                                         <i className="bi bi-gear me-2"></i>Settings
                                     </Link>
-                                </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <button className="dropdown-item text-danger" onClick={handleLogout}>
-                                        <i className="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -278,7 +315,7 @@ const AdminLayout = () => {
                 <footer className="admin-footer">
                     <div className="footer-content">
                         <div className="footer-left">
-                            <span>© 2025 NextOffer. All rights reserved.</span>
+                            <span>© 2026 NextOffer. All rights reserved.</span>
                         </div>
                         <div className="footer-right">
                             <Link to="/admin/documentation" className="footer-link">Documentation</Link>

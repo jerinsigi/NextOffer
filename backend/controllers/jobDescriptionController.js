@@ -131,3 +131,35 @@ exports.getAllActiveJobs = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+// Get all jobs for admin (with company details and application stats)
+exports.getAllJobsForAdmin = async (req, res) => {
+    try {
+        let jobs = await Job_Description.find()
+            .populate('Fk_company_id', 'company_name email logo')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Calculate real-time counts for each job
+        jobs = await Promise.all(jobs.map(async (job) => {
+            const appsCount = await Application.countDocuments({ Fk_job_id: job._id });
+            const shortlistedCount = await Application.countDocuments({ Fk_job_id: job._id, status: 'Shortlisted' });
+            const interviewedCount = await Application.countDocuments({ Fk_job_id: job._id, status: { $in: ['Interviewed', 'Completed'] } });
+            const scheduledCount = await Application.countDocuments({ Fk_job_id: job._id, status: { $in: ['Scheduled', 'Interviewing'] } });
+            const hiredCount = await Application.countDocuments({ Fk_job_id: job._id, status: 'Hired' });
+
+            return {
+                ...job,
+                applications_count: appsCount,
+                shortlisted_count: shortlistedCount,
+                interviewed_count: interviewedCount,
+                scheduled_count: scheduledCount,
+                hired_count: hiredCount
+            };
+        }));
+
+        res.json(jobs);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

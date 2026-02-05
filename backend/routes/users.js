@@ -5,6 +5,14 @@ const userController = require('../controllers/userController');
 const upload = require('../middleware/upload');
 const resumeUpload = require('../middleware/resumeUpload');
 
+// Admin routes
+router.get('/admin/users', userController.getAllUsers);
+router.put('/admin/users/:userId', userController.updateUser);
+router.put('/admin/users/:userId/suspend', userController.suspendUser);
+router.put('/admin/users/:userId/activate', userController.activateUser);
+router.delete('/admin/users/:userId', userController.deleteUser);
+router.post('/admin/users/:userId/reset-password', userController.resetUserPassword);
+
 // Get Profile
 router.post('/profile', userController.getProfile);
 

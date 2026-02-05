@@ -1,87 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Support.css';
 
 const Support = () => {
     const [activeTab, setActiveTab] = useState('tickets');
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const tickets = [
-        {
-            id: 'TKT-1245',
-            user: 'John Doe',
-            userEmail: 'john.doe@example.com',
-            company: 'TechCorp Inc.',
-            subject: 'Unable to start interview session',
-            category: 'Technical',
-            priority: 'High',
-            status: 'Open',
-            created: '2025-12-06 10:30 AM',
-            lastUpdated: '2025-12-06 11:45 AM',
-            messages: 3,
-            description: 'Candidates are reporting that the interview session is not starting. Getting a "Session initialization failed" error.',
-            assignee: 'Unassigned'
-        },
-        {
-            id: 'TKT-1244',
-            user: 'Sarah Johnson',
-            userEmail: 'sarah.j@cloudtech.com',
-            company: 'CloudTech',
-            subject: 'Question about integrity scoring',
-            category: 'General Inquiry',
-            priority: 'Medium',
-            status: 'In Progress',
-            created: '2025-12-06 09:15 AM',
-            lastUpdated: '2025-12-06 10:20 AM',
-            messages: 5,
-            description: 'How is the integrity score calculated? Need clarification for our hiring team.',
-            assignee: 'Admin Team'
-        },
-        {
-            id: 'TKT-1243',
-            user: 'Mike Brown',
-            userEmail: 'mike.b@dataco.com',
-            company: 'DataCo',
-            subject: 'Resume upload failing',
-            category: 'Technical',
-            priority: 'High',
-            status: 'Open',
-            created: '2025-12-06 08:00 AM',
-            lastUpdated: '2025-12-06 08:30 AM',
-            messages: 2,
-            description: 'PDF resume uploads are failing with error code 500. JPG images work fine.',
-            assignee: 'Unassigned'
-        },
-        {
-            id: 'TKT-1242',
-            user: 'Alice Smith',
-            userEmail: 'alice@startupxyz.com',
-            company: 'StartupXYZ',
-            subject: 'Feature request: Bulk candidate import',
-            category: 'Feature Request',
-            priority: 'Low',
-            status: 'Under Review',
-            created: '2025-12-05 04:30 PM',
-            lastUpdated: '2025-12-06 09:00 AM',
-            messages: 4,
-            description: 'Would like to import multiple candidates via CSV instead of one by one.',
-            assignee: 'Admin Team'
-        },
-        {
-            id: 'TKT-1241',
-            user: 'Robert Lee',
-            userEmail: 'robert@innovate.io',
-            company: 'InnovateLabs',
-            subject: 'Account access issue',
-            category: 'Account',
-            priority: 'Medium',
-            status: 'Resolved',
-            created: '2025-12-05 02:00 PM',
-            lastUpdated: '2025-12-05 03:45 PM',
-            messages: 6,
-            description: 'Unable to login after password reset. Issue has been resolved.',
-            assignee: 'Admin Team'
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const fetchTickets = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/contact');
+            if (response.ok) {
+                const data = await response.json();
+                const formattedTickets = data.map(submission => ({
+                    id: submission._id,
+                    user: submission.fullName,
+                    userEmail: submission.email,
+                    company: 'Public User',
+                    subject: submission.subject,
+                    category: 'General Inquiry',
+                    priority: 'Medium',
+                    status: submission.status,
+                    created: new Date(submission.createdAt).toLocaleString(),
+                    lastUpdated: new Date(submission.createdAt).toLocaleString(),
+                    messages: 1,
+                    description: submission.message,
+                    assignee: 'Unassigned'
+                }));
+                setTickets(formattedTickets);
+            }
+        } catch (error) {
+            console.error('Error fetching tickets:', error);
+        } finally {
+            setLoading(false);
+            // Hardcoded tickets removed in favor of dynamic data
         }
-    ];
+    };
+
+    const handleStatusUpdate = async (id, newStatus) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/contact/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (response.ok) {
+                // Update local state
+                setTickets(prevTickets => prevTickets.map(ticket =>
+                    ticket.id === id ? { ...ticket, status: newStatus } : ticket
+                ));
+
+                if (selectedTicket && selectedTicket.id === id) {
+                    setSelectedTicket(prev => ({ ...prev, status: newStatus }));
+                }
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+        }
+    };
 
     const feedback = [
         {
@@ -396,44 +379,41 @@ const Support = () => {
                                                 </span>
                                             </div>
                                             <h5 className="text-light mb-3">{selectedTicket.subject}</h5>
-                                            
+
                                             <div className="ticket-info-grid mb-4">
+                                                <div className="info-item">
+                                                    <label className="text-muted small">Full Name</label>
+                                                    <div className="text-light">{selectedTicket.user}</div>
+                                                </div>
+                                                <div className="info-item">
+                                                    <label className="text-muted small">Email Address</label>
+                                                    <div className="text-light">{selectedTicket.userEmail}</div>
+                                                </div>
                                                 <div className="info-item">
                                                     <label className="text-muted small">Ticket ID</label>
                                                     <div className="text-light">{selectedTicket.id}</div>
                                                 </div>
                                                 <div className="info-item">
-                                                    <label className="text-muted small">Category</label>
-                                                    <div className="text-light">{selectedTicket.category}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">User</label>
-                                                    <div className="text-light">{selectedTicket.user}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Company</label>
-                                                    <div className="text-light">{selectedTicket.company}</div>
-                                                </div>
-                                                <div className="info-item">
                                                     <label className="text-muted small">Created</label>
                                                     <div className="text-light">{selectedTicket.created}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Assignee</label>
-                                                    <div className="text-light">{selectedTicket.assignee}</div>
                                                 </div>
                                             </div>
 
                                             <div className="mb-4">
-                                                <label className="text-muted small mb-2 d-block">Description</label>
-                                                <p className="text-light">{selectedTicket.description}</p>
+                                                <label className="text-muted small mb-2 d-block">Message</label>
+                                                <div className="bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-25">
+                                                    <p className="text-light mb-0">{selectedTicket.description}</p>
+                                                </div>
                                             </div>
 
                                             <div className="d-grid gap-2">
                                                 <button className="btn btn-primary">
                                                     <i className="bi bi-reply me-2"></i>Reply to Ticket
                                                 </button>
-                                                <button className="btn btn-outline-success">
+                                                <button
+                                                    className="btn btn-outline-success"
+                                                    onClick={() => handleStatusUpdate(selectedTicket.id, 'Resolved')}
+                                                >
                                                     <i className="bi bi-check-circle me-2"></i>Mark as Resolved
                                                 </button>
                                                 <button className="btn btn-outline-warning">
@@ -534,11 +514,10 @@ const Support = () => {
                                         <td><span className="text-primary">{bug.id}</span></td>
                                         <td>{bug.subject}</td>
                                         <td>
-                                            <span className={`badge ${
-                                                bug.severity === 'Critical' ? 'bg-danger' :
+                                            <span className={`badge ${bug.severity === 'Critical' ? 'bg-danger' :
                                                 bug.severity === 'High' ? 'bg-warning' :
-                                                bug.severity === 'Medium' ? 'bg-info' : 'bg-secondary'
-                                            }`}>
+                                                    bug.severity === 'Medium' ? 'bg-info' : 'bg-secondary'
+                                                }`}>
                                                 {bug.severity}
                                             </span>
                                         </td>

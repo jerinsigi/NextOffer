@@ -1,15 +1,15 @@
 /* Admin Profile Page Styles */
 
 .profile-header-card {
-    background: rgba(2, 6, 23, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(75, 75, 75, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 12px;
     overflow: hidden;
 }
 
 .profile-banner {
     height: 150px;
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
 }
 
 .profile-header-content {
@@ -29,7 +29,7 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     border: 4px solid var(--darker-bg);
     display: flex;
     align-items: center;
@@ -57,7 +57,7 @@
 }
 
 .btn-change-avatar:hover {
-    background: #5558e3;
+    background: var(--secondary-color);
     transform: scale(1.1);
 }
 
@@ -67,7 +67,7 @@
 }
 
 .profile-header-info h2 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.5rem;
     font-size: 2rem;
 }
@@ -147,13 +147,13 @@
 
 .profile-tab:hover {
     color: var(--light-text);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .profile-tab.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .profile-tab-content {
@@ -169,6 +169,7 @@
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -181,7 +182,7 @@
 }
 
 .form-label {
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 500;
     margin-bottom: 0.5rem;
     display: block;
@@ -199,7 +200,7 @@
 }
 
 .security-section h5 {
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 600;
     margin-bottom: 1.5rem;
 }
@@ -225,7 +226,7 @@
 }
 
 .tfa-info h6 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.25rem;
 }
 
@@ -246,13 +247,13 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    background: rgba(2, 6, 23, 0.6);
+    background: rgba(10, 10, 10, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
 }
 
 .security-option h6 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.25rem;
 }
 
@@ -274,7 +275,7 @@
 }
 
 .preferences-section h5 {
-    color: var(--light-text);
+    color: #ffffff;
     font-weight: 600;
     margin-bottom: 1.5rem;
 }
@@ -290,15 +291,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.25rem;
-    background: rgba(2, 6, 23, 0.6);
+    background: rgba(10, 10, 10, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     transition: all 0.2s ease;
 }
 
 .preference-item:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .preference-info {
@@ -306,7 +307,7 @@
 }
 
 .preference-info h6 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.25rem;
     font-size: 1rem;
 }
@@ -354,11 +355,11 @@
     border-radius: 50%;
 }
 
-input:checked + .toggle-slider {
+input:checked+.toggle-slider {
     background-color: var(--primary-color);
 }
 
-input:checked + .toggle-slider:before {
+input:checked+.toggle-slider:before {
     transform: translateX(24px);
 }
 
@@ -373,7 +374,7 @@ input:checked + .toggle-slider:before {
     display: flex;
     gap: 1.5rem;
     padding: 1.5rem;
-    border-left: 2px solid rgba(99, 102, 241, 0.3);
+    border-left: 2px solid rgba(59, 130, 246, 0.3);
     position: relative;
 }
 
@@ -385,7 +386,7 @@ input:checked + .toggle-slider:before {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border: 2px solid var(--darker-bg);
     display: flex;
     align-items: center;
@@ -403,7 +404,7 @@ input:checked + .toggle-slider:before {
 }
 
 .activity-content h6 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.5rem;
 }
 
@@ -443,21 +444,21 @@ input:checked + .toggle-slider:before {
     align-items: center;
     gap: 1.5rem;
     padding: 1.5rem;
-    background: rgba(2, 6, 23, 0.6);
+    background: rgba(10, 10, 10, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     transition: all 0.2s ease;
 }
 
 .session-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .session-icon {
     width: 60px;
     height: 60px;
     border-radius: 12px;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -469,7 +470,7 @@ input:checked + .toggle-slider:before {
 }
 
 .session-info h6 {
-    color: var(--light-text);
+    color: #ffffff;
     margin-bottom: 0.5rem;
 }
 

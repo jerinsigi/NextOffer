@@ -1,5 +1,306 @@
 const Candidate = require('../models/Candidate');
 const Login = require('../models/Login');
+const Interview_Session = require('../models/Interview_Session');
+const Integrity_Log = require('../models/Integrity_Log');
+const Company = require('../models/Company');
+
+// Get all users for admin
+exports.getAllUsers = async (req, res) => {
+    try {
+        // Fetch only candidates and admin users (exclude company and recruiter)
+        const logins = await Login.find({
+            usertype: { $in: ['candidate', 'admin'] }
+        }).select('-password -otp -otpExpires');
+
+        // Fetch all candidates
+        const candidates = await Candidate.find();
+
+        // Create a map for quick lookup
+        const candidateMap = {};
+        candidates.forEach(candidate => {
+            candidateMap[candidate.email] = candidate;
+        });
+
+        // Process each user
+        const usersData = await Promise.all(logins.map(async (login) => {
+            const candidate = candidateMap[login.email];
+
+            // Initialize user data object
+            let userData = {
+                id: login._id,
+                email: login.email,
+                lastLogin: login.updatedAt,
+                joinDate: login.createdAt,
+                interviews: 0,
+                violationCount: 0
+            };
+
+            // Determine role display
+            let roleDisplay = login.usertype === 'admin' ? 'Admin' : 'Candidate';
+
+            // Determine status display
+            let statusDisplay = 'Active';
+            if (login.status === 'inactive') statusDisplay = 'Inactive';
+            else if (login.status === 'pending') statusDisplay = 'Pending';
+            else if (login.status === 'suspended') statusDisplay = 'Suspended';
+
+            userData.role = roleDisplay;
+            userData.status = statusDisplay;
+
+            // Populate data based on user type
+            if (login.usertype === 'candidate' && candidate) {
+                // For candidates, show candidate details
+                userData.username = login.username;
+                userData.name = candidate.full_name || login.username;
+                userData.company = candidate.current_role || 'N/A';
+                userData.phone = candidate.phone || null;
+                userData.location = candidate.location || null;
+                userData.image_url = candidate.image_url || null;
+                userData.education = candidate.education || null;
+                userData.experience_years = candidate.experience_years || null;
+                userData.current_role = candidate.current_role || null;
+                userData.bio = candidate.bio || null;
+                userData.skills = candidate.skills || [];
+                userData.social_links = candidate.social_links || {};
+
+                // Get interview count for candidates
+                userData.interviews = await Interview_Session.countDocuments({
+                    fk_candidate_id: candidate._id
+                });
+
+                // Get violation count for candidates
+                const sessions = await Interview_Session.find({
+                    fk_candidate_id: candidate._id
+                });
+
+                for (const session of sessions) {
+                    const integrityLog = await Integrity_Log.findOne({
+                        Fk_session_id: session._id
+                    });
+
+                    if (integrityLog) {
+                        userData.violationCount += (
+                            (integrityLog.tab_switch_count || 0) +
+                            (integrityLog.gaze_away_count || 0) +
+                            (integrityLog.face_absent_count || 0)
+                        );
+                    }
+                }
+            } else if ((login.usertype === 'company' || login.usertype === 'recruiter') && company) {
+                // For companies/recruiters, show company details
+                userData.username = login.username;
+                userData.name = company.company_name || login.username;
+                userData.company = company.company_name || 'N/A';
+                userData.phone = company.phone || null;
+                userData.location = company.location || null;
+            } else {
+                // For users without associated candidate/company record (like admin)
+                userData.username = login.username;
+                userData.name = login.username;
+                userData.company = 'N/A';
+                userData.phone = null;
+                userData.location = null;
+            }
+
+            return userData;
+        }));
+
+        // Calculate statistics
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        const statistics = {
+            total: logins.length,
+            active: logins.filter(l => l.status === 'active').length,
+            suspended: logins.filter(l => l.status === 'suspended' || l.status === 'inactive').length,
+            newThisMonth: logins.filter(l => new Date(l.createdAt) >= startOfMonth).length
+        };
+
+        res.json({
+            users: usersData,
+            statistics: statistics
+        });
+    } catch (err) {
+        console.error('Get all users error:', err);
+        res.status(500).json({ message: 'Server error fetching users', error: err.message });
+    }
+};
+
+// Suspend user
+exports.suspendUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const login = await Login.findByIdAndUpdate(
+            userId,
+            { status: 'suspended' },
+            { new: true }
+        );
+
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User suspended successfully', user: login });
+    } catch (err) {
+        console.error('Suspend user error:', err);
+        res.status(500).json({ message: 'Server error suspending user', error: err.message });
+    }
+};
+
+// Activate user
+exports.activateUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const login = await Login.findByIdAndUpdate(
+            userId,
+            { status: 'active' },
+            { new: true }
+        );
+
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ message: 'User activated successfully', user: login });
+    } catch (err) {
+        console.error('Activate user error:', err);
+        res.status(500).json({ message: 'Server error activating user', error: err.message });
+    }
+};
+
+// Delete user
+exports.deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const login = await Login.findById(userId);
+
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Delete related candidate data if exists
+        await Candidate.findOneAndDelete({ email: login.email });
+
+        // Delete the login
+        await Login.findByIdAndDelete(userId);
+
+        res.json({ message: 'User deleted successfully' });
+    } catch (err) {
+        console.error('Delete user error:', err);
+        res.status(500).json({ message: 'Server error deleting user', error: err.message });
+    }
+};
+
+// Reset password (send reset email)
+exports.resetUserPassword = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const login = await Login.findById(userId);
+
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // TODO: Implement email sending logic here
+        // For now, just return success
+
+        res.json({ message: 'Password reset email sent successfully' });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ message: 'Server error resetting password', error: err.message });
+    }
+};
+
+// Update user (admin)
+exports.updateUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { username, name, email, role, company, status } = req.body;
+
+        // Find the login record
+        const login = await Login.findById(userId);
+        if (!login) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Update Login fields
+        if (username && username !== login.username) {
+            // Check if username is already taken
+            const existingUser = await Login.findOne({ username, _id: { $ne: userId } });
+            if (existingUser) {
+                return res.status(400).json({ message: 'Username already exists' });
+            }
+            login.username = username;
+        }
+
+        if (email && email !== login.email) {
+            // Check if email is already taken
+            const existingEmail = await Login.findOne({ email, _id: { $ne: userId } });
+            if (existingEmail) {
+                return res.status(400).json({ message: 'Email already exists' });
+            }
+            login.email = email;
+        }
+
+        // Update status if provided
+        if (status) {
+            const statusMap = {
+                'Active': 'active',
+                'Inactive': 'inactive',
+                'Suspended': 'suspended',
+                'Pending': 'pending'
+            };
+            login.status = statusMap[status] || status.toLowerCase();
+        }
+
+        // Map role to usertype if provided
+        if (role) {
+            const roleMap = {
+                'Admin': 'admin',
+                'Candidate': 'candidate',
+                'HR Manager': 'recruiter',
+                'Recruiter': 'recruiter',
+                'Company Admin': 'company'
+            };
+            login.usertype = roleMap[role] || login.usertype;
+        }
+
+        await login.save();
+
+        // Update Candidate record if user is a candidate
+        if (login.usertype === 'candidate') {
+            const candidateUpdate = {};
+
+            if (name) candidateUpdate.full_name = name;
+            if (email) candidateUpdate.email = email;
+            if (company) candidateUpdate.current_role = company;
+
+            await Candidate.findOneAndUpdate(
+                { email: login.email },
+                { $set: candidateUpdate },
+                { upsert: true, new: true }
+            );
+        }
+
+        res.json({
+            message: 'User updated successfully',
+            user: {
+                id: login._id,
+                username: login.username,
+                email: login.email,
+                usertype: login.usertype,
+                status: login.status
+            }
+        });
+    } catch (err) {
+        console.error('Update user error:', err);
+        res.status(500).json({ message: 'Server error updating user', error: err.message });
+    }
+};
 
 // Get User Profile
 exports.getProfile = async (req, res) => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './Companies.css';
 
 const Companies = () => {
     const [companies, setCompanies] = useState([]);
@@ -44,22 +45,6 @@ const Companies = () => {
             ...prev,
             [name]: value
         }));
-    };
-
-    const handleAddClick = () => {
-        setIsEdit(false);
-        setCurrentCompany(null);
-        setFormData({
-            company_name: '',
-            email: '',
-            phone: '',
-            industry: '',
-            location: '',
-            website: '',
-            status: 'Active',
-            company_desc: ''
-        });
-        setShowModal(true);
     };
 
     const handleEditClick = (company) => {
@@ -171,11 +156,6 @@ const Companies = () => {
                     <h1 className="page-title">Company Management</h1>
                     <p className="text-muted">Manage all registered companies and their subscriptions</p>
                 </div>
-                <div className="header-actions">
-                    <button className="btn btn-primary" onClick={handleAddClick}>
-                        <i className="bi bi-plus-circle me-2"></i>Add New Company
-                    </button>
-                </div>
             </div>
 
             <div className="dashboard-card">
@@ -185,7 +165,7 @@ const Companies = () => {
                             type="text"
                             className="form-control form-control-dark"
                             placeholder="Search companies..."
-                            style={{ maxWidth: '300px' }}
+                            style={{ maxWidth: '700px' }}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -220,9 +200,9 @@ const Companies = () => {
                                 <tr key={company._id}>
                                     <td>
                                         <div className="d-flex align-items-center">
-                                            <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <div className="company-avatar rounded-circle d-flex align-items-center justify-content-center me-2">
                                                 {company.logo ? (
-                                                    <img src={`http://localhost:5000${company.logo}`} alt="" className="avatar-img rounded-circle" />
+                                                    <img src={`http://localhost:5000${company.logo}`} alt="" className="avatar-img rounded-circle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
                                                     company.company_name.substring(0, 2).toUpperCase()
                                                 )}
@@ -266,8 +246,8 @@ const Companies = () => {
 
             {/* View Modal */}
             {showViewModal && currentCompany && (
-                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered modal-lg">
+                <div className="modal fade show d-block modal-extra-wide" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered modal-xl">
                         <div className="modal-content bg-dark text-white">
                             <div className="modal-header border-secondary">
                                 <h5 className="modal-title">Company Details</h5>
@@ -277,9 +257,9 @@ const Companies = () => {
                                 <div className="row">
                                     <div className="col-md-4 text-center mb-4 mb-md-0">
                                         <div className="d-flex flex-column align-items-center">
-                                            <div className="avatar-xl bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '120px', height: '120px', fontSize: '2.5rem' }}>
+                                            <div className="company-avatar-large rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '120px', height: '120px', fontSize: '2.5rem' }}>
                                                 {currentCompany.logo ? (
-                                                    <img src={`http://localhost:5000${currentCompany.logo}`} alt="Company Logo" className="img-fluid rounded-circle w-100 h-100 object-fit-cover" />
+                                                    <img src={`http://localhost:5000${currentCompany.logo}`} alt="Company Logo" className="img-fluid rounded-circle" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : (
                                                     currentCompany.company_name.substring(0, 2).toUpperCase()
                                                 )}

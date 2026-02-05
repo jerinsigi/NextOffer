@@ -15,13 +15,11 @@ import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './components/admin/pages/Dashboard';
 import Companies from './components/admin/pages/Companies';
 import Users from './components/admin/pages/Users';
-import Integrity from './components/admin/pages/Integrity';
 import Support from './components/admin/pages/Support';
 import Logs from './components/admin/pages/Logs';
 import Settings from './components/admin/pages/Settings';
 import Reports from './components/admin/pages/Reports';
 import JobDescriptions from './components/admin/pages/JobDescriptions';
-import InterviewMonitoring from './components/admin/pages/InterviewMonitoring';
 import AdminProfile from './components/admin/pages/AdminProfile';
 import Documentation from './components/admin/pages/Documentation';
 import JobCategories from './components/admin/pages/JobCategories';
@@ -86,8 +84,6 @@ function App() {
           <Route path="jobs" element={<JobDescriptions />} />
           <Route path="job-categories" element={<JobCategories />} />
           <Route path="skills" element={<Skills />} />
-          <Route path="interviews" element={<InterviewMonitoring />} />
-          <Route path="integrity" element={<Integrity />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="logs" element={<Logs />} />
