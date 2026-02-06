@@ -15,6 +15,9 @@ const interviewResponseSchema = new mongoose.Schema({
     confidence_score: {
         type: Number
     },
+    feedback: {
+        type: String
+    },
     submitted_at: {
         type: Date,
         default: Date.now

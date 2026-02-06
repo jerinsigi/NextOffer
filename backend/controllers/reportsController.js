@@ -4,6 +4,7 @@ const Company = require('../models/Company');
 const Application = require('../models/Application');
 const IntegrityLog = require('../models/Integrity_Log');
 const JobDescription = require('../models/Job_Description');
+const FinalReport = require('../models/Final_Report');
 const mongoose = require('mongoose');
 
 exports.getDashboardStats = async (req, res) => {
@@ -73,10 +74,16 @@ exports.getDashboardStats = async (req, res) => {
 
         // --- 3. Company Performance ---
         // Limit to top 5-10 for performance if list is long
+        const FinalReport = require('../models/Final_Report'); // Ensure to require this model
+
+        // ... existing code ...
+
+        // --- 3. Company Performance ---
+        // Limit to top 5-10 for performance if list is long
         const companiesData = await Company.aggregate([
             {
                 $lookup: {
-                    from: 'job_descriptions', // Collection name matches model export usually lowercase plural
+                    from: 'job_descriptions',
                     localField: '_id',
                     foreignField: 'Fk_company_id',
                     as: 'jobs'
@@ -90,15 +97,17 @@ exports.getDashboardStats = async (req, res) => {
             }
         ]);
 
-        // Further detailed aggregation for companies might be heavy in one go. 
-        // We iterate or improve query. Let's try to attach metrics.
-        // Simplified approach: For each company, get count of interviews and applications via Job IDs
         const enrichedCompanies = await Promise.all(companiesData.map(async (comp) => {
             const jobIds = comp.jobIds;
             const interviewCount = await InterviewSession.countDocuments({ fk_job_id: { $in: jobIds } });
             const applicationCount = await Application.countDocuments({ Fk_job_id: { $in: jobIds } });
-            // Violations linked via InterviewSession
-            // Find sessions for these jobs, then count logs
+
+            // Calculate avg score from FinalReport
+            const reports = await FinalReport.find({ Fk_job_id: { $in: jobIds } });
+            const totalScore = reports.reduce((acc, rep) => acc + (rep.final_trust_score || 0), 0);
+            const avgScore = reports.length > 0 ? Math.round(totalScore / reports.length) : 0;
+
+            // Violations calculation
             const sessions = await InterviewSession.find({ fk_job_id: { $in: jobIds } }).select('_id');
             const sessionIds = sessions.map(s => s._id);
             const violations = await IntegrityLog.aggregate([
@@ -109,12 +118,11 @@ exports.getDashboardStats = async (req, res) => {
             return {
                 name: comp.name,
                 interviews: interviewCount,
-                candidates: applicationCount, // or candidates applied
-                avgScore: Math.floor(Math.random() * (95 - 75 + 1) + 75), // Placeholder as score logic is complex/missing
+                candidates: applicationCount,
+                avgScore: avgScore,
                 violations: violations[0]?.total || 0
             };
         }));
-
 
         // --- 4. Skills Analysis ---
         const skillsAnalysis = await JobDescription.aggregate([
@@ -122,12 +130,19 @@ exports.getDashboardStats = async (req, res) => {
             { $group: { _id: "$skills", demand: { $sum: 1 } } },
             { $sort: { demand: -1 } },
             { $limit: 7 }
-        ]).then(results => results.map(r => ({
+        ]);
+
+        // Enrich skills with data (this is expensive potentially, simplified here)
+        // Ideally we'd aggregate FinalReports -> Job -> Skills, but that's complex.
+        // For now, we will leave score as 0 if not easily linked, OR attempt a rough avg.
+        // Let's settle for 0 to show real data (or lack thereof) rather than fake.
+
+        const enrichedSkills = skillsAnalysis.map(r => ({
             skill: r._id,
             demand: r.demand,
-            avgScore: Math.floor(Math.random() * (90 - 70 + 1) + 70), // Placeholder
-            passRate: Math.floor(Math.random() * (80 - 60 + 1) + 60)  // Placeholder
-        })));
+            avgScore: 0, // Real calculation requires complex join: Report -> Job -> unwind skills -> group.
+            passRate: 0  // Placeholder for now, removing random.
+        }));
 
         // --- 5. Hiring Funnel ---
         const funnelStats = await Application.aggregate([
@@ -180,7 +195,7 @@ exports.getDashboardStats = async (req, res) => {
             },
             interviewTrends,
             companiesData: enrichedCompanies,
-            skillsAnalysis,
+            skillsAnalysis: enrichedSkills,
             hiringFunnel,
             integrityMetrics
         });

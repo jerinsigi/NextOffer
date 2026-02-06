@@ -71,6 +71,9 @@ app.use('/api/contact', contactRouter);
 const reportsRouter = require('./routes/reports');
 app.use('/api/reports', reportsRouter);
 
+const adminDashboardRouter = require('./routes/adminDashboard');
+app.use('/api/admin/dashboard', adminDashboardRouter);
+
 
 module.exports = app;
 

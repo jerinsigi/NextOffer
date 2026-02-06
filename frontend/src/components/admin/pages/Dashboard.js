@@ -1,7 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
+    const [stats, setStats] = useState({
+        totalCompanies: 0,
+        totalCandidates: 0,
+        interviewsToday: 0,
+        totalViolations: 0
+    });
+    const [recentInterviews, setRecentInterviews] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                // Adjust API URL if needed based on project config
+                const response = await axios.get('http://localhost:5000/api/admin/dashboard/stats');
+                setStats(response.data.stats);
+                setRecentInterviews(response.data.recentInterviews);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    const formatTime = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return date.toLocaleDateString();
+    };
+
     return (
         <div className="dashboard-container">
             {/* Page Header */}
@@ -10,11 +51,7 @@ const Dashboard = () => {
                     <h1 className="page-title">Dashboard Overview</h1>
                     <p className="text-muted">Welcome back! Here's what's happening with NextOffer today.</p>
                 </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary">
-                        <i className="bi bi-download me-2"></i>Export Report
-                    </button>
-                </div>
+                {/* Export Report Removed as it's likely dummy for now */}
             </div>
 
             {/* Stats Cards */}
@@ -26,10 +63,8 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Companies</div>
-                            <div className="stat-value">248</div>
-                            <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 12% from last month
-                            </div>
+                            <div className="stat-value">{loading ? '...' : stats.totalCompanies}</div>
+                            {/* Comparison removed as we don't calculate history yet */}
                         </div>
                     </div>
                 </div>
@@ -41,10 +76,7 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Active Candidates</div>
-                            <div className="stat-value">12,543</div>
-                            <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 8% from last month
-                            </div>
+                            <div className="stat-value">{loading ? '...' : stats.totalCandidates}</div>
                         </div>
                     </div>
                 </div>
@@ -56,10 +88,7 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Interviews Today</div>
-                            <div className="stat-value">156</div>
-                            <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 23% from yesterday
-                            </div>
+                            <div className="stat-value">{loading ? '...' : stats.interviewsToday}</div>
                         </div>
                     </div>
                 </div>
@@ -71,10 +100,7 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Integrity Violations</div>
-                            <div className="stat-value">12</div>
-                            <div className="stat-change negative">
-                                <i className="bi bi-arrow-down"></i> 15% from last week
-                            </div>
+                            <div className="stat-value">{loading ? '...' : stats.totalViolations}</div>
                         </div>
                     </div>
                 </div>
@@ -87,7 +113,7 @@ const Dashboard = () => {
                     <div className="dashboard-card">
                         <div className="card-header-custom">
                             <h5 className="card-title mb-0">Recent Interview Sessions</h5>
-                            <button className="btn btn-sm btn-outline-primary">View All</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => navigate('/admin/logs')}>View All</button>
                         </div>
                         <div className="table-responsive">
                             <table className="table table-dark table-hover">
@@ -97,126 +123,56 @@ const Dashboard = () => {
                                         <th>Company</th>
                                         <th>Position</th>
                                         <th>Status</th>
-                                        <th>Score</th>
                                         <th>Time</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    JD
-                                                </div>
-                                                <span>John Doe</span>
-                                            </div>
-                                        </td>
-                                        <td>TechCorp Inc.</td>
-                                        <td>Senior Developer</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td><span className="text-success fw-bold">87%</span></td>
-                                        <td>5 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    AS
-                                                </div>
-                                                <span>Alice Smith</span>
-                                            </div>
-                                        </td>
-                                        <td>StartupXYZ</td>
-                                        <td>UI/UX Designer</td>
-                                        <td><span className="badge bg-warning">In Progress</span></td>
-                                        <td><span className="text-muted">--</span></td>
-                                        <td>12 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    MB
-                                                </div>
-                                                <span>Mike Brown</span>
-                                            </div>
-                                        </td>
-                                        <td>DataCo</td>
-                                        <td>Data Analyst</td>
-                                        <td><span className="badge bg-danger">Flagged</span></td>
-                                        <td><span className="text-danger fw-bold">45%</span></td>
-                                        <td>28 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    SJ
-                                                </div>
-                                                <span>Sarah Johnson</span>
-                                            </div>
-                                        </td>
-                                        <td>CloudTech</td>
-                                        <td>DevOps Engineer</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td><span className="text-success fw-bold">92%</span></td>
-                                        <td>1 hour ago</td>
-                                    </tr>
+                                    {loading ? (
+                                        <tr><td colSpan="5" className="text-center">Loading...</td></tr>
+                                    ) : recentInterviews.length > 0 ? (
+                                        recentInterviews.map((interview) => (
+                                            <tr key={interview.id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                            {interview.candidateInitials}
+                                                        </div>
+                                                        <span>{interview.candidate}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{interview.company}</td>
+                                                <td>{interview.position}</td>
+                                                <td>
+                                                    <span className={`badge bg-${interview.status === 'completed' ? 'success' : interview.status === 'ongoing' ? 'warning' : 'secondary'}`}>
+                                                        {interview.status}
+                                                    </span>
+                                                </td>
+                                                <td>{formatTime(interview.time)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr><td colSpan="5" className="text-center text-muted">No recent interviews</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                {/* System Health & Quick Stats */}
+                {/* Quick Actions Only - System Health Removed */}
                 <div className="col-xl-4">
-                    <div className="dashboard-card mb-4">
-                        <div className="card-header-custom">
-                            <h5 className="card-title mb-0">System Health</h5>
-                        </div>
-                        <div className="p-3">
-                            <div className="health-item mb-3">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">API Response Time</span>
-                                    <span className="text-success fw-bold">98ms</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-success" style={{ width: '95%' }}></div>
-                                </div>
-                            </div>
-                            <div className="health-item mb-3">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Database Load</span>
-                                    <span className="text-warning fw-bold">67%</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-warning" style={{ width: '67%' }}></div>
-                                </div>
-                            </div>
-                            <div className="health-item">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Server Uptime</span>
-                                    <span className="text-success fw-bold">99.9%</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-success" style={{ width: '99.9%' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div className="dashboard-card">
                         <div className="card-header-custom">
                             <h5 className="card-title mb-0">Quick Actions</h5>
                         </div>
                         <div className="p-3">
-                            <button className="btn btn-outline-primary w-100 mb-2">
-                                <i className="bi bi-plus-circle me-2"></i>Add New Company
+                            <button className="btn btn-outline-primary w-100 mb-2" onClick={() => navigate('/admin/companies')}>
+                                <i className="bi bi-plus-circle me-2"></i>Manage Companies
                             </button>
-                            <button className="btn btn-outline-primary w-100 mb-2">
+                            <button className="btn btn-outline-primary w-100 mb-2" onClick={() => navigate('/admin/reports')}>
                                 <i className="bi bi-file-earmark-text me-2"></i>View Reports
                             </button>
-                            <button className="btn btn-outline-primary w-100">
+                            <button className="btn btn-outline-primary w-100" onClick={() => navigate('/admin/logs')}>
                                 <i className="bi bi-shield-check me-2"></i>Review Violations
                             </button>
                         </div>

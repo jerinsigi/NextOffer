@@ -263,3 +263,62 @@ exports.getInterviewSession = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+// Complete interview and update application status
+exports.completeInterview = async (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        console.log('🔄 Complete Interview - Received sessionId:', sessionId);
+
+        if (!sessionId) {
+            return res.status(400).json({ message: 'Session ID is required' });
+        }
+
+        // Find the session
+        const session = await InterviewSession.findById(sessionId);
+        if (!session) {
+            console.log('❌ Session not found for ID:', sessionId);
+            return res.status(404).json({ message: 'Interview session not found' });
+        }
+
+        console.log('✅ Found session:', {
+            sessionId: session._id,
+            candidateId: session.fk_candidate_id,
+            jobId: session.fk_job_id,
+            currentStatus: session.session_status
+        });
+
+        // Update session status
+        session.session_status = 'completed';
+        await session.save();
+        console.log('✅ Session status updated to: completed');
+
+        // Update Application status to 'Interviewed'
+        const application = await Application.findOne({
+            Fk_candidate_id: session.fk_candidate_id,
+            Fk_job_id: session.fk_job_id
+        });
+
+        if (application) {
+            console.log('✅ Found application:', {
+                applicationId: application._id,
+                currentStatus: application.status
+            });
+            application.status = 'Interviewed';
+            await application.save();
+            console.log('✅ Application status updated to: Interviewed');
+        } else {
+            console.log('❌ No application found for candidate:', session.fk_candidate_id, 'job:', session.fk_job_id);
+        }
+
+        res.status(200).json({
+            message: 'Interview completed successfully',
+            sessionStatus: session.session_status,
+            applicationStatus: application ? application.status : null
+        });
+
+    } catch (error) {
+        console.error('❌ Error completing interview:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};

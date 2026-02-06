@@ -17,7 +17,14 @@ const UserProfile = () => {
         currentRole: '',
         bio: '',
         avatar: '',
-        id: ''
+        id: '',
+        education: '',
+        experienceYears: 0,
+        socialLinks: {
+            linkedin: '',
+            github: '',
+            portfolio: ''
+        }
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -71,7 +78,14 @@ const UserProfile = () => {
                         currentRole: data.current_role || '',
                         bio: data.bio || '',
                         avatar: data.image_url ? (data.image_url.startsWith('http') || data.image_url.startsWith('data') ? data.image_url : `http://localhost:5000${data.image_url}`) : '',
-                        id: data._id
+                        id: data._id,
+                        education: data.education || '',
+                        experienceYears: data.experience_years || 0,
+                        socialLinks: {
+                            linkedin: data.social_links?.linkedin || '',
+                            github: data.social_links?.github || '',
+                            portfolio: data.social_links?.portfolio || ''
+                        }
                     });
                     // Load user's skills
                     setSkills(data.skills || []);
@@ -146,6 +160,11 @@ const UserProfile = () => {
             if (profileData.location) formData.append('location', profileData.location);
             if (profileData.currentRole) formData.append('currentRole', profileData.currentRole);
             if (profileData.bio) formData.append('bio', profileData.bio);
+            if (profileData.education) formData.append('education', profileData.education);
+            if (profileData.experienceYears) formData.append('experience_years', profileData.experienceYears);
+            if (profileData.socialLinks) {
+                formData.append('social_links', JSON.stringify(profileData.socialLinks));
+            }
 
             // Add skills as JSON string
             if (skills && skills.length > 0) {
@@ -416,6 +435,9 @@ const UserProfile = () => {
                             <span><i className="bi bi-envelope"></i> {profileData.email}</span>
                             <span><i className="bi bi-phone"></i> {profileData.phone || 'N/A'}</span>
                             <span><i className="bi bi-geo-alt"></i> {profileData.location || 'N/A'}</span>
+                            {profileData.experienceYears > 0 && (
+                                <span><i className="bi bi-briefcase-fill"></i> {profileData.experienceYears} years exp</span>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -542,6 +564,36 @@ const UserProfile = () => {
                                             />
                                         </div>
                                     </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Education</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-mortarboard"></i></span>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-dark"
+                                                value={profileData.education}
+                                                onChange={(e) => handleProfileChange('education', e.target.value)}
+                                                disabled={!isEditing}
+                                                placeholder="e.g. BS Computer Science"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="form-label">Years of Experience</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-calendar-check"></i></span>
+                                            <input
+                                                type="number"
+                                                className="form-control form-control-dark"
+                                                value={profileData.experienceYears}
+                                                onChange={(e) => handleProfileChange('experienceYears', parseInt(e.target.value) || 0)}
+                                                disabled={!isEditing}
+                                                placeholder="Years"
+                                                min="0"
+                                                max="50"
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="col-12">
                                         <label className="form-label">Bio</label>
                                         <textarea
@@ -552,6 +604,51 @@ const UserProfile = () => {
                                             disabled={!isEditing}
                                             placeholder="Tell us about yourself..."
                                         ></textarea>
+                                    </div>
+                                    <div className="col-12">
+                                        <h6 className="mt-4 mb-3 text-white">Social Links</h6>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <label className="form-label">LinkedIn</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-linkedin"></i></span>
+                                            <input
+                                                type="url"
+                                                className="form-control form-control-dark"
+                                                value={profileData.socialLinks.linkedin}
+                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, linkedin: e.target.value })}
+                                                disabled={!isEditing}
+                                                placeholder="LinkedIn profile URL"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <label className="form-label">GitHub</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-github"></i></span>
+                                            <input
+                                                type="url"
+                                                className="form-control form-control-dark"
+                                                value={profileData.socialLinks.github}
+                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, github: e.target.value })}
+                                                disabled={!isEditing}
+                                                placeholder="GitHub profile URL"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <label className="form-label">Portfolio</label>
+                                        <div className="input-group">
+                                            <span className="input-group-text"><i className="bi bi-globe"></i></span>
+                                            <input
+                                                type="url"
+                                                className="form-control form-control-dark"
+                                                value={profileData.socialLinks.portfolio}
+                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, portfolio: e.target.value })}
+                                                disabled={!isEditing}
+                                                placeholder="Portfolio website URL"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import './UserLayout.css';
+import '../common/dashboard/DashboardLayout.css';
 import logo from '../../logo.svg';
 
 const UserLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [notificationCount] = useState(3);
     const [userData, setUserData] = useState({ name: 'Guest', type: 'Candidate', avatar: null });
     const location = useLocation();
@@ -141,22 +140,13 @@ const UserLayout = () => {
     };
 
     return (
-        <div className={`user-layout ${sidebarCollapsed ? 'collapsed' : ''}`}>
-            {/* Mobile Overlay */}
-            {mobileMenuOpen && (
-                <div
-                    className="mobile-overlay"
-                    onClick={() => setMobileMenuOpen(false)}
-                ></div>
-            )}
-
+        <div className="dashboard-layout">
             {/* Sidebar */}
-            <aside className={`user-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            <aside className={`dashboard-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
                 {/* Logo Section */}
                 <div className="sidebar-header">
-                    <Link to="/user/dashboard" className="sidebar-brand">
+                    <Link to="/user/dashboard" className="sidebar-brand white-brand-text">
                         <img src={logo} alt="NextOffer" className="brand-logo" />
-                        {!sidebarCollapsed && <span className="brand-text">NextOffer</span>}
                     </Link>
                     <button
                         className="sidebar-toggle"
@@ -197,31 +187,28 @@ const UserLayout = () => {
                 {/* Sidebar Footer */}
                 {!sidebarCollapsed && (
                     <div className="sidebar-footer">
-                        <div className="sidebar-info">
-                            <small className="text-muted">Version 1.0.0</small>
-                        </div>
+                        <button
+                            className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={handleLogout}
+                            title="Logout"
+                        >
+                            <i className="bi bi-box-arrow-left"></i>
+                            <span>Logout</span>
+                        </button>
                     </div>
                 )}
             </aside>
 
             {/* Main Content Area */}
-            <div className="user-main">
+            <div className="dashboard-main">
                 {/* Top Navbar */}
-                <header className="user-navbar">
+                <header className="dashboard-navbar">
                     <div className="navbar-left">
-                        {/* Hamburger Menu for Mobile */}
-                        <button
-                            className="hamburger-menu"
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        >
-                            <i className={`bi ${mobileMenuOpen ? 'bi-x-lg' : 'bi-list'} fs-4`}></i>
-                        </button>
-
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb">
                             <ol className="breadcrumb mb-0">
                                 <li className="breadcrumb-item">
-                                    <Link to="/user/dashboard">Home</Link>
+                                    <Link to="/user/dashboard">User</Link>
                                 </li>
                                 <li className="breadcrumb-item active">
                                     {menuItems.find(item => item.path === location.pathname)?.title || 'Dashboard'}
@@ -328,27 +315,21 @@ const UserLayout = () => {
                                         <i className="bi bi-question-circle me-2"></i>Help Center
                                     </Link>
                                 </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <button className="dropdown-item text-danger" onClick={handleLogout}>
-                                        <i className="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
-                                </li>
                             </ul>
                         </div>
                     </div>
                 </header>
 
                 {/* Content Area */}
-                <main className="user-content">
+                <main className="dashboard-content">
                     <Outlet />
                 </main>
 
                 {/* Footer */}
-                <footer className="user-footer">
+                <footer className="dashboard-footer">
                     <div className="footer-content">
                         <div className="footer-left">
-                            <span>© 2025 NextOffer. All rights reserved.</span>
+                            <span>© 2026 NextOffer. All rights reserved.</span>
                         </div>
                         <div className="footer-right">
                             <Link to="/user/help" className="footer-link">Help</Link>

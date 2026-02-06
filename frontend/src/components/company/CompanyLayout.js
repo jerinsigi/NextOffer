@@ -54,12 +54,7 @@ const CompanyLayout = () => {
             badge: null
         },
 
-        {
-            title: 'User Management',
-            icon: 'bi-people',
-            path: '/company/users',
-            badge: null
-        },
+        
         {
             title: 'Job Descriptions',
             icon: 'bi-file-text',
@@ -121,7 +116,6 @@ const CompanyLayout = () => {
                 <div className="sidebar-header">
                     <Link to="/company/dashboard" className="sidebar-brand white-brand-text">
                         <img src={logo} alt="NextOffer" className="brand-logo" />
-                        {!sidebarCollapsed && <span className="brand-text white-brand-text">NextOffer</span>}
                     </Link>
                     <button
                         className="sidebar-toggle"

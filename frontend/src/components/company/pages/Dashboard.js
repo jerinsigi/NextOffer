@@ -3,10 +3,17 @@ import './Dashboard.css';
 
 const Dashboard = () => {
     const [company, setCompany] = useState(null);
+    const [stats, setStats] = useState({
+        totalJobs: 0,
+        activeCandidates: 0,
+        interviewsToday: 0,
+        integrityViolations: 0,
+        recentInterviews: []
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchCompanyProfile = async () => {
+        const fetchDashboardData = async () => {
             try {
                 // Get user from storage
                 const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
@@ -15,25 +22,53 @@ const Dashboard = () => {
                 const user = JSON.parse(userStr);
 
                 // Fetch full company details
-                const response = await fetch('http://localhost:5000/api/companies/profile', {
+                const profileResponse = await fetch('http://localhost:5000/api/companies/profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user.email })
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
+                if (profileResponse.ok) {
+                    const data = await profileResponse.json();
                     setCompany(data);
                 }
+
+                // Fetch Dashboard Stats
+                const statsResponse = await fetch('http://localhost:5000/api/companies/dashboard-stats', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
+
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    setStats(statsData);
+                }
+
             } catch (error) {
-                console.error('Error fetching company profile:', error);
+                console.error('Error fetching dashboard data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchCompanyProfile();
+        fetchDashboardData();
     }, []);
+
+    // Helper to format time
+    const formatTime = (dateString) => {
+        if (!dateString) return '--';
+        const date = new Date(dateString);
+        // If today, show "5 min ago" style or just time
+        // For simplicity, let's just show standard time or relative
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return `${diffInSeconds} sec ago`;
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} h ago`;
+        return date.toLocaleDateString();
+    };
 
     return (
         <div className="dashboard-container">
@@ -49,11 +84,6 @@ const Dashboard = () => {
                             : "Welcome back! Here's what's happening with NextOffer today."}
                     </p>
                 </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary">
-                        <i className="bi bi-download me-2"></i>Export Report
-                    </button>
-                </div>
             </div>
 
             {/* Stats Cards */}
@@ -61,13 +91,13 @@ const Dashboard = () => {
                 <div className="col-xl-3 col-md-6">
                     <div className="stat-card">
                         <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-building fs-3"></i>
+                            <i className="bi bi-briefcase fs-3"></i>
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Total Companies</div>
-                            <div className="stat-value">248</div>
+                            <div className="stat-label">Total Jobs</div>
+                            <div className="stat-value">{stats.totalJobs}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 12% from last month
+                                <i className="bi bi-check-circle"></i> Active Posted Jobs
                             </div>
                         </div>
                     </div>
@@ -80,9 +110,9 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Active Candidates</div>
-                            <div className="stat-value">12,543</div>
+                            <div className="stat-value">{stats.activeCandidates}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 8% from last month
+                                <i className="bi bi-person-check"></i> Total Applications
                             </div>
                         </div>
                     </div>
@@ -95,9 +125,9 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Interviews Today</div>
-                            <div className="stat-value">156</div>
+                            <div className="stat-value">{stats.interviewsToday}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 23% from yesterday
+                                <i className="bi bi-calendar-event"></i> Scheduled Today
                             </div>
                         </div>
                     </div>
@@ -110,9 +140,9 @@ const Dashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Integrity Violations</div>
-                            <div className="stat-value">12</div>
+                            <div className="stat-value">{stats.integrityViolations}</div>
                             <div className="stat-change negative">
-                                <i className="bi bi-arrow-down"></i> 15% from last week
+                                <i className="bi bi-exclamation-triangle"></i> Flagged Sessions
                             </div>
                         </div>
                     </div>
@@ -133,7 +163,6 @@ const Dashboard = () => {
                                 <thead>
                                     <tr>
                                         <th>Candidate</th>
-                                        <th>Company</th>
                                         <th>Position</th>
                                         <th>Status</th>
                                         <th>Score</th>
@@ -141,66 +170,41 @@ const Dashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    JD
-                                                </div>
-                                                <span>John Doe</span>
-                                            </div>
-                                        </td>
-                                        <td>TechCorp Inc.</td>
-                                        <td>Senior Developer</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td><span className="text-success fw-bold">87%</span></td>
-                                        <td>5 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    AS
-                                                </div>
-                                                <span>Alice Smith</span>
-                                            </div>
-                                        </td>
-                                        <td>StartupXYZ</td>
-                                        <td>UI/UX Designer</td>
-                                        <td><span className="badge bg-warning">In Progress</span></td>
-                                        <td><span className="text-muted">--</span></td>
-                                        <td>12 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    MB
-                                                </div>
-                                                <span>Mike Brown</span>
-                                            </div>
-                                        </td>
-                                        <td>DataCo</td>
-                                        <td>Data Analyst</td>
-                                        <td><span className="badge bg-danger">Flagged</span></td>
-                                        <td><span className="text-danger fw-bold">45%</span></td>
-                                        <td>28 min ago</td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <div className="d-flex align-items-center">
-                                                <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    SJ
-                                                </div>
-                                                <span>Sarah Johnson</span>
-                                            </div>
-                                        </td>
-                                        <td>CloudTech</td>
-                                        <td>DevOps Engineer</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td><span className="text-success fw-bold">92%</span></td>
-                                        <td>1 hour ago</td>
-                                    </tr>
+                                    {stats.recentInterviews.length > 0 ? (
+                                        stats.recentInterviews.map((session) => (
+                                            <tr key={session._id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                            {session.candidateInitials}
+                                                        </div>
+                                                        <span>{session.candidate}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{session.position}</td>
+                                                <td>
+                                                    <span className={`badge ${session.status === 'completed' ? 'bg-success' :
+                                                            session.status === 'ongoing' ? 'bg-warning' : 'bg-secondary'
+                                                        }`}>
+                                                        {session.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className={`${session.integrity_status === 'Flagged' ? 'text-danger fw-bold' : 'text-success fw-bold'
+                                                        }`}>
+                                                        {session.score}
+                                                    </span>
+                                                </td>
+                                                <td>{formatTime(session.time)}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="text-center text-muted py-4">
+                                                No recent interviews found
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -211,34 +215,22 @@ const Dashboard = () => {
                 <div className="col-xl-4">
                     <div className="dashboard-card mb-4">
                         <div className="card-header-custom">
-                            <h5 className="card-title mb-0">System Health</h5>
+                            <h5 className="card-title mb-0">Platform Status</h5>
                         </div>
                         <div className="p-3">
                             <div className="health-item mb-3">
                                 <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">API Response Time</span>
-                                    <span className="text-success fw-bold">98ms</span>
+                                    <span className="text-muted">Service Status</span>
+                                    <span className="text-success fw-bold">Operational</span>
                                 </div>
                                 <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-success" style={{ width: '95%' }}></div>
+                                    <div className="progress-bar bg-success" style={{ width: '100%' }}></div>
                                 </div>
                             </div>
                             <div className="health-item mb-3">
                                 <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Database Load</span>
-                                    <span className="text-warning fw-bold">67%</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-warning" style={{ width: '67%' }}></div>
-                                </div>
-                            </div>
-                            <div className="health-item">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Server Uptime</span>
-                                    <span className="text-success fw-bold">99.9%</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-success" style={{ width: '99.9%' }}></div>
+                                    <span className="text-muted">Subscription</span>
+                                    <span className="text-primary fw-bold">Active</span>
                                 </div>
                             </div>
                         </div>
@@ -250,13 +242,13 @@ const Dashboard = () => {
                         </div>
                         <div className="p-3">
                             <button className="btn btn-outline-primary w-100 mb-2">
-                                <i className="bi bi-plus-circle me-2"></i>Add New Company
+                                <i className="bi bi-plus-circle me-2"></i>Post New Job
                             </button>
                             <button className="btn btn-outline-primary w-100 mb-2">
-                                <i className="bi bi-file-earmark-text me-2"></i>View Reports
+                                <i className="bi bi-file-earmark-text me-2"></i>Review Candidates
                             </button>
                             <button className="btn btn-outline-primary w-100">
-                                <i className="bi bi-shield-check me-2"></i>Review Violations
+                                <i className="bi bi-shield-check me-2"></i>Check Integrity Logs
                             </button>
                         </div>
                     </div>

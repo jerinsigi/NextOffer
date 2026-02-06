@@ -20,6 +20,8 @@ const JobDescriptions = () => {
     const [loadingApplicants, setLoadingApplicants] = useState(false);
     const [selectedCandidates, setSelectedCandidates] = useState([]);
     const [applicantStatusFilter, setApplicantStatusFilter] = useState(null); // null = all, 'Shortlisted' = only shortlisted
+    const [showCandidateDetailsModal, setShowCandidateDetailsModal] = useState(false);
+    const [selectedCandidateDetails, setSelectedCandidateDetails] = useState(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -425,6 +427,11 @@ const JobDescriptions = () => {
         }
     };
 
+    const handleViewCandidateDetails = (applicant) => {
+        setSelectedCandidateDetails(applicant.Fk_candidate_id);
+        setShowCandidateDetailsModal(true);
+    };
+
     const filteredJobs = jobs.filter(job => {
         const matchesSearch = job.job_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (job.department && job.department.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -479,9 +486,6 @@ const JobDescriptions = () => {
                     <p className="text-muted">Manage all job postings and monitor applications</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-outline-primary me-2">
-                        <i className="bi bi-download me-2"></i>Export Jobs
-                    </button>
                     <button className="btn btn-primary" onClick={handleCreateClick}>
                         <i className="bi bi-plus-circle me-2"></i>Post New Job
                     </button>
@@ -498,9 +502,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Total Jobs</div>
                             <div className="stat-value">{stats.total}</div>
-                            <div className="stat-trend text-muted">
-                                {stats.active} active, {stats.draft} draft
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -512,9 +513,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Active Postings</div>
                             <div className="stat-value">{stats.active}</div>
-                            <div className="stat-trend text-success">
-                                <i className="bi bi-arrow-up"></i> Accepting applications
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -526,9 +524,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Total Applications</div>
                             <div className="stat-value">{stats.totalApplications}</div>
-                            <div className="stat-trend text-muted">
-                                Avg {stats.avgApplications} per job
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -540,9 +535,6 @@ const JobDescriptions = () => {
                         <div className="stat-content">
                             <div className="stat-label">Closed Jobs</div>
                             <div className="stat-value">{stats.closed}</div>
-                            <div className="stat-trend text-muted">
-                                Last 30 days
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1224,7 +1216,17 @@ const JobDescriptions = () => {
                                                         </td>
                                                         <td>
                                                             <div className="btn-group" role="group">
-                                                                {app.status !== 'Shortlisted' && (
+                                                                <button
+                                                                    className="btn btn-sm btn-info"
+                                                                    title="View Details"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleViewCandidateDetails(app);
+                                                                    }}
+                                                                >
+                                                                    <i className="bi bi-eye"></i>
+                                                                </button>
+                                                                {app.status === 'Applied' && (
                                                                     <button
                                                                         className="btn btn-sm btn-success"
                                                                         title="Shortlist"
@@ -1236,7 +1238,7 @@ const JobDescriptions = () => {
                                                                         <i className="bi bi-check-circle"></i>
                                                                     </button>
                                                                 )}
-                                                                {app.status !== 'Rejected' && (
+                                                                {!['Rejected', 'Scheduled', 'Interviewing'].includes(app.status) && (
                                                                     <button
                                                                         className="btn btn-sm btn-danger"
                                                                         title="Reject"
@@ -1278,7 +1280,7 @@ const JobDescriptions = () => {
                                 )}
                             </div>
                             <div className="modal-footer border-secondary">
-                                {selectedCandidates.length > 0 && (
+                                {selectedCandidates.length > 0 && applicantStatusFilter !== 'Shortlisted' && (
                                     <button
                                         type="button"
                                         className="btn btn-primary me-auto"
@@ -1373,6 +1375,221 @@ const JobDescriptions = () => {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Candidate Details Modal */}
+            {showCandidateDetailsModal && selectedCandidateDetails && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1070 }}>
+                    <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                        <div className="modal-content bg-dark text-white">
+                            <div className="modal-header border-secondary">
+                                <h5 className="modal-title">
+                                    <i className="bi bi-person-circle me-2"></i>
+                                    Candidate Details
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="btn-close btn-close-white"
+                                    onClick={() => setShowCandidateDetailsModal(false)}
+                                ></button>
+                            </div>
+                            <div className="modal-body candidate-details-body">
+                                {/* Profile Header Section */}
+                                <div className="candidate-profile-header mb-4 p-3 border border-secondary rounded">
+                                    <div className="d-flex align-items-center gap-3">
+                                        {selectedCandidateDetails.image_url ? (
+                                            <img
+                                                src={selectedCandidateDetails.image_url.startsWith('http') 
+                                                    ? selectedCandidateDetails.image_url 
+                                                    : `http://localhost:5000${selectedCandidateDetails.image_url}`}
+                                                alt={selectedCandidateDetails.full_name}
+                                                className="rounded-circle"
+                                                style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                                            />
+                                        ) : (
+                                            <div
+                                                className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                style={{ width: '100px', height: '100px', fontSize: '3rem' }}
+                                            >
+                                                {selectedCandidateDetails.full_name?.charAt(0).toUpperCase() || 'U'}
+                                            </div>
+                                        )}
+                                        <div className="flex-grow-1">
+                                            <h4 className="mb-1">{selectedCandidateDetails.full_name}</h4>
+                                            {selectedCandidateDetails.current_role && (
+                                                <p className="text-primary mb-2">
+                                                    <i className="bi bi-briefcase me-2"></i>
+                                                    {selectedCandidateDetails.current_role}
+                                                </p>
+                                            )}
+                                            {selectedCandidateDetails.location && (
+                                                <p className="text-muted mb-0">
+                                                    <i className="bi bi-geo-alt me-2"></i>
+                                                    {selectedCandidateDetails.location}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contact Information */}
+                                <div className="candidate-section mb-4">
+                                    <h6 className="section-title mb-3">
+                                        <i className="bi bi-envelope me-2"></i>
+                                        Contact Information
+                                    </h6>
+                                    <div className="row g-3">
+                                        <div className="col-md-6">
+                                            <div className="detail-item">
+                                                <label className="text-muted small">Email</label>
+                                                <p className="mb-0">
+                                                    <i className="bi bi-envelope-fill me-2 text-primary"></i>
+                                                    {selectedCandidateDetails.email}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {selectedCandidateDetails.phone && (
+                                            <div className="col-md-6">
+                                                <div className="detail-item">
+                                                    <label className="text-muted small">Phone</label>
+                                                    <p className="mb-0">
+                                                        <i className="bi bi-telephone-fill me-2 text-primary"></i>
+                                                        {selectedCandidateDetails.phone}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Bio Section */}
+                                {selectedCandidateDetails.bio && (
+                                    <div className="candidate-section mb-4">
+                                        <h6 className="section-title mb-3">
+                                            <i className="bi bi-person-lines-fill me-2"></i>
+                                            About
+                                        </h6>
+                                        <p className="text-light">{selectedCandidateDetails.bio}</p>
+                                    </div>
+                                )}
+
+                                {/* Professional Details */}
+                                <div className="candidate-section mb-4">
+                                    <h6 className="section-title mb-3">
+                                        <i className="bi bi-briefcase-fill me-2"></i>
+                                        Professional Details
+                                    </h6>
+                                    <div className="row g-3">
+                                        {selectedCandidateDetails.education && (
+                                            <div className="col-md-6">
+                                                <div className="detail-item">
+                                                    <label className="text-muted small">Education</label>
+                                                    <p className="mb-0">
+                                                        <i className="bi bi-mortarboard-fill me-2 text-success"></i>
+                                                        {selectedCandidateDetails.education}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {selectedCandidateDetails.experience_years !== undefined && (
+                                            <div className="col-md-6">
+                                                <div className="detail-item">
+                                                    <label className="text-muted small">Experience</label>
+                                                    <p className="mb-0">
+                                                        <i className="bi bi-clock-history me-2 text-warning"></i>
+                                                        {selectedCandidateDetails.experience_years} {selectedCandidateDetails.experience_years === 1 ? 'year' : 'years'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Skills Section */}
+                                {selectedCandidateDetails.skills && selectedCandidateDetails.skills.length > 0 && (
+                                    <div className="candidate-section mb-4">
+                                        <h6 className="section-title mb-3">
+                                            <i className="bi bi-code-slash me-2"></i>
+                                            Skills
+                                        </h6>
+                                        <div className="skills-grid">
+                                            {selectedCandidateDetails.skills.map((skill, index) => (
+                                                <div key={index} className="skill-card p-3 border border-secondary rounded">
+                                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                                        <strong className="text-primary">{skill.name}</strong>
+                                                        {skill.level && (
+                                                            <span className="badge bg-success">{skill.level}</span>
+                                                        )}
+                                                    </div>
+                                                    {skill.years && (
+                                                        <small className="text-muted">
+                                                            <i className="bi bi-calendar3 me-1"></i>
+                                                            {skill.years} {skill.years === 1 ? 'year' : 'years'} experience
+                                                        </small>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Social Links Section */}
+                                {selectedCandidateDetails.social_links && (
+                                    <div className="candidate-section mb-3">
+                                        <h6 className="section-title mb-3">
+                                            <i className="bi bi-link-45deg me-2"></i>
+                                            Social Links
+                                        </h6>
+                                        <div className="social-links-grid">
+                                            {selectedCandidateDetails.social_links.linkedin && (
+                                                <a
+                                                    href={selectedCandidateDetails.social_links.linkedin}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-outline-primary w-100"
+                                                >
+                                                    <i className="bi bi-linkedin me-2"></i>
+                                                    LinkedIn Profile
+                                                </a>
+                                            )}
+                                            {selectedCandidateDetails.social_links.github && (
+                                                <a
+                                                    href={selectedCandidateDetails.social_links.github}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-outline-light w-100"
+                                                >
+                                                    <i className="bi bi-github me-2"></i>
+                                                    GitHub Profile
+                                                </a>
+                                            )}
+                                            {selectedCandidateDetails.social_links.portfolio && (
+                                                <a
+                                                    href={selectedCandidateDetails.social_links.portfolio}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="btn btn-outline-info w-100"
+                                                >
+                                                    <i className="bi bi-globe me-2"></i>
+                                                    Portfolio Website
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer border-secondary">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowCandidateDetailsModal(false)}
+                                >
+                                    Close
+                                </button>
                             </div>
                         </div>
                     </div>

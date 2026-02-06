@@ -59,6 +59,7 @@ const MyApplications = () => {
         'Shortlisted': { label: 'Shortlisted', color: 'success', icon: 'bi-star-fill' },
         'Scheduled': { label: 'Interview Scheduled', color: 'warning', icon: 'bi-calendar-check' },
         'Interviewing': { label: 'Interview in Progress', color: 'primary', icon: 'bi-camera-video' },
+        'Interviewed': { label: 'Interview Completed', color: 'info', icon: 'bi-check2-circle' },
         'Rejected': { label: 'Rejected', color: 'danger', icon: 'bi-x-circle' },
         'Hired': { label: 'Offer Received', color: 'success', icon: 'bi-check-circle-fill' },
         'not_interested': { label: 'Withdrawn', color: 'secondary', icon: 'bi-dash-circle' }

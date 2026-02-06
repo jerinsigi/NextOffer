@@ -29,6 +29,9 @@ router.post('/profile', companyController.getCompanyByEmail);
 // Update company profile with file upload
 router.post('/profile/update', upload.single('logo'), companyController.updateCompanyProfile);
 
+// Get company dashboard stats
+router.post('/dashboard-stats', companyController.getCompanyDashboardStats);
+
 // Delete a company
 router.delete('/:id', companyController.deleteCompany);
 

@@ -64,6 +64,18 @@ const InterviewCenter = () => {
         },
         onError: (event) => {
             console.error('❌ Speech Recognition ERROR:', event);
+            if (event.error === 'not-allowed') {
+                setSpeechError('Microphone access denied. Please allow access or use text input.');
+                setUseTextInput(true);
+                useTextInputRef.current = true;
+            } else if (event.error === 'no-speech') {
+                // Ignore no-speech, just silence
+            } else {
+                setSpeechError(`Speech error: ${event.error}. Switched to text input.`);
+                // Optional: Auto-switch to text?
+                // setUseTextInput(true);
+                // useTextInputRef.current = true;
+            }
         },
         onResult: (event) => {
             console.log('📝 Speech Recognition RESULT:', event);
@@ -79,19 +91,50 @@ const InterviewCenter = () => {
         }
     }, [transcript, useTextInput]);
 
-    // Fetch Interview Data
+    // Fetch Interview Data and Responses
     useEffect(() => {
         const fetchInterviewData = async () => {
             if (!interviewId) return;
             try {
-                const response = await fetch(`http://localhost:5000/api/interviews/${interviewId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setInterviewSession(data);
-                    setQuestions(data.questions);
-                } else {
-                    setError('Failed to load interview data');
+                // Fetch Session Data
+                const sessionRes = await fetch(`http://localhost:5000/api/interviews/${interviewId}`);
+                if (!sessionRes.ok) throw new Error('Failed to load interview data');
+                const sessionData = await sessionRes.json();
+
+                // Fetch Existing Responses
+                const responsesRes = await fetch(`http://localhost:5000/api/responses/session/${interviewId}`);
+                let loadedResponses = [];
+                if (responsesRes.ok) {
+                    const responsesData = await responsesRes.json();
+                    loadedResponses = responsesData.responses || [];
                 }
+
+                setInterviewSession(sessionData);
+                setQuestions(sessionData.questions);
+                setResponses(loadedResponses);
+
+                // Determine progress
+                // Backend responses format: { questionId, aiScore, ... }
+                // We need to map this to our current questions logic
+                const answeredQuestionIds = new Set(loadedResponses.map(r => r.questionId));
+
+                // If all questions are answered, go to completed
+                if (loadedResponses.length >= sessionData.questions.length && sessionData.questions.length > 0) {
+                    setInterviewStage('completed');
+                    setInterviewProgress(100);
+                } else {
+                    // Find first unanswered question
+                    const firstUnansweredIndex = sessionData.questions.findIndex(q => !answeredQuestionIds.has(q.id));
+                    if (firstUnansweredIndex !== -1) {
+                        setCurrentQuestion(firstUnansweredIndex);
+                        setInterviewProgress(((firstUnansweredIndex) / sessionData.questions.length) * 100);
+                    } else if (loadedResponses.length > 0) {
+                        // All loaded but maybe length mismatch? Just go to end
+                        setInterviewStage('completed');
+                        setInterviewProgress(100);
+                    }
+                }
+
             } catch (err) {
                 console.error("Error fetching interview:", err);
                 setError('Error loading interview data');
@@ -781,12 +824,36 @@ const InterviewCenter = () => {
         SpeechRecognition.stopListening();
     };
 
-    const endInterview = () => {
-        console.log('endInterview called');
+    const endInterview = async () => {
+        console.log('🎬 endInterview called');
         stopCamera(); // Stop camera when interview ends
 
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
+        }
+
+        // Call backend completion endpoint
+        console.log('📞 Calling completion endpoint with sessionId:', interviewId);
+        try {
+            const response = await fetch('http://localhost:5000/api/interviews/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: interviewId })
+            });
+
+            console.log('📡 Completion endpoint response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Interview marked as complete:', result);
+                console.log('   - Session Status:', result.sessionStatus);
+                console.log('   - Application Status:', result.applicationStatus);
+            } else {
+                const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+                console.error('❌ Failed to mark interview as complete:', response.status, errorData);
+            }
+        } catch (error) {
+            console.error('❌ Error calling completion endpoint:', error);
         }
 
         setInterviewStage('completed');
@@ -796,7 +863,7 @@ const InterviewCenter = () => {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(err => console.error('Error exiting fullscreen:', err));
         }
-        console.log('Interview ended, camera should be stopped');
+        console.log('✅ Interview ended, camera stopped, stage set to completed');
     };
 
     const getStatusIcon = (status) => {
@@ -1310,133 +1377,261 @@ const InterviewCenter = () => {
             {/* Completed Stage */}
             {interviewStage === 'completed' && (
                 <div className="completed-stage">
-                    <div className="completion-card">
-                        <div className="success-icon">
-                            <i className="bi bi-check-circle-fill"></i>
-                        </div>
-                        <h2>Interview Completed Successfully! 🎉</h2>
-                        <p className="text-muted">
-                            Your responses are being analyzed by our AI system
-                        </p>
-
-                        <div className="completion-stats">
-                            <div className="stat-item">
-                                <i className="bi bi-list-check"></i>
-                                <div>
-                                    <div className="stat-value">{questions.length}</div>
-                                    <div className="stat-label">Questions Answered</div>
-                                </div>
-                            </div>
-                            <div className="stat-item">
-                                <i className="bi bi-clock-history"></i>
-                                <div>
-                                    <div className="stat-value">{interviewSession.duration}</div>
-                                    <div className="stat-label">Minutes</div>
-                                </div>
-                            </div>
-                            <div className="stat-item">
-                                <i className="bi bi-shield-check"></i>
-                                <div>
-                                    <div className="stat-value">Clean</div>
-                                    <div className="stat-label">Integrity Status</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* AI Scoring Results */}
-                        {responses.length > 0 && (
-                            <div className="scoring-results" style={{
-                                background: 'white',
-                                borderRadius: '12px',
-                                padding: '25px',
-                                marginTop: '20px',
-                                border: '1px solid #dee2e6'
+                    <div className="completion-card" style={{
+                        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                        borderRadius: '20px',
+                        padding: '40px',
+                        maxWidth: '900px',
+                        margin: '0 auto',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(74, 144, 226, 0.2)'
+                    }}>
+                        {/* Success Header */}
+                        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 20px',
+                                boxShadow: '0 10px 30px rgba(74, 144, 226, 0.4)'
                             }}>
-                                <h4 style={{ marginBottom: '20px' }}>
-                                    <i className="bi bi-graph-up me-2"></i>
-                                    AI Evaluation Scores
-                                </h4>
-                                <div style={{ marginBottom: '15px' }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '15px',
-                                        background: '#f8f9fa',
-                                        borderRadius: '8px',
-                                        marginBottom: '10px'
-                                    }}>
-                                        <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                            Average Score
-                                        </span>
-                                        <span style={{
-                                            fontSize: '1.5rem',
-                                            fontWeight: 'bold',
-                                            color: responses.reduce((sum, r) => sum + r.ai_score, 0) / responses.length >= 75 ? '#28a745' : '#ffc107'
-                                        }}>
-                                            {Math.round(responses.reduce((sum, r) => sum + r.ai_score, 0) / responses.length)}/100
-                                        </span>
+                                <i className="bi bi-check-circle-fill" style={{ fontSize: '45px', color: 'white' }}></i>
+                            </div>
+                            <h2 style={{ 
+                                color: '#ffffff', 
+                                fontWeight: '700',
+                                marginBottom: '10px',
+                                fontSize: '2rem'
+                            }}>Interview Completed! 🎉</h2>
+                            <p style={{ color: '#94a3b8', fontSize: '1.05rem' }}>
+                                Great job! Your responses have been submitted successfully.
+                            </p>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '20px',
+                            marginBottom: '30px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, rgba(74, 144, 226, 0.15) 0%, rgba(74, 144, 226, 0.1) 100%)',
+                                borderRadius: '12px',
+                                padding: '20px',
+                                textAlign: 'center',
+                                border: '1px solid rgba(74, 144, 226, 0.3)'
+                            }}>
+                                <i className="bi bi-list-check" style={{ fontSize: '30px', color: '#4a90e2', marginBottom: '10px' }}></i>
+                                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#4a90e2' }}>{questions.length}</div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Questions Answered</div>
+                            </div>
+                            
+                            {responses.length > 0 && (
+                                <div style={{
+                                    background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%)',
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    textAlign: 'center',
+                                    border: '1px solid rgba(76, 175, 80, 0.3)'
+                                }}>
+                                    <i className="bi bi-trophy-fill" style={{ fontSize: '30px', color: '#4caf50', marginBottom: '10px' }}></i>
+                                    <div style={{ fontSize: '2rem', fontWeight: '700', color: '#4caf50' }}>
+                                        {Math.round(responses.reduce((sum, r) => sum + (r.ai_score || 0), 0) / responses.length)}%
                                     </div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Average Score</div>
                                 </div>
-                                <div style={{ display: 'grid', gap: '10px' }}>
-                                    {responses.map((response, index) => (
-                                        <div key={index} style={{
-                                            padding: '12px',
-                                            background: '#f8f9fa',
-                                            borderRadius: '8px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center'
-                                        }}>
-                                            <span style={{ fontSize: '0.9rem' }}>Question {index + 1}</span>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <span style={{
-                                                    fontWeight: 'bold',
-                                                    fontSize: '1.1rem',
-                                                    color: response.ai_score >= 75 ? '#28a745' : response.ai_score >= 50 ? '#ffc107' : '#dc3545'
+                            )}
+                            
+                            <div style={{
+                                background: integrityStatus.violations.length === 0 
+                                    ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%)'
+                                    : 'linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%)',
+                                borderRadius: '12px',
+                                padding: '20px',
+                                textAlign: 'center',
+                                border: integrityStatus.violations.length === 0 ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid rgba(255, 152, 0, 0.3)'
+                            }}>
+                                <i className={`bi ${integrityStatus.violations.length === 0 ? 'bi-shield-check' : 'bi-shield-exclamation'}`} 
+                                   style={{ 
+                                       fontSize: '30px', 
+                                       color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800', 
+                                       marginBottom: '10px' 
+                                   }}></i>
+                                <div style={{ 
+                                    fontSize: '2rem', 
+                                    fontWeight: '700', 
+                                    color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800' 
+                                }}>
+                                    {integrityStatus.violations.length}
+                                </div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Integrity Alerts</div>
+                            </div>
+                        </div>
+
+                        {/* AI Evaluation Results */}
+                        {responses.length > 0 && (
+                            <div style={{
+                                marginBottom: '30px'
+                            }}>
+                                <h3 style={{ 
+                                    color: '#ffffff', 
+                                    marginBottom: '20px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    fontSize: '1.3rem',
+                                    fontWeight: '600'
+                                }}>
+                                    <i className="bi bi-graph-up-arrow" style={{ color: '#4a90e2' }}></i>
+                                    AI Evaluation Results
+                                </h3>
+                                
+                                <div style={{ display: 'grid', gap: '15px' }}>
+                                    {responses.map((response, index) => {
+                                        const score = response.ai_score || 0;
+                                        const getScoreColor = (s) => {
+                                            if (s >= 80) return { bg: 'rgba(76, 175, 80, 0.15)', border: '#4caf50', text: '#4caf50' };
+                                            if (s >= 60) return { bg: 'rgba(74, 144, 226, 0.15)', border: '#4a90e2', text: '#4a90e2' };
+                                            if (s >= 40) return { bg: 'rgba(255, 152, 0, 0.15)', border: '#ff9800', text: '#ff9800' };
+                                            return { bg: 'rgba(244, 67, 54, 0.15)', border: '#f44336', text: '#f44336' };
+                                        };
+                                        const colors = getScoreColor(score);
+                                        
+                                        return (
+                                            <div key={index} style={{
+                                                background: 'rgba(30, 41, 59, 0.5)',
+                                                borderRadius: '12px',
+                                                padding: '20px',
+                                                border: `2px solid ${colors.border}`,
+                                                boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                                            }}>
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    justifyContent: 'space-between', 
+                                                    alignItems: 'center',
+                                                    marginBottom: '12px'
                                                 }}>
-                                                    {response.ai_score}/100
-                                                </span>
-                                                <span style={{ fontSize: '0.8rem', color: '#6c757d' }}>
-                                                    ({response.confidenceScore}% confidence)
-                                                </span>
+                                                    <span style={{ 
+                                                        fontSize: '1rem', 
+                                                        fontWeight: '600',
+                                                        color: '#e2e8f0'
+                                                    }}>
+                                                        Question {index + 1}
+                                                    </span>
+                                                    <div style={{
+                                                        background: colors.bg,
+                                                        padding: '8px 16px',
+                                                        borderRadius: '20px',
+                                                        border: `1px solid ${colors.border}`,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}>
+                                                        <span style={{
+                                                            fontWeight: '700',
+                                                            fontSize: '1.2rem',
+                                                            color: colors.text
+                                                        }}>
+                                                            {score}/100
+                                                        </span>
+                                                        {response.confidence_score && (
+                                                            <span style={{ 
+                                                                fontSize: '0.75rem', 
+                                                                color: '#94a3b8',
+                                                                fontWeight: '500'
+                                                            }}>
+                                                                ({response.confidence_score}% confidence)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {response.feedback && (
+                                                    <div style={{ 
+                                                        fontSize: '0.95rem', 
+                                                        color: '#cbd5e1',
+                                                        backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                                                        padding: '12px 15px',
+                                                        borderRadius: '8px',
+                                                        borderLeft: `4px solid ${colors.border}`,
+                                                        lineHeight: '1.6'
+                                                    }}>
+                                                        <i className="bi bi-chat-left-quote" style={{ 
+                                                            color: colors.border, 
+                                                            marginRight: '8px' 
+                                                        }}></i>
+                                                        {response.feedback}
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
-                        <div className="next-steps">
-                            <h4>What's Next?</h4>
-                            <ul>
-                                <li>
-                                    <i className="bi bi-check-circle text-success me-2"></i>
-                                    AI will evaluate your technical responses
-                                </li>
-                                <li>
-                                    <i className="bi bi-check-circle text-success me-2"></i>
-                                    Communication skills assessment will be generated
-                                </li>
-                                <li>
-                                    <i className="bi bi-check-circle text-success me-2"></i>
-                                    Resume-answer alignment analysis
-                                </li>
-                                <li>
-                                    <i className="bi bi-hourglass-split text-warning me-2"></i>
-                                    Results will be available in 10-15 minutes
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div className="completion-actions">
-                            <button className="btn btn-outline-primary">
-                                <i className="bi bi-arrow-left me-2"></i>
+                        {/* Action Buttons */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '15px',
+                            justifyContent: 'center',
+                            marginTop: '30px',
+                            flexWrap: 'wrap'
+                        }}>
+                            <button 
+                                className="btn btn-outline-primary"
+                                onClick={() => window.location.href = '/user/dashboard'}
+                                style={{
+                                    padding: '12px 30px',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    borderRadius: '10px',
+                                    border: '2px solid #4a90e2',
+                                    color: '#4a90e2',
+                                    background: 'transparent',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.background = '#4a90e2';
+                                    e.target.style.color = 'white';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.background = 'transparent';
+                                    e.target.style.color = '#4a90e2';
+                                }}
+                            >
+                                <i className="bi bi-house-fill me-2"></i>
                                 Back to Dashboard
                             </button>
-                            <button className="btn btn-primary">
-                                <i className="bi bi-file-earmark-bar-graph me-2"></i>
-                                View Results (Available Soon)
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => window.location.href = '/user/applications'}
+                                style={{
+                                    padding: '12px 30px',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    borderRadius: '10px',
+                                    background: 'linear-gradient(135deg, #4a90e2 0%, #357abd 100%)',
+                                    border: 'none',
+                                    boxShadow: '0 4px 15px rgba(74, 144, 226, 0.4)',
+                                    transition: 'all 0.3s ease',
+                                    color: 'white'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = '0 6px 20px rgba(74, 144, 226, 0.5)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = '0 4px 15px rgba(74, 144, 226, 0.4)';
+                                }}
+                            >
+                                <i className="bi bi-briefcase-fill me-2"></i>
+                                View My Applications
                             </button>
                         </div>
                     </div>

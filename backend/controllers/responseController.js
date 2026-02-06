@@ -90,8 +90,9 @@ exports.getSessionResponses = async (req, res) => {
                 topic: r.Fk_question_id.topic,
                 difficulty: r.Fk_question_id.difficulty_level,
                 candidateAnswer: r.candidate_answer,
-                aiScore: r.ai_score,
-                confidenceScore: r.confidence_score,
+                ai_score: r.ai_score,
+                confidence_score: r.confidence_score,
+                feedback: r.feedback,
                 submittedAt: r.submitted_at
             }))
         });

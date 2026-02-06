@@ -8,7 +8,7 @@ const ComingSoon = ({ title, subtitle, icon }) => {
                     <h1 className="page-title">{title}</h1>
                     <p className="text-muted">{subtitle}</p>
                 </div>
-            </div>
+            </div> 
 
             <div className="dashboard-card">
                 <div className="p-5 text-center" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>

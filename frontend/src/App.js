@@ -46,7 +46,7 @@ import CompanyLayout from './components/company/CompanyLayout';
 import CompanyDashboard from './components/company/pages/Dashboard';
 import CompanyProfile from './components/company/pages/CompanyProfile';
 
-import CompanyUsers from './components/company/pages/Users';
+
 import CompanyIntegrity from './components/company/pages/Integrity';
 import CompanySupport from './components/company/pages/Support';
 import CompanyLogs from './components/company/pages/Logs';
@@ -129,7 +129,6 @@ function App() {
             <Route path="documentation" element={<CompanyDocumentation />} />
             <Route path="settings" element={<CompanySettings />} />
 
-            <Route path="users" element={<CompanyUsers />} />
           </Route>
         </Route>
 

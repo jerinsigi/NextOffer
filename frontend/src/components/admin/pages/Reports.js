@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Reports.css';
+import axios from 'axios';
 
 const Reports = () => {
     const [dateRange, setDateRange] = useState('last7days');
@@ -18,8 +19,6 @@ const Reports = () => {
         integrityMetrics: []
     });
 
-    const API_URL = 'http://localhost:5000/api/reports/dashboard-stats';
-
     useEffect(() => {
         fetchDashboardStats();
     }, [dateRange]);
@@ -27,13 +26,12 @@ const Reports = () => {
     const fetchDashboardStats = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}?dateRange=${dateRange}`);
-            if (response.ok) {
-                const data = await response.json();
-                setStats(data);
-            } else {
-                console.error('Failed to fetch dashboard stats');
-            }
+            // Using relative path or full path based on setup. 
+            // In Dashboard.js I used http://localhost:5000, so keeping it consistent.
+            const response = await axios.get(`http://localhost:5000/api/reports/dashboard-stats`, {
+                params: { dateRange }
+            });
+            setStats(response.data);
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
         } finally {
@@ -41,7 +39,7 @@ const Reports = () => {
         }
     };
 
-    // Helper to format date for chart (YYYY-MM-DD -> MMM D)
+    // Helper to format date for chart
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -87,15 +85,15 @@ const Reports = () => {
                             <i className="bi bi-download me-2"></i>Export Report
                         </button>
                         <ul className="dropdown-menu dropdown-menu-end">
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('pdf')}>
+                            <li><button className="dropdown-item" onClick={() => exportReport('pdf')}>
                                 <i className="bi bi-file-earmark-pdf me-2"></i>Export as PDF
-                            </a></li>
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('excel')}>
+                            </button></li>
+                            <li><button className="dropdown-item" onClick={() => exportReport('excel')}>
                                 <i className="bi bi-file-earmark-excel me-2"></i>Export as Excel
-                            </a></li>
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('csv')}>
+                            </button></li>
+                            <li><button className="dropdown-item" onClick={() => exportReport('csv')}>
                                 <i className="bi bi-file-earmark-text me-2"></i>Export as CSV
-                            </a></li>
+                            </button></li>
                         </ul>
                     </div>
                 </div>
@@ -107,7 +105,6 @@ const Reports = () => {
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-people-fill text-primary"></i>
-                            {/* <span className="metric-change positive">+12.5%</span> */}
                         </div>
                         <div className="metric-value">{overview.totalCandidates?.toLocaleString()}</div>
                         <div className="metric-label">Total Candidates</div>
@@ -120,7 +117,6 @@ const Reports = () => {
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-camera-video-fill text-success"></i>
-                            {/* <span className="metric-change positive">+8.3%</span> */}
                         </div>
                         <div className="metric-value">{overview.interviewsConducted?.toLocaleString()}</div>
                         <div className="metric-label">Interviews Conducted</div>
@@ -133,7 +129,6 @@ const Reports = () => {
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-graph-up-arrow text-info"></i>
-                            {/* <span className="metric-change positive">+5.1%</span> */}
                         </div>
                         <div className="metric-value">{overview.avgSuccessRate}</div>
                         <div className="metric-label">Avg Success Rate</div>
@@ -146,7 +141,6 @@ const Reports = () => {
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-shield-fill-exclamation text-danger"></i>
-                            {/* <span className="metric-change negative">-3.2%</span> */}
                         </div>
                         <div className="metric-value">{overview.integrityViolations}</div>
                         <div className="metric-label">Integrity Violations</div>
@@ -177,7 +171,6 @@ const Reports = () => {
                             <div className="chart-container">
                                 {interviewTrends.length > 0 ? (
                                     <svg className="line-chart" viewBox="0 0 600 250">
-                                        {/* Grid lines */}
                                         {[0, 1, 2, 3, 4].map((i) => (
                                             <line
                                                 key={i}
@@ -189,13 +182,10 @@ const Reports = () => {
                                                 strokeWidth="1"
                                             />
                                         ))}
-
-                                        {/* Dynamic Scaling Calculation */}
                                         {(() => {
                                             const maxVal = Math.max(...interviewTrends.map(t => t.interviews), 10);
-                                            const scaleY = (val) => 250 - (val / maxVal) * 200; // 250 is bottom, 50 is top
+                                            const scaleY = (val) => 250 - (val / maxVal) * 200;
 
-                                            // Generate points
                                             const pointsInterviews = interviewTrends.map((t, i) =>
                                                 `${80 + i * 80},${scaleY(t.interviews)}`
                                             ).join(' ');
@@ -361,20 +351,17 @@ const Reports = () => {
                                             <small className="text-muted">
                                                 <i className="bi bi-briefcase me-1"></i>{skill.demand} jobs
                                             </small>
-                                            <small className="text-success">
-                                                {skill.passRate}% pass rate
-                                            </small>
+                                            {/* Removed random pass rate */}
                                         </div>
                                     </div>
                                     <div className="progress" style={{ height: '10px' }}>
-                                        {/* Normalize bar width based on max demand (approx 20 for now or find max) */}
                                         <div
                                             className="progress-bar bg-gradient-primary"
                                             style={{ width: `${Math.min((skill.demand / 10) * 100, 100)}%` }}
                                         ></div>
                                     </div>
                                     <div className="d-flex justify-content-between mt-1">
-                                        <small className="text-muted">Avg Score: {skill.avgScore}%</small>
+                                        <small className="text-muted">Avg Score: {skill.avgScore || 0}%</small>
                                         <small className="text-primary">{skill.demand} positions</small>
                                     </div>
                                 </div>

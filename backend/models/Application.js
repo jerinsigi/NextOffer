@@ -17,7 +17,7 @@ const applicationSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Applied', 'Shortlisted', 'Scheduled', 'Interviewing', 'Rejected', 'Hired'],
+        enum: ['Applied', 'Shortlisted', 'Scheduled', 'Interviewing', 'Interviewed', 'Rejected', 'Hired'],
         default: 'Applied'
     },
     coverLetter: {

@@ -1,5 +1,9 @@
 const Company = require('../models/Company');
 const Login = require('../models/Login');
+const Job_Description = require('../models/Job_Description');
+const Application = require('../models/Application');
+const Interview_Session = require('../models/Interview_Session');
+const Integrity_Log = require('../models/Integrity_Log');
 const bcrypt = require('bcrypt');
 const { sendOTP } = require('../utils/emailService');
 
@@ -349,5 +353,103 @@ exports.updateCompanyProfile = async (req, res) => {
     } catch (err) {
         console.error('Update company profile error:', err);
         res.status(500).json({ message: 'Server error updating profile', error: err.message });
+    }
+};
+
+// Get Company Dashboard Stats
+exports.getCompanyDashboardStats = async (req, res) => {
+    try {
+        const { email } = req.body;
+        console.log('Fetching dashboard stats for:', email);
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const company = await Company.findOne({ email });
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        // 1. Get all jobs for this company
+        const jobs = await Job_Description.find({ Fk_company_id: company._id });
+        const jobIds = jobs.map(job => job._id);
+
+        // 2. Count Active Candidates (Unique applicants for company's jobs)
+        const applicationsCount = await Application.countDocuments({
+            Fk_job_id: { $in: jobIds }
+        });
+
+        // 3. Count Interviews Today
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const interviewsTodayCount = await Interview_Session.countDocuments({
+            fk_job_id: { $in: jobIds },
+            session_status: { $in: ['pending', 'ongoing', 'completed'] },
+            started_at: { $gte: startOfDay, $lte: endOfDay }
+        });
+
+        // 4. Integrity Violations (for company's interviews)
+        const companySessions = await Interview_Session.find({ fk_job_id: { $in: jobIds } }, '_id');
+        const sessionIds = companySessions.map(s => s._id);
+
+        const integrityLogs = await Integrity_Log.find({
+            Fk_session_id: { $in: sessionIds },
+            $or: [
+                { tab_switch_count: { $gt: 0 } },
+                { gaze_away_count: { $gt: 0 } },
+                { face_absent_count: { $gt: 0 } }
+            ]
+        });
+        const violationsCount = integrityLogs.length;
+
+        // 5. Recent Interview Sessions (Limit 5)
+        const recentInterviews = await Interview_Session.find({ fk_job_id: { $in: jobIds } })
+            .sort({ started_at: -1 })
+            .limit(5)
+            .populate('fk_candidate_id', 'full_name email')
+            .populate('fk_job_id', 'job_title');
+
+        // Format recent interviews for frontend
+        const formedRecentInterviews = [];
+        for (const session of recentInterviews) {
+            let score = '--';
+            let integrityStatus = 'Clean';
+
+            // Check Integrity Log for this session
+            const log = await Integrity_Log.findOne({ Fk_session_id: session._id });
+            if (log && log.integrity_score !== undefined) {
+                score = `${log.integrity_score}%`;
+                if (log.integrity_score < 70) integrityStatus = 'Flagged';
+            }
+
+            formedRecentInterviews.push({
+                _id: session._id,
+                candidate: session.fk_candidate_id ? session.fk_candidate_id.full_name : 'Unknown',
+                candidateInitials: session.fk_candidate_id && session.fk_candidate_id.full_name ?
+                    session.fk_candidate_id.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '??',
+                company: company.company_name,
+                position: session.fk_job_id ? session.fk_job_id.job_title : 'Unknown',
+                status: session.session_status,
+                time: session.started_at,
+                score: score,
+                integrity_status: integrityStatus
+            });
+        }
+
+        res.json({
+            totalJobs: jobs.length,
+            activeCandidates: applicationsCount,
+            interviewsToday: interviewsTodayCount,
+            integrityViolations: violationsCount,
+            recentInterviews: formedRecentInterviews
+        });
+
+    } catch (err) {
+        console.error('Dashboard Stats Error:', err);
+        res.status(500).json({ message: 'Server error fetching dashboard stats', error: err.message });
     }
 };

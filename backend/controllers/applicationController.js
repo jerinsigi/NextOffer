@@ -110,7 +110,7 @@ exports.getJobApplications = async (req, res) => {
     try {
         const { jobId } = req.params;
         const applications = await Application.find({ Fk_job_id: jobId })
-            .populate('Fk_candidate_id', 'full_name email phone image_url skills education experience_years location current_role bio')
+            .populate('Fk_candidate_id', 'full_name email phone image_url skills education experience_years location current_role bio social_links')
             .populate('Fk_resume_id')
             .lean() // Convert to plain object to attach properties
             .sort({ createdAt: -1 });
