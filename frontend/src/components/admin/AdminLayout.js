@@ -142,7 +142,6 @@ const AdminLayout = () => {
                 <div className="sidebar-header">
                     <Link to="/admin/dashboard" className="sidebar-brand white-brand-text">
                         <img src={logo} alt="NextOffer" className="brand-logo" />
-                        {!sidebarCollapsed && <span className="brand-text white-brand-text">NextOffer</span>}
                     </Link>
                     <button
                         className="sidebar-toggle"

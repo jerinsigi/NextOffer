@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import './CompanyLayout.css';
+import '../admin/AdminLayout.css';
 import logo from '../../logo.svg';
 
 const CompanyLayout = () => {
@@ -114,14 +114,14 @@ const CompanyLayout = () => {
     };
 
     return (
-        <div className="company-layout">
+        <div className="admin-layout">
             {/* Sidebar */}
-            <aside className={`company-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+            <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
                 {/* Logo Section */}
                 <div className="sidebar-header">
-                    <Link to="/company/dashboard" className="sidebar-brand">
+                    <Link to="/company/dashboard" className="sidebar-brand white-brand-text">
                         <img src={logo} alt="NextOffer" className="brand-logo" />
-                        {!sidebarCollapsed && <span className="brand-text">NextOffer</span>}
+                        {!sidebarCollapsed && <span className="brand-text white-brand-text">NextOffer</span>}
                     </Link>
                     <button
                         className="sidebar-toggle"
@@ -160,17 +160,22 @@ const CompanyLayout = () => {
                 {/* Sidebar Footer */}
                 {!sidebarCollapsed && (
                     <div className="sidebar-footer">
-                        <div className="sidebar-info">
-                            <small className="text-muted">Version 1.0.0</small>
-                        </div>
+                        <button
+                            className="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={handleLogout}
+                            title="Logout"
+                        >
+                            <i className="bi bi-box-arrow-left"></i>
+                            <span>Logout</span>
+                        </button>
                     </div>
                 )}
             </aside>
 
             {/* Main Content Area */}
-            <div className="company-main">
+            <div className="admin-main">
                 {/* Top Navbar */}
-                <header className="company-navbar">
+                <header className="admin-navbar">
                     <div className="navbar-left">
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb">
@@ -186,15 +191,6 @@ const CompanyLayout = () => {
                     </div>
 
                     <div className="navbar-right">
-                        {/* Search Bar */}
-                        <div className="search-bar">
-                            <i className="bi bi-search search-icon"></i>
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Search users, companies, candidates..."
-                            />
-                        </div>
 
                         {/* Notifications */}
                         <div className="dropdown">
@@ -262,35 +258,27 @@ const CompanyLayout = () => {
                             >
                                 <div className="avatar">
                                     {getLogoUrl(companyLogo) ? (
-                                        <img src={getLogoUrl(companyLogo)} alt={companyName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                        <img src={getLogoUrl(companyLogo)} alt={companyName} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                                     ) : (
-                                        companyName.charAt(0).toUpperCase()
+                                        <i className="bi bi-building fs-4"></i>
                                     )}
                                 </div>
                                 <div className="profile-info d-none d-md-block">
                                     <div className="profile-name">{companyName}</div>
+                                    <div className="profile-role">Company Admin</div>
                                 </div>
                                 <i className="bi bi-chevron-down"></i>
                             </button>
                             <ul className="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <Link className="dropdown-item" to="/company/profile">
-                                        <i className="bi bi-person me-2"></i>View Profile
+                                    <Link className="dropdown-item d-flex align-items-center" to="/company/profile">
+                                        <i className="bi bi-building me-2"></i>Company Profile
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link className="dropdown-item" to="/company/settings">
+                                    <Link className="dropdown-item d-flex align-items-center" to="/company/settings">
                                         <i className="bi bi-gear me-2"></i>Settings
                                     </Link>
-                                </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <button className="dropdown-item text-danger" type="button" onClick={(e) => {
-                                        e.preventDefault();
-                                        handleLogout();
-                                    }}>
-                                        <i className="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
                                 </li>
                             </ul>
                         </div>
@@ -298,12 +286,12 @@ const CompanyLayout = () => {
                 </header>
 
                 {/* Content Area */}
-                <main className="company-content">
+                <main className="admin-content">
                     <Outlet />
                 </main>
 
                 {/* Footer */}
-                <footer className="company-footer">
+                <footer className="admin-footer">
                     <div className="footer-content">
                         <div className="footer-left">
                             <span>© 2025 NextOffer. All rights reserved.</span>
