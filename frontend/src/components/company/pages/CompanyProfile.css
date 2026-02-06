@@ -45,7 +45,7 @@
     position: absolute;
     inset: -3px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
     z-index: -1;
 }
 
@@ -160,13 +160,13 @@
 
 .profile-tab:hover {
     color: var(--light-text);
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .profile-tab.active {
     color: var(--primary-color);
     border-bottom-color: var(--primary-color);
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .profile-tab-content {
@@ -311,8 +311,8 @@
 }
 
 .preference-item:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .preference-info {
@@ -387,7 +387,7 @@ input:checked+.toggle-slider:before {
     display: flex;
     gap: 1.5rem;
     padding: 1.5rem;
-    border-left: 2px solid rgba(99, 102, 241, 0.3);
+    border-left: 2px solid rgba(59, 130, 246, 0.3);
     position: relative;
 }
 
@@ -399,7 +399,7 @@ input:checked+.toggle-slider:before {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border: 2px solid var(--darker-bg);
     display: flex;
     align-items: center;
@@ -464,14 +464,14 @@ input:checked+.toggle-slider:before {
 }
 
 .session-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .session-icon {
     width: 60px;
     height: 60px;
     border-radius: 12px;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;

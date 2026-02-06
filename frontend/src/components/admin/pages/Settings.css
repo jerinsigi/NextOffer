@@ -2,7 +2,7 @@
 
 /* Tabs Navigation */
 .settings-tabs .nav-pills {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
     padding: 0.5rem;
@@ -24,7 +24,7 @@
 }
 
 .settings-tabs .nav-link:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     color: var(--light-text);
 }
 
@@ -61,7 +61,7 @@
 
 .form-switch .form-check-input:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
 }
 
 /* Form Range */
@@ -95,13 +95,13 @@
 }
 
 .form-range::-webkit-slider-runnable-track {
-    background: rgba(99, 102, 241, 0.2);
+    background: rgba(59, 130, 246, 0.2);
     height: 0.5rem;
     border-radius: 0.25rem;
 }
 
 .form-range::-moz-range-track {
-    background: rgba(99, 102, 241, 0.2);
+    background: rgba(59, 130, 246, 0.2);
     height: 0.5rem;
     border-radius: 0.25rem;
 }
@@ -109,7 +109,7 @@
 /* Info Box */
 .info-box {
     padding: 1rem;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.5rem;
     text-align: center;
@@ -179,7 +179,7 @@ input[type="number"].form-control-dark:focus,
 input[type="text"].form-control-dark:focus,
 input[type="email"].form-control-dark:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
 }
 
 /* Divider Enhancement */

@@ -7,7 +7,7 @@
 .help-hero {
     text-align: center;
     padding: 60px 20px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
     border-radius: 24px;
     margin-bottom: 40px;
 }
@@ -62,7 +62,7 @@
     outline: none;
     border-color: var(--primary-color);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 /* Support Stats */
@@ -84,7 +84,7 @@
 
 .stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -145,7 +145,7 @@
 
 .action-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
 }
 
 .action-card.primary:hover {
@@ -236,7 +236,7 @@
 }
 
 .faq-item.expanded {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border-color: var(--primary-color);
 }
 
@@ -291,7 +291,7 @@
 
 .contact-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -399,7 +399,7 @@
     outline: none;
     border-color: var(--primary-color);
     background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .form-group textarea {
@@ -468,7 +468,7 @@
 
 .resource-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -510,12 +510,12 @@
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .btn-success {

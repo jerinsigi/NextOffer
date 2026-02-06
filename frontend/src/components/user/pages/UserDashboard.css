@@ -25,7 +25,7 @@
 .page-title {
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -57,7 +57,7 @@
 
 /* Stat Cards */
 .stat-card {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 1rem;
     padding: 1.5rem;
@@ -76,7 +76,7 @@
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -87,7 +87,7 @@
 }
 
 .stat-card-primary {
-    border-left: 3px solid #6366f1;
+    border-left: 3px solid #3b82f6;
 }
 
 .stat-card-success {
@@ -104,8 +104,8 @@
 
 .stat-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.25);
-    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.4);
 }
 
 .stat-icon-wrapper {
@@ -185,7 +185,7 @@
 
 /* Dashboard Card */
 .dashboard-card {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 1rem;
     overflow: hidden;
@@ -193,7 +193,7 @@
 }
 
 .dashboard-card:hover {
-    border-color: rgba(99, 102, 241, 0.2);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 .card-header-custom {
@@ -232,8 +232,8 @@
 }
 
 .interview-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
     transform: translateX(4px);
 }
 
@@ -243,7 +243,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border-radius: 0.5rem;
     font-size: 1.5rem;
 }
@@ -307,7 +307,7 @@
 }
 
 .table-hover tbody tr:hover {
-    background-color: rgba(99, 102, 241, 0.05);
+    background-color: rgba(59, 130, 246, 0.05);
 }
 
 /* Profile Strength */
@@ -365,8 +365,8 @@
 }
 
 .job-item:hover {
-    background: rgba(99, 102, 241, 0.1);
-    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
     transform: translateY(-2px);
 }
 
@@ -412,11 +412,11 @@
 
 .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     border: none;
 }
 
@@ -425,12 +425,12 @@
 }
 
 .btn-outline-primary {
-    border-color: rgba(99, 102, 241, 0.5);
+    border-color: rgba(59, 130, 246, 0.5);
     color: var(--primary-color);
 }
 
 .btn-outline-primary:hover {
-    background-color: rgba(99, 102, 241, 0.1);
+    background-color: rgba(59, 130, 246, 0.1);
     border-color: var(--primary-color);
     color: var(--primary-color);
 }

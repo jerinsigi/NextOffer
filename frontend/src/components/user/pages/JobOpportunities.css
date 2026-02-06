@@ -53,7 +53,7 @@
 .search-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .filter-select {
@@ -92,7 +92,7 @@
 .user-job-card:hover {
     transform: translateY(-5px);
     background: rgba(30, 41, 59, 0.6);
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(59, 130, 246, 0.3);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .job-type-tag {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     color: var(--primary-color);
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
@@ -180,13 +180,13 @@
 }
 
 .skill-tag-small {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(59, 130, 246, 0.15);
     color: #a5b4fc;
     padding: 0.25rem 0.75rem;
     border-radius: 16px;
     font-size: 0.75rem;
     font-weight: 500;
-    border: 1px solid rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     white-space: nowrap;
 }
 
@@ -197,18 +197,18 @@
 }
 
 .skill-tag-modal {
-    background: rgba(99, 102, 241, 0.2);
+    background: rgba(59, 130, 246, 0.2);
     color: #c7d2fe;
     padding: 0.4rem 0.9rem;
     border-radius: 18px;
     font-size: 0.85rem;
     font-weight: 500;
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    border: 1px solid rgba(59, 130, 246, 0.4);
     transition: all 0.2s ease;
 }
 
 .skill-tag-modal:hover {
-    background: rgba(99, 102, 241, 0.3);
+    background: rgba(59, 130, 246, 0.3);
     transform: translateY(-1px);
 }
 
@@ -254,11 +254,11 @@
 }
 
 .apply-section {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     padding: 1.5rem;
     border-radius: 8px;
     margin-top: 1rem;
-    border: 1px solid rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.1);
 }
 
 .already-applied-banner {

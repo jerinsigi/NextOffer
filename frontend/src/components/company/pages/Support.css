@@ -2,7 +2,7 @@
 
 /* Tabs Navigation */
 .support-tabs .nav-pills {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
     padding: 0.5rem;
@@ -23,7 +23,7 @@
 }
 
 .support-tabs .nav-link:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     color: var(--light-text);
 }
 
@@ -51,11 +51,11 @@
 }
 
 .ticket-item:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .ticket-item.selected {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border-left: 3px solid var(--primary-color);
 }
 
@@ -92,7 +92,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     padding: 1rem;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border-radius: 0.5rem;
 }
 
@@ -104,7 +104,7 @@
 
 /* Feedback Card */
 .feedback-card {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
     padding: 1.5rem;
@@ -114,8 +114,8 @@
 
 .feedback-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
-    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.3);
 }
 
 .feedback-card .bi-star-fill,

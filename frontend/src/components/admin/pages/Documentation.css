@@ -101,12 +101,12 @@
 }
 
 .doc-nav-item:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     color: var(--primary-color);
 }
 
 .doc-nav-item.active {
-    background: rgba(99, 102, 241, 0.15);
+    background: rgba(59, 130, 246, 0.15);
     color: var(--primary-color);
     border-left-color: var(--primary-color);
     font-weight: 500;
@@ -125,7 +125,7 @@
 .doc-section-header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.3);
 }
 
 .doc-section-header h2 {
@@ -195,8 +195,8 @@
 
 /* Quick Links */
 .doc-quick-links {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
     border-radius: 8px;
     padding: 1.5rem;
     margin-top: 2rem;
@@ -233,7 +233,7 @@
 }
 
 .quick-link-card:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border-color: var(--primary-color);
     color: var(--primary-color);
     transform: translateY(-2px);

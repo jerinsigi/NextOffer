@@ -2,7 +2,7 @@
 
 /* Tabs Navigation */
 .logs-tabs .nav-pills {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.75rem;
     padding: 0.5rem;
@@ -23,7 +23,7 @@
 }
 
 .logs-tabs .nav-link:hover {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     color: var(--light-text);
 }
 
@@ -51,11 +51,11 @@
 }
 
 .log-item:hover {
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
 }
 
 .log-item.selected {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     border-left: 3px solid var(--primary-color);
 }
 
@@ -101,7 +101,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     padding: 1rem;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border-radius: 0.5rem;
 }
 
@@ -114,7 +114,7 @@
 /* Changes Display */
 .changes-display {
     padding: 1rem;
-    background: rgba(99, 102, 241, 0.05);
+    background: rgba(59, 130, 246, 0.05);
     border-radius: 0.5rem;
 }
 
@@ -170,7 +170,7 @@
 
 /* API Logs Table Enhancements */
 code {
-    background: rgba(99, 102, 241, 0.1);
+    background: rgba(59, 130, 246, 0.1);
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     font-size: 0.875rem;

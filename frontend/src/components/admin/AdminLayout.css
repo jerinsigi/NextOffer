@@ -1,5 +1,5 @@
 /* Admin Layout Variables - Modern Black Theme */
-:root {
+.admin-layout {
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 80px;
     --navbar-height: 70px;

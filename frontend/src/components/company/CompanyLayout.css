@@ -1,5 +1,5 @@
 /* Company Layout Variables */
-:root {
+.company-layout {
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 80px;
     --navbar-height: 70px;
@@ -8,8 +8,8 @@
     --sidebar-border: rgba(255, 255, 255, 0.1);
     --navbar-bg: #1e293b;
     --content-bg: #0f172a;
-    --hover-bg: rgba(99, 102, 241, 0.1);
-    --active-bg: rgba(99, 102, 241, 0.2);
+    --hover-bg: rgba(59, 130, 246, 0.1);
+    --active-bg: rgba(59, 130, 246, 0.2);
     --transition-speed: 0.3s;
 }
 
@@ -248,7 +248,7 @@
     background-color: var(--sidebar-bg);
     border-color: var(--primary-color);
     color: var(--light-text);
-    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
 }
 
 .search-bar .form-control::placeholder {
