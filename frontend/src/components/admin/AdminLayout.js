@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import './AdminLayout.css';
+import '../common/dashboard/DashboardLayout.css';
 import logo from '../../logo.svg';
 
 const AdminLayout = () => {
@@ -135,9 +135,9 @@ const AdminLayout = () => {
     };
 
     return (
-        <div className="admin-layout">
+        <div className="dashboard-layout">
             {/* Sidebar */}
-            <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+            <aside className={`dashboard-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
                 {/* Logo Section */}
                 <div className="sidebar-header">
                     <Link to="/admin/dashboard" className="sidebar-brand white-brand-text">
@@ -193,9 +193,9 @@ const AdminLayout = () => {
             </aside>
 
             {/* Main Content Area */}
-            <div className="admin-main">
+            <div className="dashboard-main">
                 {/* Top Navbar */}
-                <header className="admin-navbar">
+                <header className="dashboard-navbar">
                     <div className="navbar-left">
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb">
@@ -306,12 +306,12 @@ const AdminLayout = () => {
                 </header>
 
                 {/* Content Area */}
-                <main className="admin-content">
+                <main className="dashboard-content">
                     <Outlet />
                 </main>
 
                 {/* Footer */}
-                <footer className="admin-footer">
+                <footer className="dashboard-footer">
                     <div className="footer-content">
                         <div className="footer-left">
                             <span>© 2026 NextOffer. All rights reserved.</span>
@@ -330,3 +330,4 @@ const AdminLayout = () => {
 };
 
 export default AdminLayout;
+

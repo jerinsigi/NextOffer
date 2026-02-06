@@ -1,5 +1,5 @@
-/* Admin Layout Variables - Modern Black Theme */
-.admin-layout {
+/* Dashboard Layout Variables - Modern Black Theme */
+.dashboard-layout {
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 80px;
     --navbar-height: 70px;
@@ -26,16 +26,16 @@
 /* Force white color for all brand elements - CRITICAL OVERRIDE - v2.0 */
 .white-brand-text,
 .white-brand-text *,
-.admin-sidebar a.sidebar-brand,
-.admin-sidebar a.sidebar-brand:link,
-.admin-sidebar a.sidebar-brand:visited,
-.admin-sidebar a.sidebar-brand:hover,
-.admin-sidebar a.sidebar-brand:active,
-.admin-sidebar a.sidebar-brand:focus,
-.admin-sidebar a.sidebar-brand *,
-.admin-sidebar .sidebar-brand,
-.admin-sidebar .sidebar-brand *,
-.admin-sidebar .brand-text,
+.dashboard-sidebar a.sidebar-brand,
+.dashboard-sidebar a.sidebar-brand:link,
+.dashboard-sidebar a.sidebar-brand:visited,
+.dashboard-sidebar a.sidebar-brand:hover,
+.dashboard-sidebar a.sidebar-brand:active,
+.dashboard-sidebar a.sidebar-brand:focus,
+.dashboard-sidebar a.sidebar-brand *,
+.dashboard-sidebar .sidebar-brand,
+.dashboard-sidebar .sidebar-brand *,
+.dashboard-sidebar .brand-text,
 .sidebar-header a,
 .sidebar-header a *,
 .sidebar-header .sidebar-brand,
@@ -48,14 +48,14 @@
 }
 
 /* Main Layout Container */
-.admin-layout {
+.dashboard-layout {
     display: flex;
     min-height: 100vh;
     background-color: var(--content-bg);
 }
 
 /* Sidebar Styles */
-.admin-sidebar {
+.dashboard-sidebar {
     width: var(--sidebar-width);
     background: linear-gradient(180deg, #0a0a0a 0%, #000000 100%);
     border-right: 1px solid var(--border-color);
@@ -71,7 +71,7 @@
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8);
 }
 
-.admin-sidebar.collapsed {
+.dashboard-sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
 }
 
@@ -136,28 +136,28 @@
     color: #ffffff !important;
 }
 
-.admin-sidebar .sidebar-brand,
-.admin-sidebar .sidebar-brand span,
-.admin-sidebar .brand-text {
+.dashboard-sidebar .sidebar-brand,
+.dashboard-sidebar .sidebar-brand span,
+.dashboard-sidebar .brand-text {
     color: #ffffff !important;
 }
 
-.admin-sidebar .sidebar-brand:hover,
-.admin-sidebar .sidebar-brand:visited,
-.admin-sidebar .sidebar-brand:active,
-.admin-sidebar .sidebar-brand:focus,
-.admin-sidebar .sidebar-brand span:hover,
-.admin-sidebar .sidebar-brand span:visited,
-.admin-sidebar .sidebar-brand span:active,
-.admin-sidebar .sidebar-brand span:focus,
-.admin-sidebar .brand-text:hover,
-.admin-sidebar .brand-text:visited,
-.admin-sidebar .brand-text:active,
-.admin-sidebar .brand-text:focus {
+.dashboard-sidebar .sidebar-brand:hover,
+.dashboard-sidebar .sidebar-brand:visited,
+.dashboard-sidebar .sidebar-brand:active,
+.dashboard-sidebar .sidebar-brand:focus,
+.dashboard-sidebar .sidebar-brand span:hover,
+.dashboard-sidebar .sidebar-brand span:visited,
+.dashboard-sidebar .sidebar-brand span:active,
+.dashboard-sidebar .sidebar-brand span:focus,
+.dashboard-sidebar .brand-text:hover,
+.dashboard-sidebar .brand-text:visited,
+.dashboard-sidebar .brand-text:active,
+.dashboard-sidebar .brand-text:focus {
     color: #ffffff !important;
 }
 
-.admin-sidebar.collapsed .brand-text {
+.dashboard-sidebar.collapsed .brand-text {
     opacity: 0;
     width: 0;
 }
@@ -181,16 +181,16 @@
 }
 
 /* Ensure toggle button is visible when collapsed */
-.admin-sidebar.collapsed .sidebar-header {
+.dashboard-sidebar.collapsed .sidebar-header {
     justify-content: center;
     padding: 1.5rem 0.5rem;
 }
 
-.admin-sidebar.collapsed .sidebar-brand {
+.dashboard-sidebar.collapsed .sidebar-brand {
     display: none;
 }
 
-.admin-sidebar.collapsed .sidebar-toggle {
+.dashboard-sidebar.collapsed .sidebar-toggle {
     display: block;
 }
 
@@ -262,12 +262,12 @@
     flex: 1;
 }
 
-.admin-sidebar.collapsed .nav-link {
+.dashboard-sidebar.collapsed .nav-link {
     justify-content: center;
 }
 
-.admin-sidebar.collapsed .nav-text,
-.admin-sidebar.collapsed .badge {
+.dashboard-sidebar.collapsed .nav-text,
+.dashboard-sidebar.collapsed .badge {
     display: none;
 }
 
@@ -283,7 +283,7 @@
 }
 
 /* Main Content Area */
-.admin-main {
+.dashboard-main {
     flex: 1;
     margin-left: var(--sidebar-width);
     display: flex;
@@ -292,12 +292,12 @@
     transition: margin-left var(--transition-speed) ease;
 }
 
-.admin-sidebar.collapsed~.admin-main {
+.dashboard-sidebar.collapsed~.dashboard-main {
     margin-left: var(--sidebar-collapsed-width);
 }
 
 /* Top Navbar */
-.admin-navbar {
+.dashboard-navbar {
     height: var(--navbar-height);
     background: rgba(10, 10, 10, 0.95);
     border-bottom: 1px solid var(--border-color);
@@ -486,29 +486,29 @@
 }
 
 /* Content Area */
-.admin-content {
+.dashboard-content {
     flex: 1;
     padding: 2rem;
     background: linear-gradient(180deg, #000000 0%, #0a0b0d 100%);
     min-height: calc(100vh - var(--navbar-height) - var(--footer-height));
 }
 
-.admin-content h1,
-.admin-content h2,
-.admin-content h3,
-.admin-content h4,
-.admin-content h5,
-.admin-content h6 {
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content h4,
+.dashboard-content h5,
+.dashboard-content h6 {
     color: #ffffff !important;
     font-weight: 700;
 }
 
-.admin-content p {
+.dashboard-content p {
     color: var(--text-secondary);
 }
 
 /* Footer */
-.admin-footer {
+.dashboard-footer {
     height: var(--footer-height);
     background: rgba(10, 10, 10, 0.95);
     border-top: 1px solid var(--border-color);
@@ -542,15 +542,15 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .admin-sidebar {
+    .dashboard-sidebar {
         transform: translateX(-100%);
     }
 
-    .admin-sidebar.collapsed {
+    .dashboard-sidebar.collapsed {
         transform: translateX(0);
     }
 
-    .admin-main {
+    .dashboard-main {
         margin-left: 0;
     }
 
@@ -562,7 +562,7 @@
         display: none !important;
     }
 
-    .admin-content {
+    .dashboard-content {
         padding: 1rem;
     }
 }
@@ -807,32 +807,32 @@
 }
 
 /* Force all titles and headings to white - Override any blue/purple colors */
-.admin-layout h1,
-.admin-layout h2,
-.admin-layout h3,
-.admin-layout h4,
-.admin-layout h5,
-.admin-layout h6,
-.admin-main h1,
-.admin-main h2,
-.admin-main h3,
-.admin-main h4,
-.admin-main h5,
-.admin-main h6,
+.dashboard-layout h1,
+.dashboard-layout h2,
+.dashboard-layout h3,
+.dashboard-layout h4,
+.dashboard-layout h5,
+.dashboard-layout h6,
+.dashboard-main h1,
+.dashboard-main h2,
+.dashboard-main h3,
+.dashboard-main h4,
+.dashboard-main h5,
+.dashboard-main h6,
 .dashboard-container h1,
 .dashboard-container h2,
 .dashboard-container h3,
 .dashboard-container h4,
 .dashboard-container h5,
 .dashboard-container h6,
-.admin-layout .page-title,
-.admin-main .page-title,
-.admin-content .page-title,
-.admin-layout .card-title,
-.admin-main .card-title,
-.admin-content .card-title,
-.admin-layout .modal-title,
-.admin-main .modal-title {
+.dashboard-layout .page-title,
+.dashboard-main .page-title,
+.dashboard-content .page-title,
+.dashboard-layout .card-title,
+.dashboard-main .card-title,
+.dashboard-content .card-title,
+.dashboard-layout .modal-title,
+.dashboard-main .modal-title {
     color: #ffffff !important;
     background: none !important;
     background-image: none !important;
@@ -842,9 +842,9 @@
 }
 
 /* Final comprehensive override - ensure all text within admin section is white for titles */
-.admin-layout [class*="title"],
-.admin-main [class*="title"],
-.admin-content [class*="title"] {
+.dashboard-layout [class*="title"],
+.dashboard-main [class*="title"],
+.dashboard-content [class*="title"] {
     color: #ffffff !important;
     background: none !important;
     background-image: none !important;
