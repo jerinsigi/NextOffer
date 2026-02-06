@@ -68,6 +68,10 @@ const contactRouter = require('./routes/contactRoutes');
 app.use('/api/contact', contactRouter);
 
 
+const reportsRouter = require('./routes/reports');
+app.use('/api/reports', reportsRouter);
+
+
 module.exports = app;
 
 // Only listen if not running on Vercel
