@@ -13,7 +13,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Custom middleware to serve files with proper headers for inline viewing
-app.use('/uploads', (req, res, next) => {
+app.use('/upload', (req, res, next) => {
     // Set Content-Disposition to inline for PDFs and documents
     const filePath = req.path.toLowerCase();
     if (filePath.endsWith('.pdf') || filePath.endsWith('.doc') || filePath.endsWith('.docx')) {

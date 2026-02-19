@@ -7,8 +7,8 @@ const { createNotification } = require('./notificationController');
 // Apply for a job
 exports.applyForJob = async (req, res) => {
     try {
-        const { candidateEmail, jobId, coverLetter } = req.body;
-        const resume_path = req.file ? '/uploads/resumes/' + req.file.filename : null;
+        const { candidateEmail, jobId, coverLetter, resumeId } = req.body;
+        const resume_path = req.file ? '/upload/resumes/' + req.file.filename : null;
 
         // Find candidate by email
         const candidate = await Candidate.findOne({ email: candidateEmail });
@@ -26,22 +26,37 @@ exports.applyForJob = async (req, res) => {
             return res.status(400).json({ message: 'You have already applied for this job' });
         }
 
-        // Create Resume record if resume was uploaded
-        let resumeRecord = null;
-        if (resume_path) {
-            resumeRecord = new Resume({
+        // Handle Resume Selection/Upload
+        let finalResumeId = null;
+
+        if (resumeId) {
+            // Case 1: User selected an existing resume from library
+            const existingResume = await Resume.findById(resumeId);
+            if (!existingResume) {
+                return res.status(404).json({ message: 'Selected resume not found' });
+            }
+            finalResumeId = existingResume._id;
+        } else if (resume_path) {
+            // Case 2: User uploaded a new resume file
+            const newResume = new Resume({
                 Fk_candidate_id: candidate._id,
-                Fk_job_id: jobId,
+                Fk_job_id: jobId, // Optional: link to job context
+                tag_name: "Application Resume", // Default tag
+                original_filename: req.file.originalname,
                 resume_path: resume_path
             });
-            await resumeRecord.save();
+            await newResume.save();
+            finalResumeId = newResume._id;
+        } else {
+            // Case 3: No resume provided (Validation Error)
+            return res.status(400).json({ message: 'A resume is required to apply for this job.' });
         }
 
         // Create Application
         const newApplication = new Application({
             Fk_candidate_id: candidate._id,
             Fk_job_id: jobId,
-            Fk_resume_id: resumeRecord ? resumeRecord._id : null,
+            Fk_resume_id: finalResumeId,
             coverLetter,
             status: 'Applied'
         });

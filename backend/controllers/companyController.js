@@ -335,7 +335,7 @@ exports.updateCompanyProfile = async (req, res) => {
 
         // Handle File Upload for logo
         if (req.file) {
-            updateData.logo = '/uploads/' + req.file.filename;
+            updateData.logo = '/upload/' + req.file.filename;
         }
 
         // Update company

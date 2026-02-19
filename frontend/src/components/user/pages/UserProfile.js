@@ -313,7 +313,7 @@ const UserProfile = () => {
                     ? responseData.profile.image_url
                     : profileData.avatar;
 
-                if (newImageUrl && newImageUrl.startsWith('/uploads')) {
+                if (newImageUrl && newImageUrl.startsWith('/upload')) {
                     newImageUrl = `http://localhost:5000${newImageUrl}`;
                 }
 

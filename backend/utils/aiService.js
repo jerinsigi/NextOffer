@@ -1,6 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require('fs');
-const pdf = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const path = require('path');
 
 // Initialize Gemini
@@ -10,68 +10,132 @@ const extractTextFromPDF = async (pdfPath) => {
     try {
         // Check if file is actually a PDF
         if (!pdfPath.toLowerCase().endsWith('.pdf')) {
-            console.warn('Resume is not a PDF file (found:', pdfPath, '). Skipping text extraction.');
+            console.warn('⚠️ Resume is not a PDF file (found:', pdfPath, '). Skipping text extraction.');
             return null;
         }
 
-        const absolutePath = path.resolve(__dirname, '..', pdfPath.startsWith('/') ? pdfPath.slice(1) : pdfPath);
+        // FIX: Resume path from DB is like "/uploads/resumes/..." 
+        // but actual folder on disk is "upload/resumes/..." (singular 'upload')
+        // We need to map this correctly relative to backend root.
+        let relativePath = pdfPath.startsWith('/') ? pdfPath.slice(1) : pdfPath;
+
+        // If path starts with 'upload/', replace with 'upload/'
+        if (relativePath.startsWith('upload/')) {
+            relativePath = relativePath.replace('upload/', 'upload/');
+        }
+
+        const absolutePath = path.resolve(__dirname, '..', relativePath);
+
+        console.log(`🔍 Attempting to read PDF from: ${absolutePath}`);
+
         if (!fs.existsSync(absolutePath)) {
-            console.error('PDF file not found:', absolutePath);
+            console.error('❌ PDF file not found at:', absolutePath);
             return null;
         }
+
         const dataBuffer = fs.readFileSync(absolutePath);
-        const data = await pdf(dataBuffer);
-        return data.text;
+        const parser = new PDFParse({ data: dataBuffer });
+        const data = await parser.getText();
+
+        if (data.text && data.text.length > 50) {
+            console.log(`✅ PDF Text Extracted Successfully (${data.text.length} chars)`);
+            return data.text;
+        } else {
+            console.warn('⚠️ PDF extracted but text seems empty or too short.');
+            return null;
+        }
+
     } catch (error) {
-        console.error('Error extracting PDF text:', error);
+        console.error('❌ Error extracting PDF text:', error.message);
         return null;
     }
 };
 
-const generateInterviewQuestions = async (resumeText, jobDescription, count = 5, skills = []) => {
-    try {
-        console.log('=== AI Question Generation ===');
-        console.log('API Key Present:', !!process.env.GEMINI_API_KEY);
-        console.log('Requested Count:', count);
-        console.log('Skills:', skills);
+/**
+ * Generate interview questions deeply personalised to the candidate's resume.
+ * Produces two batches:
+ *   1. Resume-personalised  — based on actual projects, experience, tech stack in their CV
+ *   2. Role / skill-based    — based on job requirements and required skills
+ *
+ * @param {string|null} resumeText  - Full text extracted from the candidate's PDF resume
+ * @param {string}      jobTitle    - Job title being applied for
+ * @param {string}      jobDesc     - Job description / requirements
+ * @param {string[]}    skills      - Required skills listed on the job posting
+ * @param {number}      totalCount  - Total questions to generate
+ */
+const generateResumeAwareQuestions = async (resumeText, jobTitle, jobDesc, skills = [], totalCount = 5) => {
+    const hasResume = resumeText && resumeText.trim().length > 100;
 
-        if (!process.env.GEMINI_API_KEY) {
-            console.warn('GEMINI_API_KEY not found. Using mock questions.');
-            return getMockQuestions(count);
-        }
-
-        console.log('Calling Gemini API...');
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        const skillsContext = skills.length > 0 ? `Focus specifically on assessing these required skills: ${skills.join(', ')}.` : '';
-
-        const prompt = `
-            You are an expert technical interviewer. Based on the following Candidate Resume and Job Description, generate ${count} tailored interview questions.
-            ${skillsContext}
-            
-            Ensure the questions are specific to the technology stack mentioned (e.g., if JavaScript/React is mentioned, ask specific technical questions about them).
-            
-            Format the output as a JSON array of objects with keys: "question_text", "topic", "difficulty_level" (Easy, Medium, Hard).
-            
-            Job Description:
-            ${jobDescription}
-            
-            Candidate Resume:
-            ${resumeText.substring(0, 3000)} // Truncate to avoid limits if too long
-        `;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        // Clean markdown code blocks if present
-        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(jsonStr);
-
-    } catch (error) {
-        console.error('Error generating AI questions:', error);
-        return getMockQuestions();
+    if (!process.env.GEMINI_API_KEY) {
+        console.warn('GEMINI_API_KEY not set — using mock questions.');
+        return getMockQuestions(totalCount);
     }
+
+    const resumeCount = hasResume ? Math.ceil(totalCount * 0.5) : 0;
+    const roleCount = totalCount - resumeCount;
+    const skillsStr = skills.length > 0 ? skills.join(', ') : 'general software development skills';
+    const resumeSnippet = hasResume ? resumeText.substring(0, 4000) : '';
+
+    const prompt = `
+You are a senior technical interviewer preparing a personalised interview for a candidate applying for the role of "${jobTitle}".
+
+${hasResume ? `
+=== CANDIDATE RESUME (analyse carefully) ===
+${resumeSnippet}
+
+Step 1 — Silently extract from the resume:
+  • Professional summary / objective
+  • Technical skills and tools listed
+  • Work experience: companies, roles, responsibilities, achievements
+  • Projects: names, technologies used, what the candidate built or contributed
+  • Education and certifications
+
+Step 2 — Generate ${resumeCount} RESUME-PERSONALISED questions that:
+  - Directly reference something from THEIR resume (e.g. "I see you used React in your project X — tell me about …")
+  - Probe depth of understanding on technologies they CLAIM to know
+  - Ask about specific challenges, decisions, or outcomes in their listed experience
+  - Cover different sections: at least one about a project, one about work experience or skills
+  - topic should be labelled "Resume – <area>" (e.g. "Resume – Project Experience", "Resume – Skills Deep-Dive")
+` : ''}
+
+=== JOB ROLE REQUIREMENTS ===
+Job Title: ${jobTitle}
+Required Skills: ${skillsStr}
+Job Description:
+${(jobDesc || jobTitle).substring(0, 1500)}
+
+Step ${hasResume ? 3 : 1} — Generate ${roleCount} ROLE-BASED questions that:
+  - Assess technical depth on the required skills (${skillsStr})
+  - Include at least one behavioural / situational question (STAR format expected)
+  - Vary difficulty: mix Easy, Medium, Hard
+  - topic should be labelled with the specific skill or area (e.g. "React", "System Design", "Leadership")
+
+=== OUTPUT FORMAT ===
+Return ONLY a valid JSON array (no markdown, no extra text) of exactly ${totalCount} objects, each with:
+  "question_text" : string
+  "topic"         : string
+  "difficulty_level" : "Easy" | "Medium" | "Hard"
+  "question_source"  : "resume" | "role"
+`;
+
+    try {
+        console.log(`=== AI Resume-Aware Question Generation (${totalCount} questions) ===`);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(jsonStr);
+        console.log(`✅ Generated ${parsed.length} questions (${parsed.filter(q => q.question_source === 'resume').length} resume-based)`);
+        return parsed;
+    } catch (err) {
+        console.error('Error in generateResumeAwareQuestions:', err.message);
+        return getMockQuestions(totalCount);
+    }
+};
+
+// Keep the old function around as a simpler wrapper for backward compatibility
+const generateInterviewQuestions = async (resumeText, jobDescription, count = 5, skills = []) => {
+    return generateResumeAwareQuestions(resumeText, jobDescription, jobDescription, skills, count);
 };
 
 const getMockQuestions = (count = 5) => {
@@ -159,4 +223,5 @@ const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'Gen
     }
 };
 
-module.exports = { extractTextFromPDF, generateInterviewQuestions, scoreResponse };
+module.exports = { extractTextFromPDF, generateInterviewQuestions, generateResumeAwareQuestions, scoreResponse };
+

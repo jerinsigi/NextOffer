@@ -119,7 +119,7 @@ exports.register = async (req, res) => {
         let image_url = '';
 
         if (req.file) {
-            image_url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            image_url = `${req.protocol}://${req.get('host')}/upload/${req.file.filename}`;
         }
 
         // Basic validation

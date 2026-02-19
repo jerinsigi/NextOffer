@@ -388,6 +388,8 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .candidate-video {
@@ -559,7 +561,8 @@
 }
 
 .question-type-badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     padding: 6px 12px;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
@@ -568,7 +571,69 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+.question-badges-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
     margin-bottom: 20px;
+}
+
+/* Resume-Based vs Role-Based */
+.question-source-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.question-source-badge.resume-badge {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #a78bfa;
+    /* purple — directly from the candidate's resume */
+}
+
+.question-source-badge.role-badge {
+    background: rgba(59, 130, 246, 0.12);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--primary-color);
+}
+
+/* Difficulty badges */
+.question-difficulty-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.question-difficulty-badge.diff-easy {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.question-difficulty-badge.diff-medium {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.question-difficulty-badge.diff-hard {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
 }
 
 .question-text {

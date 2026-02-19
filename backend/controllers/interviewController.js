@@ -191,6 +191,12 @@ exports.getInterviewSession = async (req, res) => {
         const job = session.fk_job_id;
         const skills = job.skills || [];
 
+        // Record actual start time the first time the candidate opens the interview
+        if (!session.actual_started_at) {
+            session.actual_started_at = new Date();
+            await session.save();
+        }
+
         // Fetch questions matching skills
         // Note: Interview_Question model structure is slightly different than expected in my previous thought.
         // It has 'topic' instead of 'skills' array? And 'difficulty_level'.
@@ -223,46 +229,60 @@ exports.getInterviewSession = async (req, res) => {
 
         if (questions.length === 0) {
             try {
-                // Find Application to get Resume
+                // Find the Application that links this candidate + job (to get their resume)
                 const Application = require('../models/Application');
                 const application = await Application.findOne({
                     Fk_candidate_id: session.fk_candidate_id._id,
                     Fk_job_id: job._id
                 }).populate('Fk_resume_id');
 
-                let resumeText = "";
+                // Extract resume text from their PDF
+                const { extractTextFromPDF, generateResumeAwareQuestions } = require('../utils/aiService');
+                let resumeText = null;
                 if (application && application.Fk_resume_id && application.Fk_resume_id.resume_path) {
-                    const { extractTextFromPDF, generateInterviewQuestions } = require('../utils/aiService');
+                    console.log('📄 Extracting resume text from:', application.Fk_resume_id.resume_path);
                     resumeText = await extractTextFromPDF(application.Fk_resume_id.resume_path);
+                    if (resumeText) {
+                        console.log(`✅ Resume text extracted (${resumeText.length} chars)`);
+                    } else {
+                        console.warn('⚠️ Could not extract resume text — generating role-only questions');
+                    }
+                } else {
+                    console.warn('⚠️ No resume attached to this application — generating role-only questions');
                 }
 
-                // Generate Questions via AI
-                const { generateInterviewQuestions } = require('../utils/aiService');
-                const aiQuestions = await generateInterviewQuestions(
-                    resumeText || "Candidate's resume not available.",
-                    job.job_description || job.job_title,
-                    targetCount, // Pass configured count
-                    job.skills || [] // Pass skills
+                // Generate questions: ~50% resume-personalised + ~50% role-based
+                const aiQuestions = await generateResumeAwareQuestions(
+                    resumeText,                                  // candidate resume text (may be null)
+                    job.job_title || 'Software Developer',       // job title
+                    job.job_description || job.job_title || '',  // full job description
+                    job.skills || [],                            // required skills
+                    targetCount                                  // total questions
                 );
 
-                // Format for DB
+                // Save to DB, preserving question_source
                 const questionsToInsert = aiQuestions.map(q => ({
                     Fk_session_id: session._id,
                     question_text: q.question_text,
-                    topic: q.topic,
-                    difficulty_level: q.difficulty_level,
-                    generated_by: 'AI'
+                    topic: q.topic || 'General',
+                    difficulty_level: q.difficulty_level || 'Medium',
+                    generated_by: 'AI',
+                    question_source: q.question_source || 'role'   // 'resume' | 'role'
                 }));
 
                 await InterviewQuestion.insertMany(questionsToInsert);
                 questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+                console.log(`✅ Saved ${questions.length} questions (${questions.filter(q => q.question_source === 'resume').length} resume-based)`);
 
             } catch (err) {
-                console.error("AI Generation Error, falling back to defaults:", err);
+                console.error('AI Question Generation failed, using defaults:', err.message);
+                const companyName = job.Fk_company_id ? job.Fk_company_id.company_name : (job.company_name || 'our company');
                 const defaultQuestions = [
-                    { Fk_session_id: session._id, question_text: "Tell us about yourself.", topic: "Intro", difficulty_level: "Easy" },
-                    { Fk_session_id: session._id, question_text: `Why do you want to work at ${job.company_name || 'our company'}?`, topic: "Motivation", difficulty_level: "Medium" },
-                    { Fk_session_id: session._id, question_text: "What are your strengths and weaknesses?", topic: "Behavioral", difficulty_level: "Medium" }
+                    { Fk_session_id: session._id, question_text: "Tell us about yourself and your background.", topic: "Introduction", difficulty_level: "Easy", question_source: "role" },
+                    { Fk_session_id: session._id, question_text: `Why do you want to work at ${companyName}?`, topic: "Motivation", difficulty_level: "Easy", question_source: "role" },
+                    { Fk_session_id: session._id, question_text: "Describe a challenging project you worked on. What was your role and what did you learn?", topic: "Experience", difficulty_level: "Medium", question_source: "role" },
+                    { Fk_session_id: session._id, question_text: "What are your strongest technical skills and how have you applied them recently?", topic: "Technical Skills", difficulty_level: "Medium", question_source: "role" },
+                    { Fk_session_id: session._id, question_text: "Tell me about a time you handled a conflict within a team. How did you resolve it?", topic: "Behavioural", difficulty_level: "Medium", question_source: "role" },
                 ];
                 await InterviewQuestion.insertMany(defaultQuestions);
                 questions = await InterviewQuestion.find({ Fk_session_id: session._id });
@@ -285,7 +305,9 @@ exports.getInterviewSession = async (req, res) => {
                 type: q.topic || 'General',
                 question: q.question_text,
                 duration: 300,
-                skillTested: q.topic || 'General'
+                skillTested: q.topic || 'General',
+                difficultyLevel: q.difficulty_level || 'Medium',
+                questionSource: q.question_source || 'role'   // 'resume' | 'role'
             }))
         };
 
@@ -326,7 +348,7 @@ exports.getUserInterviewResults = async (req, res) => {
         const Application = require('../models/Application');
         const applications = await Application.find({
             Fk_candidate_id: candidate._id,
-            status: { $in: ['Interviewed', 'Hired', 'Rejected', 'Offered'] }
+            status: { $in: ['Interviewing', 'Interviewed', 'Hired', 'Rejected'] }
         });
 
         const jobIds = applications.map(app => app.Fk_job_id);
@@ -426,7 +448,7 @@ exports.getUserInterviewResults = async (req, res) => {
                 jobTitle: job.job_title || 'Unknown Role',
                 company: company ? company.company_name : (job.company_name || 'Unknown Company'),
                 companyLogo: company ? company.logo : null,
-                date: session.ended_at || session.started_at,
+                date: session.actual_completed_at || session.actual_started_at || session.ended_at,
                 type: 'AI Technical Interview',
                 status: session.session_status,
                 overallScore: overallScore,
@@ -445,7 +467,9 @@ exports.getUserInterviewResults = async (req, res) => {
                 questions: questionsWithResponses,
                 integrityStatus: integrityScore === 100 ? 'Clean' : 'Flagged',
                 violations: integrityScore < 100 ? 1 : 0, // Simple mapping since we don't track raw violations count in FinalReport yet
-                duration: session.ended_at && session.started_at ? Math.round((new Date(session.ended_at) - new Date(session.started_at)) / 60000) : 0,
+                duration: (session.actual_started_at && session.actual_completed_at)
+                    ? Math.round((new Date(session.actual_completed_at) - new Date(session.actual_started_at)) / 60000)
+                    : 0,
                 recordingAvailable: false,
                 transcriptAvailable: true
             });
@@ -478,6 +502,7 @@ exports.completeInterview = async (req, res) => {
 
         // Update session status
         session.session_status = 'completed';
+        session.actual_completed_at = new Date();
         await session.save();
         console.log('✅ Session status updated to: completed');
 

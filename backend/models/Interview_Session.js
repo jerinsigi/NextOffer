@@ -21,6 +21,12 @@ const interviewSessionSchema = new mongoose.Schema({
     },
     ended_at: {
         type: Date
+    },
+    actual_started_at: {
+        type: Date   // set when candidate opens the interview
+    },
+    actual_completed_at: {
+        type: Date   // set when candidate submits / completes
     }
 });
 

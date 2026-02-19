@@ -19,6 +19,11 @@ const interviewQuestionSchema = new mongoose.Schema({
     generated_by: {
         type: String,
         default: 'AI'
+    },
+    question_source: {
+        type: String,
+        enum: ['resume', 'role'],
+        default: 'role'
     }
 });
 

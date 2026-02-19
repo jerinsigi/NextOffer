@@ -27,7 +27,7 @@ exports.uploadResume = async (req, res) => {
             Fk_candidate_id: candidate._id,
             tag_name: tag_name.trim(),
             original_filename: req.file.originalname,
-            resume_path: '/uploads/resumes/' + req.file.filename
+            resume_path: '/upload/resumes/' + req.file.filename
         });
 
         await resume.save();

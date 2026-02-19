@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import 'regenerator-runtime/runtime';
+// import 'regenerator-runtime/runtime'; // Moved to index.js
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { FaceDetection } from '@mediapipe/face_detection';
+
+// Handle potential ESM/CJS interop issues with SpeechRecognition
 import './InterviewCenter.css';
+
+// Handle potential ESM/CJS interop issues with SpeechRecognition
+const SpeechRecognitionAPI = SpeechRecognition.startListening
+    ? SpeechRecognition
+    : (SpeechRecognition.default || SpeechRecognition); // Fallback to default or self
 
 const InterviewCenter = () => {
     const [interviewStage, setInterviewStage] = useState('pre-check'); // pre-check, ready, active, completed
@@ -50,37 +57,40 @@ const InterviewCenter = () => {
     const retryCountRef = useRef(0);
 
     // React Speech Recognition Hook with event handlers
+    // React Speech Recognition Hook
+    // Note: v4 hook does not accept callbacks like onStart/onEnd directly.
+    // We use useEffect to monitor state changes.
     const {
         transcript,
         listening,
         resetTranscript,
-        browserSupportsSpeechRecognition
-    } = useSpeechRecognition({
-        onStart: () => {
+        browserSupportsSpeechRecognition,
+        isMicrophoneAvailable
+    } = useSpeechRecognition();
+
+    // Monitor listening state
+    useEffect(() => {
+        if (listening) {
             console.log('🎤 Speech Recognition STARTED');
-        },
-        onEnd: () => {
+            setIsListening(true);
+        } else {
             console.log('🛑 Speech Recognition ENDED');
-        },
-        onError: (event) => {
-            console.error('❌ Speech Recognition ERROR:', event);
-            if (event.error === 'not-allowed') {
-                setSpeechError('Microphone access denied. Please allow access or use text input.');
-                setUseTextInput(true);
-                useTextInputRef.current = true;
-            } else if (event.error === 'no-speech') {
-                // Ignore no-speech, just silence
-            } else {
-                setSpeechError(`Speech error: ${event.error}. Switched to text input.`);
-                // Optional: Auto-switch to text?
-                // setUseTextInput(true);
-                // useTextInputRef.current = true;
-            }
-        },
-        onResult: (event) => {
-            console.log('📝 Speech Recognition RESULT:', event);
+            setIsListening(false);
         }
-    });
+    }, [listening]);
+
+    // Monitor microphone availability
+    useEffect(() => {
+        if (!browserSupportsSpeechRecognition) {
+            setSpeechError('Browser does not support speech recognition.');
+            setUseTextInput(true);
+            useTextInputRef.current = true;
+        } else if (isMicrophoneAvailable === false) { // Explicitly check false
+            setSpeechError('Microphone access denied. Please allow access.');
+            setUseTextInput(true);
+            useTextInputRef.current = true;
+        }
+    }, [browserSupportsSpeechRecognition, isMicrophoneAvailable]);
 
     // Sync transcript to currentAnswer in voice mode
     useEffect(() => {
@@ -722,7 +732,7 @@ const InterviewCenter = () => {
         }
 
         // Stop speech recognition
-        SpeechRecognition.stopListening();
+        SpeechRecognitionAPI.stopListening();
 
         // Submit current answer to backend (use transcript if in voice mode, currentAnswer if in text mode)
         const answerToSubmit = useTextInput ? currentAnswer : transcript;
@@ -826,7 +836,7 @@ const InterviewCenter = () => {
         resetTranscript();
 
         console.log('Calling SpeechRecognition.startListening...');
-        SpeechRecognition.startListening({
+        SpeechRecognitionAPI.startListening({
             continuous: true,
             language: 'en-US'
         }).then(() => {
@@ -838,7 +848,7 @@ const InterviewCenter = () => {
     };
 
     const stopSpeechRecognition = () => {
-        SpeechRecognition.stopListening();
+        SpeechRecognitionAPI.stopListening();
     };
 
     const endInterview = async () => {
@@ -1193,149 +1203,81 @@ const InterviewCenter = () => {
 
                         {/* Question Section */}
                         <div className="question-section">
-                            <div className="ai-interviewer">
-                                <div className="ai-avatar">
-                                    <i className="bi bi-robot"></i>
+                            {/* Scrollable area: AI header + question card + transcript */}
+                            <div className="question-scroll-area">
+                                <div className="ai-interviewer">
+                                    <div className="ai-avatar">
+                                        <i className="bi bi-robot"></i>
+                                    </div>
+                                    <div className="ai-info">
+                                        <h4>NextOffer AI Interviewer</h4>
+                                        <span className="ai-status">
+                                            <span className="status-dot"></span>
+                                            Listening...
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="ai-info">
-                                    <h4>NextOffer AI Interviewer</h4>
-                                    <span className="ai-status">
-                                        <span className="status-dot"></span>
-                                        Listening...
-                                    </span>
-                                </div>
-                            </div>
 
-                            <div className="question-card">
-                                <div className="question-type-badge">
-                                    <i className="bi bi-tag-fill me-1"></i>
-                                    {questions[currentQuestion].type}
+                                <div className="question-card">
+                                    <div className="question-badges-row">
+                                        <span className="question-type-badge">
+                                            <i className="bi bi-tag-fill me-1"></i>
+                                            {questions[currentQuestion].type}
+                                        </span>
+                                        <span className={`question-source-badge ${questions[currentQuestion].questionSource === 'resume' ? 'resume-badge' : 'role-badge'}`}>
+                                            <i className={`bi ${questions[currentQuestion].questionSource === 'resume' ? 'bi-file-person-fill' : 'bi-briefcase-fill'} me-1`}></i>
+                                            {questions[currentQuestion].questionSource === 'resume' ? 'Resume-Based' : 'Role-Based'}
+                                        </span>
+                                        <span className={`question-difficulty-badge diff-${(questions[currentQuestion].difficultyLevel || 'Medium').toLowerCase()}`}>
+                                            {questions[currentQuestion].difficultyLevel || 'Medium'}
+                                        </span>
+                                    </div>
+                                    <div className="question-text">
+                                        <i className="bi bi-chat-quote me-2"></i>
+                                        {questions[currentQuestion].question}
+                                    </div>
+                                    <div className="question-meta">
+                                        <span className="skill-tag">
+                                            <i className="bi bi-bookmark me-1"></i>
+                                            {questions[currentQuestion].skillTested}
+                                        </span>
+                                        <span className="time-limit">
+                                            <i className="bi bi-hourglass-split me-1"></i>
+                                            5 min
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="question-text">
-                                    <i className="bi bi-chat-quote me-2"></i>
-                                    {questions[currentQuestion].question}
-                                </div>
-                                <div className="question-meta">
-                                    <span className="skill-tag">
-                                        <i className="bi bi-bookmark me-1"></i>
-                                        {questions[currentQuestion].skillTested}
-                                    </span>
-                                    <span className="time-limit">
-                                        <i className="bi bi-hourglass-split me-1"></i>
-                                        5 min
-                                    </span>
-                                </div>
-                            </div>
 
-                            {/* Transcript Display */}
-                            <div className="transcript-box" style={{
-                                background: '#f8f9fa',
-                                border: '2px solid #dee2e6',
-                                borderRadius: '12px',
-                                padding: '15px',
-                                margin: '15px 0',
-                                minHeight: '100px',
-                                maxHeight: '120px',
-                                overflowY: 'auto'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
-                                    <i className={`bi bi-mic${listening ? '-fill' : ''}`} style={{
-                                        fontSize: '1.5rem',
-                                        color: listening ? '#28a745' : speechError ? '#dc3545' : '#6c757d'
-                                    }}></i>
-                                    <h6 style={{ margin: 0, color: '#495057', flex: 1 }}>
-                                        {speechError ? speechError : (listening ? 'Listening... (Your answer)' : useTextInput ? 'Type your answer below' : 'Start speaking to answer')}
-                                    </h6>
-                                    {speechError && !useTextInput && (
-                                        <button
-                                            onClick={() => {
-                                                setSpeechError(null);
-                                                retryCountRef.current = 0;
-                                                startSpeechRecognition();
-                                            }}
-                                            style={{
-                                                marginLeft: 'auto',
-                                                padding: '5px 10px',
-                                                fontSize: '0.85rem',
-                                                background: '#007bff',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '5px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            Retry Voice
-                                        </button>
-                                    )}
-                                    {/* Always show toggle button */}
-                                    <button
-                                        onClick={() => {
-                                            const newValue = !useTextInput;
-                                            setUseTextInput(newValue);
-                                            useTextInputRef.current = newValue;
-
-                                            if (!newValue) {
-                                                // Switching to voice mode
-                                                setSpeechError(null);
-                                                startSpeechRecognition();
-                                            } else {
-                                                // Switching to text mode - stop recognition
-                                                SpeechRecognition.stopListening();
-                                            }
-                                        }}
-                                        style={{
-                                            padding: '5px 15px',
-                                            fontSize: '0.85rem',
-                                            background: useTextInput ? '#28a745' : '#6c757d',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '5px'
-                                        }}
-                                    >
-                                        <i className={`bi bi-${useTextInput ? 'mic' : 'keyboard'}`}></i>
-                                        {useTextInput ? 'Use Voice' : 'Type Instead'}
-                                    </button>
-                                </div>
-                                {useTextInput ? (
-                                    <textarea
-                                        value={currentAnswer}
-                                        onChange={(e) => setCurrentAnswer(e.target.value)}
-                                        placeholder="Type your answer here..."
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            fontSize: '1rem',
-                                            borderRadius: '8px',
-                                            border: '1px solid #ced4da',
-                                            resize: 'vertical',
-                                            minHeight: '60px',
-                                            fontFamily: 'inherit'
-                                        }}
-                                    />
-                                ) : (
-                                    <>
-                                        <p style={{
-                                            fontSize: '1rem',
-                                            lineHeight: '1.6',
-                                            color: currentAnswer ? '#212529' : '#6c757d',
-                                            fontStyle: currentAnswer ? 'normal' : 'italic',
-                                            margin: 0
-                                        }}>
-                                            {currentAnswer || 'Your spoken answer will appear here...'}
-                                        </p>
-                                        <p style={{ fontSize: '0.8rem', color: '#dc3545', marginTop: '10px' }}>
-                                            DEBUG - Listening: {listening.toString()} | Transcript: "{transcript}" | Current Answer: "{currentAnswer}" | Browser Support: {browserSupportsSpeechRecognition.toString()} | Text Mode: {useTextInput.toString()}
-                                        </p>
-                                        {!listening && (
+                                {/* Transcript Display */}
+                                <div className="transcript-box" style={{
+                                    background: '#f8f9fa',
+                                    border: '2px solid #dee2e6',
+                                    borderRadius: '12px',
+                                    padding: '15px',
+                                    margin: '15px 0',
+                                    minHeight: '100px',
+                                    maxHeight: '120px',
+                                    overflowY: 'auto'
+                                }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                                        <i className={`bi bi-mic${listening ? '-fill' : ''}`} style={{
+                                            fontSize: '1.5rem',
+                                            color: listening ? '#28a745' : speechError ? '#dc3545' : '#6c757d'
+                                        }}></i>
+                                        <h6 style={{ margin: 0, color: '#495057', flex: 1 }}>
+                                            {speechError ? speechError : (listening ? 'Listening... (Your answer)' : useTextInput ? 'Type your answer below' : 'Start speaking to answer')}
+                                        </h6>
+                                        {speechError && !useTextInput && (
                                             <button
-                                                onClick={startSpeechRecognition}
+                                                onClick={() => {
+                                                    setSpeechError(null);
+                                                    retryCountRef.current = 0;
+                                                    startSpeechRecognition();
+                                                }}
                                                 style={{
-                                                    marginTop: '10px',
-                                                    padding: '8px 15px',
+                                                    marginLeft: 'auto',
+                                                    padding: '5px 10px',
+                                                    fontSize: '0.85rem',
                                                     background: '#007bff',
                                                     color: 'white',
                                                     border: 'none',
@@ -1343,14 +1285,95 @@ const InterviewCenter = () => {
                                                     cursor: 'pointer'
                                                 }}
                                             >
-                                                <i className="bi bi-mic-fill me-2"></i>
-                                                Start Listening Manually
+                                                Retry Voice
                                             </button>
                                         )}
-                                    </>
-                                )}
+                                        {/* Always show toggle button */}
+                                        <button
+                                            onClick={() => {
+                                                const newValue = !useTextInput;
+                                                setUseTextInput(newValue);
+                                                useTextInputRef.current = newValue;
+
+                                                if (!newValue) {
+                                                    // Switching to voice mode
+                                                    setSpeechError(null);
+                                                    startSpeechRecognition();
+                                                } else {
+                                                    // Switching to text mode - stop recognition
+                                                    SpeechRecognitionAPI.stopListening();
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '5px 15px',
+                                                fontSize: '0.85rem',
+                                                background: useTextInput ? '#28a745' : '#6c757d',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '5px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '5px'
+                                            }}
+                                        >
+                                            <i className={`bi bi-${useTextInput ? 'mic' : 'keyboard'}`}></i>
+                                            {useTextInput ? 'Use Voice' : 'Type Instead'}
+                                        </button>
+                                    </div>
+                                    {useTextInput ? (
+                                        <textarea
+                                            value={currentAnswer}
+                                            onChange={(e) => setCurrentAnswer(e.target.value)}
+                                            placeholder="Type your answer here..."
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                fontSize: '1rem',
+                                                borderRadius: '8px',
+                                                border: '1px solid #ced4da',
+                                                resize: 'vertical',
+                                                minHeight: '60px',
+                                                fontFamily: 'inherit'
+                                            }}
+                                        />
+                                    ) : (
+                                        <>
+                                            <p style={{
+                                                fontSize: '1rem',
+                                                lineHeight: '1.6',
+                                                color: currentAnswer ? '#212529' : '#6c757d',
+                                                fontStyle: currentAnswer ? 'normal' : 'italic',
+                                                margin: 0
+                                            }}>
+                                                {currentAnswer || 'Your spoken answer will appear here...'}
+                                            </p>
+                                            <p style={{ fontSize: '0.8rem', color: '#dc3545', marginTop: '10px' }}>
+                                                DEBUG - Listening: {listening.toString()} | Transcript: "{transcript}" | Current Answer: "{currentAnswer}" | Browser Support: {browserSupportsSpeechRecognition.toString()} | Text Mode: {useTextInput.toString()}
+                                            </p>
+                                            {!listening && (
+                                                <button
+                                                    onClick={startSpeechRecognition}
+                                                    style={{
+                                                        marginTop: '10px',
+                                                        padding: '8px 15px',
+                                                        background: '#007bff',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '5px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    <i className="bi bi-mic-fill me-2"></i>
+                                                    Start Listening Manually
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
 
+                            {/* Answer Controls — always visible at the bottom */}
                             <div className="answer-controls">
                                 <div className="audio-wave">
                                     <div className="wave-bar"></div>
