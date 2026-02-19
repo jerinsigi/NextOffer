@@ -32,7 +32,7 @@ import UserDashboard from './components/user/pages/UserDashboard';
 import UserProfile from './components/user/pages/UserProfile';
 import MyApplications from './components/user/pages/MyApplications';
 import InterviewCenter from './components/user/pages/InterviewCenter';
-import PracticeInterview from './components/user/pages/PracticeInterview';
+import PracticeInterview from './components/user/pages/PracticeInterviewPage';
 import ResultsFeedback from './components/user/pages/ResultsFeedback';
 import SkillDevelopment from './components/user/pages/SkillDevelopment';
 import Notifications from './components/user/pages/Notifications';

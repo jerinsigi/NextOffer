@@ -75,8 +75,8 @@ const JobOpportunities = () => {
         }
     };
 
-    const hasApplied = (jobId) => {
-        return userApplications.some(app => app.Fk_job_id && (app.Fk_job_id === jobId || app.Fk_job_id._id === jobId));
+    const getApplication = (jobId) => {
+        return userApplications.find(app => app.Fk_job_id && (app.Fk_job_id === jobId || app.Fk_job_id._id === jobId));
     };
 
     const handleApply = async (e) => {
@@ -211,7 +211,11 @@ const JobOpportunities = () => {
                                     <h3>{job.job_title}</h3>
                                     <div className="company-name">
                                         {job.Fk_company_id?.company_name || 'Unknown Company'}
-                                        {hasApplied(job._id) && <i className="bi bi-check-circle-fill text-success ms-2" title="Applied"></i>}
+                                        {getApplication(job._id) && (
+                                            <span className={`status-badge-small ${getApplication(job._id).status.toLowerCase()}`}>
+                                                {getApplication(job._id).status}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="job-meta-grid">
@@ -242,7 +246,7 @@ const JobOpportunities = () => {
                                 <div className="job-card-actions">
                                     <span className="posted-date">Posted {new Date(job.createdAt).toLocaleDateString()}</span>
                                     <button className="btn-view-details">
-                                        {hasApplied(job._id) ? 'View Status' : 'View Details'}
+                                        {getApplication(job._id) ? 'View Status' : 'View Details'}
                                     </button>
                                 </div>
                             </div>
@@ -328,10 +332,53 @@ const JobOpportunities = () => {
                                 </div>
 
                                 {/* Application Section */}
-                                {hasApplied(selectedJob._id) ? (
-                                    <div className="already-applied-banner">
-                                        <i className="bi bi-check-circle-fill me-2"></i>
-                                        You have already applied for this position.
+                                {getApplication(selectedJob._id) ? (
+                                    <div className="application-status-card">
+                                        <div className="status-header">
+                                            <h5 className="mb-0">Application Status</h5>
+                                            <span className={`status-badge ${getApplication(selectedJob._id).status.toLowerCase()}`}>
+                                                {getApplication(selectedJob._id).status}
+                                            </span>
+                                        </div>
+
+                                        <div className="status-body">
+                                            <div className="status-row">
+                                                <i className="bi bi-calendar-check text-primary"></i>
+                                                <div>
+                                                    <span className="text-muted d-block small">Applied On</span>
+                                                    <span>{new Date(getApplication(selectedJob._id).createdAt).toLocaleDateString(undefined, {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}</span>
+                                                </div>
+                                            </div>
+
+                                            {getApplication(selectedJob._id).interviewDetails && (
+                                                <div className="status-row">
+                                                    <i className="bi bi-camera-video text-warning"></i>
+                                                    <div>
+                                                        <span className="text-muted d-block small">Interview Scheduled</span>
+                                                        <span>{new Date(getApplication(selectedJob._id).interviewDetails.started_at).toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="status-row">
+                                                <i className="bi bi-file-earmark-text text-info"></i>
+                                                <div>
+                                                    <span className="text-muted d-block small">Resume</span>
+                                                    <span className="text-light">Attached to application</span>
+                                                </div>
+                                            </div>
+
+                                            {getApplication(selectedJob._id).coverLetter && (
+                                                <div className="mt-3 pt-3 border-top border-secondary">
+                                                    <span className="text-muted small d-block mb-1">Cover Letter</span>
+                                                    <p className="small mb-0 opacity-75 fst-italic">"{getApplication(selectedJob._id).coverLetter}"</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="apply-section">

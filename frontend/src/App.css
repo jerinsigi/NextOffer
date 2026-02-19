@@ -57,3 +57,14 @@
 .dropdown-item:active {
   background: rgba(59, 130, 246, 0.3) !important;
 }
+
+/* Logo Cloud Mask */
+.logo-cloud-mask {
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.logo-dark-mode-adjust {
+  /* Optional: filter: brightness(0) invert(1); if you want them white */
+  filter: brightness(0) invert(1);
+}

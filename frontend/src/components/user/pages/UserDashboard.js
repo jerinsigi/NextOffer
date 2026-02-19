@@ -1,17 +1,78 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './UserDashboard.css';
 
 const UserDashboard = () => {
-    const [userName, setUserName] = React.useState('User');
+    const navigate = useNavigate();
+    const [userName, setUserName] = useState('User');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [dashboardData, setDashboardData] = useState({
+        stats: {
+            totalApplications: 0,
+            interviews: 0,
+            averageScore: 0,
+            practiceSessions: 0
+        },
+        upcomingInterviews: [],
+        recentApplications: [],
+        recommendedJobs: [],
+        profileStrength: 0
+    });
 
-    React.useEffect(() => {
-        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-        if (userStr) {
-            const user = JSON.parse(userStr);
-            // Start simple with username, or fetch profile if we want full name
-            setUserName(user.username || 'User');
-        }
-    }, []);
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+                if (!userStr) {
+                    navigate('/login');
+                    return;
+                }
+
+                const user = JSON.parse(userStr);
+                setUserName(user.username || 'User');
+
+                // Fetch dashboard stats using email
+                // Note: Ensure your backend runs on port 5000 or configure proxy
+                const response = await fetch(`http://localhost:5000/api/dashboard/user-stats/${user.email}`);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch dashboard data');
+                }
+
+                const data = await response.json();
+                setDashboardData(data);
+                setLoading(false);
+
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+                setError('Failed to load dashboard data. Please try again later.');
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, [navigate]);
+
+    if (loading) {
+        return (
+            <div className="dashboard-container d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="dashboard-container">
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="dashboard-container">
@@ -28,10 +89,10 @@ const UserDashboard = () => {
                     </div>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-primary">
+                    <button className="btn btn-primary" onClick={() => navigate('/user/jobs')}>
                         <i className="bi bi-briefcase me-2"></i>Browse Jobs
                     </button>
-                    <button className="btn btn-outline-primary">
+                    <button className="btn btn-outline-primary" onClick={() => navigate('/user/practice')}>
                         <i className="bi bi-lightbulb me-2"></i>Practice
                     </button>
                 </div>
@@ -51,9 +112,9 @@ const UserDashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Applications</div>
-                            <div className="stat-value">12</div>
+                            <div className="stat-value">{dashboardData.stats.totalApplications}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-plus-circle me-1"></i> 3 new this week
+                                <i className="bi bi-check-circle me-1"></i> Career Progress
                             </div>
                         </div>
                     </div>
@@ -71,9 +132,9 @@ const UserDashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Interviews</div>
-                            <div className="stat-value">5</div>
+                            <div className="stat-value">{dashboardData.stats.interviews}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-calendar-check me-1"></i> 2 scheduled
+                                <i className="bi bi-calendar-check me-1"></i> Scheduled / Done
                             </div>
                         </div>
                     </div>
@@ -91,9 +152,9 @@ const UserDashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Average Score</div>
-                            <div className="stat-value">78%</div>
+                            <div className="stat-value">{dashboardData.stats.averageScore}%</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-trophy me-1"></i> +5% improvement
+                                <i className="bi bi-trophy me-1"></i> Performance
                             </div>
                         </div>
                     </div>
@@ -111,9 +172,9 @@ const UserDashboard = () => {
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Practice Sessions</div>
-                            <div className="stat-value">24</div>
+                            <div className="stat-value">{dashboardData.stats.practiceSessions}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-fire me-1"></i> 8 this month
+                                <i className="bi bi-fire me-1"></i> Keep practicing!
                             </div>
                         </div>
                     </div>
@@ -127,61 +188,44 @@ const UserDashboard = () => {
                     <div className="dashboard-card mb-4">
                         <div className="card-header-custom">
                             <h5 className="card-title mb-0">Upcoming Interviews</h5>
-                            <button className="btn btn-sm btn-outline-primary">View All</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => navigate('/user/applications')}>View All</button>
                         </div>
                         <div className="interview-list">
-                            <div className="interview-item">
-                                <div className="interview-icon">
-                                    <i className="bi bi-camera-video-fill text-primary"></i>
-                                </div>
-                                <div className="interview-details">
-                                    <h6 className="interview-title">Senior Software Developer</h6>
-                                    <p className="interview-company">
-                                        <i className="bi bi-building me-2"></i>TechCorp Inc.
-                                    </p>
-                                    <div className="interview-meta">
-                                        <span className="badge bg-primary me-2">
-                                            <i className="bi bi-calendar me-1"></i>Dec 10, 2025
-                                        </span>
-                                        <span className="badge bg-info">
-                                            <i className="bi bi-clock me-1"></i>10:00 AM
-                                        </span>
+                            {dashboardData.upcomingInterviews.length > 0 ? (
+                                dashboardData.upcomingInterviews.map((interview) => (
+                                    <div key={interview.id} className="interview-item">
+                                        <div className="interview-icon">
+                                            <i className="bi bi-camera-video-fill text-primary"></i>
+                                        </div>
+                                        <div className="interview-details">
+                                            <h6 className="interview-title">{interview.jobTitle}</h6>
+                                            <p className="interview-company">
+                                                <i className="bi bi-building me-2"></i>{interview.company}
+                                            </p>
+                                            <div className="interview-meta">
+                                                <span className="badge bg-primary me-2">
+                                                    <i className="bi bi-calendar me-1"></i>
+                                                    {new Date(interview.date).toLocaleDateString()}
+                                                </span>
+                                                <span className="badge bg-info">
+                                                    <i className="bi bi-clock me-1"></i>
+                                                    {new Date(interview.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="interview-actions">
+                                            <button className="btn btn-sm btn-primary" onClick={() => navigate(`/user/interview/${interview.id}`)}>
+                                                <i className="bi bi-play-circle me-1"></i>Join
+                                            </button>
+                                        </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="p-4 text-center text-muted">
+                                    <i className="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+                                    No upcoming interviews scheduled.
                                 </div>
-                                <div className="interview-actions">
-                                    <button className="btn btn-sm btn-primary">
-                                        <i className="bi bi-play-circle me-1"></i>Join
-                                    </button>
-                                    <button className="btn btn-sm btn-outline-secondary">
-                                        <i className="bi bi-info-circle"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="interview-item">
-                                <div className="interview-icon">
-                                    <i className="bi bi-camera-video-fill text-success"></i>
-                                </div>
-                                <div className="interview-details">
-                                    <h6 className="interview-title">Full Stack Developer</h6>
-                                    <p className="interview-company">
-                                        <i className="bi bi-building me-2"></i>StartupXYZ
-                                    </p>
-                                    <div className="interview-meta">
-                                        <span className="badge bg-primary me-2">
-                                            <i className="bi bi-calendar me-1"></i>Dec 12, 2025
-                                        </span>
-                                        <span className="badge bg-info">
-                                            <i className="bi bi-clock me-1"></i>2:30 PM
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="interview-actions">
-                                    <button className="btn btn-sm btn-outline-primary" disabled>
-                                        <i className="bi bi-clock me-1"></i>Scheduled
-                                    </button>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -189,50 +233,45 @@ const UserDashboard = () => {
                     <div className="dashboard-card">
                         <div className="card-header-custom">
                             <h5 className="card-title mb-0">Recent Applications</h5>
-                            <button className="btn btn-sm btn-outline-primary">View All</button>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => navigate('/user/applications')}>View All</button>
                         </div>
                         <div className="table-responsive">
-                            <table className="table table-dark table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Position</th>
-                                        <th>Company</th>
-                                        <th>Applied Date</th>
-                                        <th>Status</th>
-                                        <th>Match</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Senior Software Developer</td>
-                                        <td>TechCorp Inc.</td>
-                                        <td>Dec 5, 2025</td>
-                                        <td><span className="badge bg-warning">Interview Scheduled</span></td>
-                                        <td><span className="text-success fw-bold">92%</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Full Stack Developer</td>
-                                        <td>StartupXYZ</td>
-                                        <td>Dec 4, 2025</td>
-                                        <td><span className="badge bg-info">Resume Reviewed</span></td>
-                                        <td><span className="text-success fw-bold">85%</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Backend Engineer</td>
-                                        <td>CloudTech</td>
-                                        <td>Dec 3, 2025</td>
-                                        <td><span className="badge bg-secondary">Under Review</span></td>
-                                        <td><span className="text-warning fw-bold">78%</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>DevOps Specialist</td>
-                                        <td>DataCo</td>
-                                        <td>Dec 1, 2025</td>
-                                        <td><span className="badge bg-success">Completed</span></td>
-                                        <td><span className="text-success fw-bold">88%</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            {dashboardData.recentApplications.length > 0 ? (
+                                <table className="table table-dark table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Position</th>
+                                            <th>Company</th>
+                                            <th>Applied Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {dashboardData.recentApplications.map((app) => (
+                                            <tr key={app.id}>
+                                                <td>{app.position}</td>
+                                                <td>{app.company}</td>
+                                                <td>{new Date(app.date).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className={`badge bg-${app.status === 'Hired' ? 'success' :
+                                                        app.status === 'Rejected' ? 'danger' :
+                                                            app.status === 'Interviewing' ? 'warning' :
+                                                                'info'
+                                                        }`}>
+                                                        {app.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-4 text-center text-muted">
+                                    <i className="bi bi-file-earmark-x fs-1 mb-2 d-block"></i>
+                                    No recent applications found. <br />
+                                    <button className="btn btn-sm btn-primary mt-2" onClick={() => navigate('/user/jobs')}>Browse Jobs</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -249,30 +288,30 @@ const UserDashboard = () => {
                                 <div className="progress-circle mx-auto mb-3" style={{ width: '120px', height: '120px' }}>
                                     <svg viewBox="0 0 120 120">
                                         <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                                        <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" strokeWidth="8" strokeDasharray="339.29" strokeDashoffset="67.86" strokeLinecap="round" transform="rotate(-90 60 60)" />
+                                        <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" strokeWidth="8" strokeDasharray={`${dashboardData.profileStrength * 3.39} 339.29`} strokeLinecap="round" transform="rotate(-90 60 60)" />
                                     </svg>
                                     <div className="progress-text">
-                                        <span className="fs-3 fw-bold text-primary">80%</span>
+                                        <span className="fs-3 fw-bold text-primary">{dashboardData.profileStrength}%</span>
                                     </div>
                                 </div>
-                                <p className="text-muted mb-0">Good progress! Complete your profile to increase visibility.</p>
+                                <p className="text-muted mb-0">Complete your profile to increase visibility.</p>
                             </div>
                             <div className="profile-checklist">
-                                <div className="checklist-item completed">
-                                    <i className="bi bi-check-circle-fill text-success"></i>
-                                    <span>Resume Uploaded</span>
+                                <div className={`checklist-item ${dashboardData.profileStrength > 0 ? 'completed' : ''}`}>
+                                    <i className={`bi bi-${dashboardData.profileStrength > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
+                                    <span>Account Created</span>
                                 </div>
-                                <div className="checklist-item completed">
-                                    <i className="bi bi-check-circle-fill text-success"></i>
-                                    <span>Skills Added</span>
+                                <div className={`checklist-item ${dashboardData.stats.totalApplications > 0 ? 'completed' : ''}`}>
+                                    <i className={`bi bi-${dashboardData.stats.totalApplications > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
+                                    <span>First Application</span>
                                 </div>
-                                <div className="checklist-item">
-                                    <i className="bi bi-circle text-muted"></i>
-                                    <span>Add Work Experience</span>
+                                <div className={`checklist-item ${dashboardData.stats.interviews > 0 ? 'completed' : ''}`}>
+                                    <i className={`bi bi-${dashboardData.stats.interviews > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
+                                    <span>First Interview</span>
                                 </div>
-                                <div className="checklist-item">
-                                    <i className="bi bi-circle text-muted"></i>
-                                    <span>Complete Practice Interview</span>
+                                <div className={`checklist-item ${dashboardData.stats.averageScore > 0 ? 'completed' : ''}`}>
+                                    <i className={`bi bi-${dashboardData.stats.averageScore > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
+                                    <span>Performance Score</span>
                                 </div>
                             </div>
                         </div>
@@ -284,37 +323,29 @@ const UserDashboard = () => {
                             <h5 className="card-title mb-0">Recommended for You</h5>
                         </div>
                         <div className="job-list">
-                            <div className="job-item">
-                                <div className="job-header">
-                                    <h6 className="job-title">React Developer</h6>
-                                    <span className="badge bg-success">95% Match</span>
+                            {dashboardData.recommendedJobs.length > 0 ? (
+                                dashboardData.recommendedJobs.map(job => (
+                                    <div key={job.id} className="job-item">
+                                        <div className="job-header">
+                                            <h6 className="job-title">{job.title}</h6>
+                                            <span className="badge bg-success">{job.match}% Match</span>
+                                        </div>
+                                        <p className="job-company">
+                                            <i className="bi bi-building me-2"></i>{job.company}
+                                        </p>
+                                        <p className="job-location">
+                                            <i className="bi bi-geo-alt me-2"></i>{job.location}
+                                        </p>
+                                        <button className="btn btn-sm btn-outline-primary w-100" onClick={() => navigate('/user/jobs')}>
+                                            <i className="bi bi-arrow-right me-1"></i>View Details
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="p-3 text-center text-muted">
+                                    No recommendations yet.
                                 </div>
-                                <p className="job-company">
-                                    <i className="bi bi-building me-2"></i>Innovation Labs
-                                </p>
-                                <p className="job-location">
-                                    <i className="bi bi-geo-alt me-2"></i>Remote
-                                </p>
-                                <button className="btn btn-sm btn-outline-primary w-100">
-                                    <i className="bi bi-arrow-right me-1"></i>View Details
-                                </button>
-                            </div>
-
-                            <div className="job-item">
-                                <div className="job-header">
-                                    <h6 className="job-title">Node.js Developer</h6>
-                                    <span className="badge bg-success">88% Match</span>
-                                </div>
-                                <p className="job-company">
-                                    <i className="bi bi-building me-2"></i>Tech Solutions
-                                </p>
-                                <p className="job-location">
-                                    <i className="bi bi-geo-alt me-2"></i>Hybrid
-                                </p>
-                                <button className="btn btn-sm btn-outline-primary w-100">
-                                    <i className="bi bi-arrow-right me-1"></i>View Details
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -324,13 +355,13 @@ const UserDashboard = () => {
                             <h5 className="card-title mb-0">Quick Actions</h5>
                         </div>
                         <div className="p-3">
-                            <button className="btn btn-outline-primary w-100 mb-2">
+                            <button className="btn btn-outline-primary w-100 mb-2" onClick={() => navigate('/user/practice')}>
                                 <i className="bi bi-lightbulb me-2"></i>Start Practice Interview
                             </button>
-                            <button className="btn btn-outline-primary w-100 mb-2">
+                            <button className="btn btn-outline-primary w-100 mb-2" onClick={() => navigate('/user/profile')}>
                                 <i className="bi bi-file-earmark-arrow-up me-2"></i>Update Resume
                             </button>
-                            <button className="btn btn-outline-primary w-100">
+                            <button className="btn btn-outline-primary w-100" onClick={() => navigate('/user/applications')}>
                                 <i className="bi bi-graph-up-arrow me-2"></i>View Analytics
                             </button>
                         </div>

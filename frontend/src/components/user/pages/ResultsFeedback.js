@@ -1,182 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ResultsFeedback.css';
 
 const ResultsFeedback = () => {
     const [activeTab, setActiveTab] = useState('all');
     const [selectedResult, setSelectedResult] = useState(null);
 
-    // Sample interview results data
-    const interviewResults = [
-        {
-            id: 1,
-            jobTitle: 'Senior Software Developer',
-            company: 'TechCorp Inc.',
-            companyLogo: 'TC',
-            date: '2025-12-03',
-            type: 'AI Technical Interview',
-            status: 'completed',
-            overallScore: 85,
-            scores: {
-                technical: 88,
-                communication: 82,
-                problemSolving: 87,
-                codeQuality: 84,
-                resumeAlignment: 90
-            },
-            feedback: {
-                strengths: [
-                    'Excellent understanding of React hooks and state management',
-                    'Clear and concise explanations of technical concepts',
-                    'Strong problem-solving approach with structured thinking',
-                    'Good use of real-world examples from previous experience'
-                ],
-                improvements: [
-                    'Could elaborate more on system design considerations',
-                    'Consider discussing edge cases in coding solutions',
-                    'Provide more details on testing strategies'
-                ],
-                aiSummary: 'The candidate demonstrated strong technical proficiency in React and Node.js, with excellent communication skills. Answers were well-structured and showed deep understanding of the topics. Resume claims were well-supported by technical knowledge.',
-                recommendation: 'Highly Recommended for Next Round'
-            },
-            questions: [
-                {
-                    question: 'Explain the difference between useMemo and useCallback hooks.',
-                    answer: 'Answered with clear examples and use cases',
-                    score: 92,
-                    aiComment: 'Excellent answer with practical examples'
-                },
-                {
-                    question: 'Describe your experience leading a development team.',
-                    answer: 'Shared specific project experience with measurable outcomes',
-                    score: 85,
-                    aiComment: 'Good leadership examples, could add more detail on conflict resolution'
-                },
-                {
-                    question: 'How would you handle authentication in a REST API?',
-                    answer: 'Discussed JWT, OAuth, and security best practices',
-                    score: 88,
-                    aiComment: 'Comprehensive answer covering multiple approaches'
+    const [interviewResults, setInterviewResults] = useState([]);
+    const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(null); // unused
+
+    // Fetch user from local storage
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    useEffect(() => {
+        const fetchResults = async () => {
+            if (!user || (!user.id && !user._id)) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Support both id and _id formats
+                const userId = user.id || user._id;
+                const response = await fetch(`http://localhost:5000/api/interviews/user-results/${userId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch results');
                 }
-            ],
-            integrityStatus: 'Clean',
-            violations: 0,
-            duration: 42,
-            recordingAvailable: true,
-            transcriptAvailable: true
-        },
-        {
-            id: 2,
-            jobTitle: 'Full Stack Developer',
-            company: 'StartupXYZ',
-            companyLogo: 'SX',
-            date: '2025-11-28',
-            type: 'AI Technical Interview',
-            status: 'completed',
-            overallScore: 78,
-            scores: {
-                technical: 75,
-                communication: 80,
-                problemSolving: 82,
-                codeQuality: 76,
-                resumeAlignment: 77
-            },
-            feedback: {
-                strengths: [
-                    'Good understanding of full-stack development concepts',
-                    'Enthusiastic and engaged throughout the interview',
-                    'Honest about knowledge gaps and willingness to learn'
-                ],
-                improvements: [
-                    'Need more practical experience with database optimization',
-                    'Could improve explanation of complex algorithms',
-                    'Work on conciseness in answers'
-                ],
-                aiSummary: 'The candidate shows promise with solid fundamentals and good communication. Some areas need development, particularly in advanced database concepts and system design.',
-                recommendation: 'Recommended with Reservations'
-            },
-            questions: [
-                {
-                    question: 'Explain your approach to state management in React.',
-                    answer: 'Discussed Context API and Redux basics',
-                    score: 78,
-                    aiComment: 'Good basics, but could go deeper into advanced patterns'
-                },
-                {
-                    question: 'How do you optimize database queries?',
-                    answer: 'Mentioned indexing and query optimization',
-                    score: 72,
-                    aiComment: 'Basic understanding shown, needs more hands-on experience'
-                },
-                {
-                    question: 'Describe a challenging bug you fixed.',
-                    answer: 'Shared a detailed debugging story with resolution',
-                    score: 85,
-                    aiComment: 'Excellent problem-solving demonstration'
-                }
-            ],
-            integrityStatus: 'Clean',
-            violations: 0,
-            duration: 38,
-            recordingAvailable: true,
-            transcriptAvailable: true
-        },
-        {
-            id: 3,
-            jobTitle: 'Backend Engineer',
-            company: 'CloudTech',
-            companyLogo: 'CT',
-            date: '2025-11-20',
-            type: 'AI Technical Interview',
-            status: 'completed',
-            overallScore: 92,
-            scores: {
-                technical: 95,
-                communication: 88,
-                problemSolving: 93,
-                codeQuality: 91,
-                resumeAlignment: 94
-            },
-            feedback: {
-                strengths: [
-                    'Outstanding technical knowledge in Node.js and microservices',
-                    'Excellent system design thinking and scalability considerations',
-                    'Clear communication of complex architectural concepts',
-                    'Strong alignment between resume and demonstrated skills'
-                ],
-                improvements: [
-                    'Could discuss more about team collaboration approaches',
-                    'Consider adding frontend perspective when discussing full solutions'
-                ],
-                aiSummary: 'Exceptional candidate with deep technical expertise and excellent problem-solving skills. Demonstrated advanced understanding of backend systems, scalability, and best practices. Highly recommended for senior positions.',
-                recommendation: 'Strongly Recommended - Fast Track'
-            },
-            questions: [
-                {
-                    question: 'How would you design a scalable microservices architecture?',
-                    answer: 'Comprehensive answer covering service mesh, API gateway, and data consistency',
-                    score: 96,
-                    aiComment: 'Outstanding answer demonstrating expert-level knowledge'
-                },
-                {
-                    question: 'Explain your experience with MongoDB schema design.',
-                    answer: 'Detailed discussion of schema patterns and performance optimization',
-                    score: 94,
-                    aiComment: 'Excellent practical knowledge with real-world examples'
-                },
-                {
-                    question: 'How do you ensure API security?',
-                    answer: 'Covered authentication, authorization, rate limiting, and encryption',
-                    score: 90,
-                    aiComment: 'Comprehensive security approach'
-                }
-            ],
-            integrityStatus: 'Clean',
-            violations: 0,
-            duration: 45,
-            recordingAvailable: true,
-            transcriptAvailable: true
-        }
-    ];
+                const data = await response.json();
+                setInterviewResults(data);
+            } catch (err) {
+                console.error("Error loading results:", err);
+                // setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchResults();
+    }, [user]);
 
     const getScoreColor = (score) => {
         if (score >= 85) return 'excellent';
@@ -191,8 +52,8 @@ const ResultsFeedback = () => {
         return 'info';
     };
 
-    const filteredResults = activeTab === 'all' 
-        ? interviewResults 
+    const filteredResults = activeTab === 'all'
+        ? interviewResults
         : interviewResults.filter(r => {
             if (activeTab === 'excellent') return r.overallScore >= 85;
             if (activeTab === 'good') return r.overallScore >= 70 && r.overallScore < 85;
@@ -219,73 +80,85 @@ const ResultsFeedback = () => {
                 </div>
             </div>
 
-            {/* Performance Overview */}
-            <div className="performance-overview">
-                <div className="overview-card">
-                    <div className="overview-icon excellent">
-                        <i className="bi bi-trophy-fill"></i>
-                    </div>
-                    <div className="overview-info">
-                        <div className="overview-value">
-                            {Math.round(interviewResults.reduce((acc, r) => acc + r.overallScore, 0) / interviewResults.length)}%
+            {/* Performance Overview (Hidden if Loading) */}
+            {!loading && interviewResults.length > 0 && (
+                <div className="performance-overview">
+                    <div className="overview-card">
+                        <div className="overview-icon excellent">
+                            <i className="bi bi-trophy-fill"></i>
                         </div>
-                        <div className="overview-label">Average Score</div>
-                    </div>
-                </div>
-                <div className="overview-card">
-                    <div className="overview-icon good">
-                        <i className="bi bi-check-circle-fill"></i>
-                    </div>
-                    <div className="overview-info">
-                        <div className="overview-value">{interviewResults.length}</div>
-                        <div className="overview-label">Total Interviews</div>
-                    </div>
-                </div>
-                <div className="overview-card">
-                    <div className="overview-icon success">
-                        <i className="bi bi-star-fill"></i>
-                    </div>
-                    <div className="overview-info">
-                        <div className="overview-value">
-                            {interviewResults.filter(r => r.overallScore >= 85).length}
+                        <div className="overview-info">
+                            <div className="overview-value">
+                                {Math.round(interviewResults.reduce((acc, r) => acc + r.overallScore, 0) / interviewResults.length)}%
+                            </div>
+                            <div className="overview-label">Average Score</div>
                         </div>
-                        <div className="overview-label">Excellent Results</div>
+                    </div>
+                    <div className="overview-card">
+                        <div className="overview-icon good">
+                            <i className="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div className="overview-info">
+                            <div className="overview-value">{interviewResults.length}</div>
+                            <div className="overview-label">Total Interviews</div>
+                        </div>
+                    </div>
+                    <div className="overview-card">
+                        <div className="overview-icon success">
+                            <i className="bi bi-star-fill"></i>
+                        </div>
+                        <div className="overview-info">
+                            <div className="overview-value">
+                                {interviewResults.filter(r => r.overallScore >= 85).length}
+                            </div>
+                            <div className="overview-label">Excellent Results</div>
+                        </div>
+                    </div>
+                    <div className="overview-card">
+                        <div className="overview-icon clean">
+                            <i className="bi bi-shield-check"></i>
+                        </div>
+                        <div className="overview-info">
+                            <div className="overview-value">100%</div>
+                            <div className="overview-label">Clean Integrity</div>
+                        </div>
                     </div>
                 </div>
-                <div className="overview-card">
-                    <div className="overview-icon clean">
-                        <i className="bi bi-shield-check"></i>
+            )}
+
+            {/* Loading State */}
+            {loading && (
+                <div className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
                     </div>
-                    <div className="overview-info">
-                        <div className="overview-value">100%</div>
-                        <div className="overview-label">Clean Integrity</div>
-                    </div>
+                    <p className="mt-3 text-muted">Loading your results...</p>
                 </div>
-            </div>
+            )}
 
             {/* Filter Tabs */}
             <div className="filter-tabs">
-                <button 
+                <button
                     className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
                     onClick={() => setActiveTab('all')}
                 >
                     All Results ({interviewResults.length})
                 </button>
-                <button 
+                <button
                     className={`tab-btn ${activeTab === 'excellent' ? 'active' : ''}`}
                     onClick={() => setActiveTab('excellent')}
                 >
                     <i className="bi bi-star me-1"></i>
                     Excellent (85%+)
                 </button>
-                <button 
+                <button
                     className={`tab-btn ${activeTab === 'good' ? 'active' : ''}`}
                     onClick={() => setActiveTab('good')}
                 >
                     <i className="bi bi-check-circle me-1"></i>
                     Good (70-84%)
                 </button>
-                <button 
+                <button
                     className={`tab-btn ${activeTab === 'needs-improvement' ? 'active' : ''}`}
                     onClick={() => setActiveTab('needs-improvement')}
                 >
@@ -308,7 +181,13 @@ const ResultsFeedback = () => {
                             <div className="result-header">
                                 <div className="result-main-info">
                                     <div className="company-info">
-                                        <div className="company-logo">{result.companyLogo}</div>
+                                        <div className="company-logo">
+                                            {result.companyLogo && result.companyLogo.includes('/') ? (
+                                                <img src={`http://localhost:5000${result.companyLogo}`} alt={result.company} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                result.company.substring(0, 2).toUpperCase()
+                                            )}
+                                        </div>
                                         <div>
                                             <h4>{result.jobTitle}</h4>
                                             <p className="company-name">
@@ -317,10 +196,10 @@ const ResultsFeedback = () => {
                                             </p>
                                             <p className="interview-meta">
                                                 <i className="bi bi-calendar3 me-2"></i>
-                                                {new Date(result.date).toLocaleDateString('en-US', { 
-                                                    month: 'long', 
-                                                    day: 'numeric', 
-                                                    year: 'numeric' 
+                                                {new Date(result.date).toLocaleDateString('en-US', {
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                    year: 'numeric'
                                                 })}
                                                 <span className="mx-2">•</span>
                                                 <i className="bi bi-robot me-2"></i>
@@ -349,8 +228,8 @@ const ResultsFeedback = () => {
                                                 <span className="score-item-value">{value}%</span>
                                             </div>
                                             <div className="score-item-bar">
-                                                <div 
-                                                    className="score-item-fill" 
+                                                <div
+                                                    className="score-item-fill"
                                                     style={{ width: `${value}%` }}
                                                 ></div>
                                             </div>
@@ -382,7 +261,7 @@ const ResultsFeedback = () => {
                                         {result.violations} violations
                                     </span>
                                 </div>
-                                <button 
+                                <button
                                     className="btn btn-primary"
                                     onClick={() => setSelectedResult(result)}
                                 >
@@ -442,7 +321,7 @@ const ResultsFeedback = () => {
                                                 {key.replace(/([A-Z])/g, ' $1').trim()}
                                             </div>
                                             <div className="performance-score-bar">
-                                                <div 
+                                                <div
                                                     className={`performance-fill ${getScoreColor(value)}`}
                                                     style={{ width: `${value}%` }}
                                                 ></div>

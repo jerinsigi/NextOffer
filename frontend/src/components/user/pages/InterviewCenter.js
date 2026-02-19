@@ -529,25 +529,34 @@ const InterviewCenter = () => {
 
                 // Process video frames at regular intervals
                 const processFrame = async () => {
+                    // Check if component is still mounted/active and faceDetection instance exists
+                    if (!faceDetectionRef.current || interviewStage !== 'active') return;
+
                     if (videoRef.current && videoRef.current.readyState >= 2) {
-                        // Create canvas if not exists
-                        if (!canvasRef.current) {
-                            canvasRef.current = document.createElement('canvas');
-                            canvasRef.current.width = videoRef.current.videoWidth;
-                            canvasRef.current.height = videoRef.current.videoHeight;
+                        try {
+                            // Create canvas if not exists
+                            if (!canvasRef.current) {
+                                canvasRef.current = document.createElement('canvas');
+                                canvasRef.current.width = videoRef.current.videoWidth;
+                                canvasRef.current.height = videoRef.current.videoHeight;
+                            }
+
+                            // Draw current video frame to canvas
+                            const ctx = canvasRef.current.getContext('2d');
+                            ctx.drawImage(
+                                videoRef.current,
+                                0, 0,
+                                canvasRef.current.width,
+                                canvasRef.current.height
+                            );
+
+                            // Send to MediaPipe for detection ONLY if ref still exists
+                            if (faceDetectionRef.current) {
+                                await faceDetectionRef.current.send({ image: videoRef.current });
+                            }
+                        } catch (err) {
+                            console.warn("Mediapipe processing error (likely unmounted):", err);
                         }
-
-                        // Draw current video frame to canvas
-                        const ctx = canvasRef.current.getContext('2d');
-                        ctx.drawImage(
-                            videoRef.current,
-                            0, 0,
-                            canvasRef.current.width,
-                            canvasRef.current.height
-                        );
-
-                        // Send to MediaPipe for detection
-                        await faceDetection.send({ image: videoRef.current });
                     }
                 };
 
@@ -570,8 +579,16 @@ const InterviewCenter = () => {
                 detectionIntervalRef.current = null;
             }
             if (faceDetectionRef.current) {
-                faceDetectionRef.current.close();
+                // Determine if we can safely close. 
+                // Sometimes closing immediately causes the WASM error if a process is running.
+                // We just nullify the ref so no new sends happen.
+                const fd = faceDetectionRef.current;
                 faceDetectionRef.current = null;
+                try {
+                    fd.close();
+                } catch (e) {
+                    console.warn("Error closing FaceDetection:", e);
+                }
             }
         };
     }, [interviewStage]);
@@ -1401,8 +1418,8 @@ const InterviewCenter = () => {
                             }}>
                                 <i className="bi bi-check-circle-fill" style={{ fontSize: '45px', color: 'white' }}></i>
                             </div>
-                            <h2 style={{ 
-                                color: '#ffffff', 
+                            <h2 style={{
+                                color: '#ffffff',
                                 fontWeight: '700',
                                 marginBottom: '10px',
                                 fontSize: '2rem'
@@ -1430,7 +1447,7 @@ const InterviewCenter = () => {
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: '#4a90e2' }}>{questions.length}</div>
                                 <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Questions Answered</div>
                             </div>
-                            
+
                             {responses.length > 0 && (
                                 <div style={{
                                     background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%)',
@@ -1446,9 +1463,9 @@ const InterviewCenter = () => {
                                     <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Average Score</div>
                                 </div>
                             )}
-                            
+
                             <div style={{
-                                background: integrityStatus.violations.length === 0 
+                                background: integrityStatus.violations.length === 0
                                     ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.1) 100%)'
                                     : 'linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%)',
                                 borderRadius: '12px',
@@ -1456,16 +1473,16 @@ const InterviewCenter = () => {
                                 textAlign: 'center',
                                 border: integrityStatus.violations.length === 0 ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid rgba(255, 152, 0, 0.3)'
                             }}>
-                                <i className={`bi ${integrityStatus.violations.length === 0 ? 'bi-shield-check' : 'bi-shield-exclamation'}`} 
-                                   style={{ 
-                                       fontSize: '30px', 
-                                       color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800', 
-                                       marginBottom: '10px' 
-                                   }}></i>
-                                <div style={{ 
-                                    fontSize: '2rem', 
-                                    fontWeight: '700', 
-                                    color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800' 
+                                <i className={`bi ${integrityStatus.violations.length === 0 ? 'bi-shield-check' : 'bi-shield-exclamation'}`}
+                                    style={{
+                                        fontSize: '30px',
+                                        color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800',
+                                        marginBottom: '10px'
+                                    }}></i>
+                                <div style={{
+                                    fontSize: '2rem',
+                                    fontWeight: '700',
+                                    color: integrityStatus.violations.length === 0 ? '#4caf50' : '#ff9800'
                                 }}>
                                     {integrityStatus.violations.length}
                                 </div>
@@ -1478,8 +1495,8 @@ const InterviewCenter = () => {
                             <div style={{
                                 marginBottom: '30px'
                             }}>
-                                <h3 style={{ 
-                                    color: '#ffffff', 
+                                <h3 style={{
+                                    color: '#ffffff',
                                     marginBottom: '20px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -1490,7 +1507,7 @@ const InterviewCenter = () => {
                                     <i className="bi bi-graph-up-arrow" style={{ color: '#4a90e2' }}></i>
                                     AI Evaluation Results
                                 </h3>
-                                
+
                                 <div style={{ display: 'grid', gap: '15px' }}>
                                     {responses.map((response, index) => {
                                         const score = response.ai_score || 0;
@@ -1501,7 +1518,7 @@ const InterviewCenter = () => {
                                             return { bg: 'rgba(244, 67, 54, 0.15)', border: '#f44336', text: '#f44336' };
                                         };
                                         const colors = getScoreColor(score);
-                                        
+
                                         return (
                                             <div key={index} style={{
                                                 background: 'rgba(30, 41, 59, 0.5)',
@@ -1510,14 +1527,14 @@ const InterviewCenter = () => {
                                                 border: `2px solid ${colors.border}`,
                                                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
                                             }}>
-                                                <div style={{ 
-                                                    display: 'flex', 
-                                                    justifyContent: 'space-between', 
+                                                <div style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
                                                     alignItems: 'center',
                                                     marginBottom: '12px'
                                                 }}>
-                                                    <span style={{ 
-                                                        fontSize: '1rem', 
+                                                    <span style={{
+                                                        fontSize: '1rem',
                                                         fontWeight: '600',
                                                         color: '#e2e8f0'
                                                     }}>
@@ -1540,8 +1557,8 @@ const InterviewCenter = () => {
                                                             {score}/100
                                                         </span>
                                                         {response.confidence_score && (
-                                                            <span style={{ 
-                                                                fontSize: '0.75rem', 
+                                                            <span style={{
+                                                                fontSize: '0.75rem',
                                                                 color: '#94a3b8',
                                                                 fontWeight: '500'
                                                             }}>
@@ -1551,8 +1568,8 @@ const InterviewCenter = () => {
                                                     </div>
                                                 </div>
                                                 {response.feedback && (
-                                                    <div style={{ 
-                                                        fontSize: '0.95rem', 
+                                                    <div style={{
+                                                        fontSize: '0.95rem',
                                                         color: '#cbd5e1',
                                                         backgroundColor: 'rgba(15, 23, 42, 0.5)',
                                                         padding: '12px 15px',
@@ -1560,9 +1577,9 @@ const InterviewCenter = () => {
                                                         borderLeft: `4px solid ${colors.border}`,
                                                         lineHeight: '1.6'
                                                     }}>
-                                                        <i className="bi bi-chat-left-quote" style={{ 
-                                                            color: colors.border, 
-                                                            marginRight: '8px' 
+                                                        <i className="bi bi-chat-left-quote" style={{
+                                                            color: colors.border,
+                                                            marginRight: '8px'
                                                         }}></i>
                                                         {response.feedback}
                                                     </div>
@@ -1582,7 +1599,7 @@ const InterviewCenter = () => {
                             marginTop: '30px',
                             flexWrap: 'wrap'
                         }}>
-                            <button 
+                            <button
                                 className="btn btn-outline-primary"
                                 onClick={() => window.location.href = '/user/dashboard'}
                                 style={{
@@ -1607,7 +1624,7 @@ const InterviewCenter = () => {
                                 <i className="bi bi-house-fill me-2"></i>
                                 Back to Dashboard
                             </button>
-                            <button 
+                            <button
                                 className="btn btn-primary"
                                 onClick={() => window.location.href = '/user/applications'}
                                 style={{
