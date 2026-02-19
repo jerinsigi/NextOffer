@@ -77,6 +77,9 @@ app.use('/api/admin/dashboard', adminDashboardRouter);
 const dashboardRouter = require('./routes/dashboardRoutes');
 app.use('/api/dashboard', dashboardRouter);
 
+const practiceRouter = require('./routes/practiceRoutes');
+app.use('/api/practice', practiceRouter);
+
 
 module.exports = app;
 
