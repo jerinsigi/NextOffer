@@ -1,4 +1,4 @@
-/* Job Descriptions Page Styles */
+﻿/* Job Descriptions Page Styles */
 
 .jobs-filters {
     display: flex;
@@ -712,4 +712,349 @@
 
 .candidate-details-body::-webkit-scrollbar-thumb:hover {
     background: rgba(59, 130, 246, 0.7);
+}
+
+
+/* =====================================================
+   PREMIUM JOB DESCRIPTION MODAL FORM STYLES
+   ===================================================== */
+
+.jd-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.jd-form-section {
+    padding: 1.25rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.jd-form-section:last-of-type {
+    border-bottom: none;
+}
+
+.jd-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #60a5fa;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, transparent 100%);
+    padding: 0.45rem 0.85rem;
+    border-radius: 6px;
+    border-left: 3px solid #3b82f6;
+}
+
+.jd-section-header i {
+    font-size: 0.9rem;
+    color: #3b82f6;
+}
+
+.jd-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 1.25rem;
+}
+
+.jd-fields-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.jd-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.jd-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.jd-label i {
+    color: #60a5fa;
+    font-size: 0.82rem;
+}
+
+.jd-optional {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #64748b;
+    font-size: 0.72rem;
+}
+
+.jd-input,
+.jd-select {
+    background: rgba(15, 20, 40, 0.7);
+    border: 1px solid rgba(99, 120, 180, 0.25);
+    border-radius: 8px;
+    color: #e2e8f0;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.875rem;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.jd-input::placeholder {
+    color: #475569;
+}
+
+.jd-input:focus,
+.jd-select:focus {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    background: rgba(20, 28, 55, 0.85);
+}
+
+.jd-select {
+    padding-right: 2.2rem;
+    cursor: pointer;
+}
+
+.jd-select option {
+    background: #1e2640;
+    color: #e2e8f0;
+}
+
+.jd-textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+}
+
+.jd-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) sepia(1) saturate(3) hue-rotate(190deg);
+    cursor: pointer;
+}
+
+.jd-skills-box {
+    background: rgba(15, 20, 40, 0.7);
+    border: 1px solid rgba(99, 120, 180, 0.25);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jd-skills-box:focus-within {
+    border-color: rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.jd-skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+}
+
+.jd-skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.2));
+    border: 1px solid rgba(99, 130, 246, 0.4);
+    border-radius: 20px;
+    padding: 0.22rem 0.65rem 0.22rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #a5b4fc;
+    white-space: nowrap;
+}
+
+.jd-skill-remove {
+    background: none;
+    border: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: #94a3b8;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.jd-skill-remove:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.jd-skill-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.jd-skill-search-icon {
+    color: #475569;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.jd-skill-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    flex: 1;
+    padding: 0.15rem 0;
+}
+
+.jd-skill-input::placeholder {
+    color: #475569;
+}
+
+.jd-skills-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem;
+    background: #111827;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-radius: 10px;
+    z-index: 2000;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.jd-skills-dropdown::-webkit-scrollbar { width: 4px; }
+.jd-skills-dropdown::-webkit-scrollbar-track { background: transparent; }
+.jd-skills-dropdown::-webkit-scrollbar-thumb { background: rgba(99, 130, 246, 0.4); border-radius: 4px; }
+
+.jd-skills-dropdown li { list-style: none; }
+
+.jd-skills-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0.55rem 0.75rem;
+    border-radius: 7px;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-align: left;
+}
+
+.jd-skills-dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: #e2e8f0;
+}
+
+.jd-dropdown-icon {
+    color: #60a5fa;
+    font-size: 0.9rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.jd-hint {
+    font-size: 0.72rem;
+    color: #475569;
+    margin: 0.4rem 0 0;
+}
+
+.jd-hint kbd {
+    background: rgba(99, 120, 180, 0.2);
+    border: 1px solid rgba(99, 120, 180, 0.3);
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-family: inherit;
+}
+
+.jd-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 0 0.25rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.jd-btn-cancel {
+    background: rgba(99, 120, 180, 0.12);
+    border: 1px solid rgba(99, 120, 180, 0.25);
+    color: #94a3b8;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.jd-btn-cancel:hover {
+    background: rgba(99, 120, 180, 0.2);
+    color: #e2e8f0;
+    border-color: rgba(99, 120, 180, 0.4);
+}
+
+.jd-btn-submit {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    border: none;
+    color: #fff;
+    padding: 0.6rem 1.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.jd-btn-submit:hover {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+.jd-btn-submit:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+    .jd-fields-grid,
+    .jd-fields-grid-3 {
+        grid-template-columns: 1fr;
+    }
 }

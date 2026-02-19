@@ -1002,3 +1002,59 @@ input:checked+.toggle-slider:before {
         justify-content: flex-end;
     }
 }
+
+/* ===== react-phone-input-2 Dark Theme Overrides (UserProfile) ===== */
+.react-tel-input .flag-dropdown {
+    background: rgba(2, 6, 23, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-right: none !important;
+    border-radius: 8px 0 0 8px !important;
+}
+
+.react-tel-input .flag-dropdown:hover,
+.react-tel-input .flag-dropdown.open {
+    background: rgba(2, 6, 23, 0.9) !important;
+}
+
+.react-tel-input .selected-flag {
+    background: transparent !important;
+}
+
+.react-tel-input .country-list {
+    background: #0f172a !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 8px !important;
+}
+
+.react-tel-input .country-list .country {
+    color: #e2e8f0 !important;
+    padding: 8px 12px !important;
+}
+
+.react-tel-input .country-list .country:hover,
+.react-tel-input .country-list .country.highlight {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #93c5fd !important;
+}
+
+.react-tel-input .country-list .country-name {
+    color: inherit !important;
+}
+
+.react-tel-input .country-list .dial-code {
+    color: #64748b !important;
+}
+
+.react-tel-input .search-box {
+    background: rgba(2, 6, 23, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    width: calc(100% - 16px) !important;
+}
+
+.react-tel-input .search {
+    background: #0f172a !important;
+    padding: 8px !important;
+}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './UserProfile.css';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -646,17 +648,44 @@ const UserProfile = () => {
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Phone</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-phone"></i></span>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-dark"
+                                        {isEditing ? (
+                                            <PhoneInput
+                                                country={'in'}
                                                 value={profileData.phone}
-                                                onChange={(e) => handleProfileChange('phone', e.target.value)}
-                                                disabled={!isEditing}
-                                                placeholder="Enter phone number"
+                                                onChange={phone => handleProfileChange('phone', phone)}
+                                                inputClass="form-control form-control-dark w-100"
+                                                containerClass="form-control-dark rounded-3"
+                                                buttonClass="bg-dark border-secondary"
+                                                dropdownClass="bg-dark text-light border-secondary"
+                                                inputStyle={{
+                                                    background: 'rgba(2, 6, 23, 0.8)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                    color: '#fff',
+                                                    width: '100%',
+                                                    height: '42px'
+                                                }}
+                                                buttonStyle={{
+                                                    background: 'rgba(2, 6, 23, 0.8)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                    borderRight: 'none'
+                                                }}
+                                                dropdownStyle={{
+                                                    background: '#0f172a',
+                                                    color: '#fff'
+                                                }}
                                             />
-                                        </div>
+                                        ) : (
+                                            <div className="input-group">
+                                                <span className="input-group-text"><i className="bi bi-phone"></i></span>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-dark"
+                                                    value={profileData.phone ? `+${profileData.phone}` : ''}
+                                                    disabled
+                                                    placeholder="No phone number set"
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Location</label>

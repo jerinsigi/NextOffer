@@ -525,7 +525,25 @@ const JobOpportunities = () => {
                                                     onChange={(e) => setApplicationForm({ ...applicationForm, coverLetter: e.target.value })}
                                                 ></textarea>
                                             </div>
-                                            <button type="submit" className="btn btn-primary w-100 py-2" disabled={applying}>
+                                            {/* Resume required warning */}
+                                            {((resumeSource === 'library' && !selectedResumeId) ||
+                                                (resumeSource === 'upload' && !resumeFile)) && (
+                                                    <div className="d-flex align-items-center gap-2 mb-3 p-2 rounded" style={{ background: 'rgba(255,193,7,0.12)', border: '1px solid rgba(255,193,7,0.35)' }}>
+                                                        <i className="bi bi-exclamation-triangle-fill text-warning"></i>
+                                                        <span className="small text-warning">
+                                                            {resumeSource === 'library'
+                                                                ? 'Please select a resume from your library or switch to "Upload New".'
+                                                                : 'Please upload your resume to continue.'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary w-100 py-2"
+                                                disabled={applying ||
+                                                    (resumeSource === 'library' && !selectedResumeId) ||
+                                                    (resumeSource === 'upload' && !resumeFile)}
+                                            >
                                                 {applying ? 'Submitting...' : 'Submit Application'}
                                             </button>
                                         </form>

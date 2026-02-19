@@ -848,206 +848,287 @@ const JobDescriptions = () => {
                                 ></button>
                             </div>
                             <div className="modal-body">
-                                <form onSubmit={handleSubmitJob}>
-                                    <div className="row g-3">
-                                        <div className="col-md-6">
-                                            <label className="form-label">Job Title (Category)</label>
-                                            <select
-                                                className="form-select bg-dark text-light border-secondary"
-                                                value={formData.job_title}
-                                                onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                                                required
-                                            >
-                                                <option value="">Select a Job Category</option>
-                                                {jobCategories.map(cat => (
-                                                    <option key={cat._id} value={cat.name}>{cat.name}</option>
-                                                ))}
-                                            </select>
+                                <form onSubmit={handleSubmitJob} className="jd-modal-form">
+
+                                    {/* Section: Basic Info */}
+                                    <div className="jd-form-section">
+                                        <div className="jd-section-header">
+                                            <i className="bi bi-briefcase-fill"></i>
+                                            <span>Basic Information</span>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Department</label>
-                                            <input
-                                                type="text"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.department}
-                                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                                required
-                                            />
+                                        <div className="jd-fields-grid">
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-tag-fill"></i> Job Title / Category
+                                                </label>
+                                                <select
+                                                    className="jd-select"
+                                                    value={formData.job_title}
+                                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                                                    required
+                                                >
+                                                    <option value="">Select a Job Category</option>
+                                                    {jobCategories.map(cat => (
+                                                        <option key={cat._id} value={cat.name}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-building"></i> Department
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="jd-input"
+                                                    placeholder="e.g. Engineering"
+                                                    value={formData.department}
+                                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-geo-alt-fill"></i> Location
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="jd-input"
+                                                    placeholder="e.g. Bangalore, Remote"
+                                                    value={formData.location}
+                                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-clock-fill"></i> Job Type
+                                                </label>
+                                                <select
+                                                    className="jd-select"
+                                                    value={formData.type}
+                                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                                >
+                                                    <option value="Full-time">Full-time</option>
+                                                    <option value="Part-time">Part-time</option>
+                                                    <option value="Contract">Contract</option>
+                                                    <option value="Internship">Internship</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Location</label>
-                                            <input
-                                                type="text"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.location}
-                                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                                required
-                                            />
+                                    </div>
+
+                                    {/* Section: Compensation */}
+                                    <div className="jd-form-section">
+                                        <div className="jd-section-header">
+                                            <i className="bi bi-cash-stack"></i>
+                                            <span>Compensation & Experience</span>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Type</label>
-                                            <select
-                                                className="form-select bg-dark text-light border-secondary"
-                                                value={formData.type}
-                                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                            >
-                                                <option value="Full-time">Full-time</option>
-                                                <option value="Part-time">Part-time</option>
-                                                <option value="Contract">Contract</option>
-                                                <option value="Internship">Internship</option>
-                                            </select>
+                                        <div className="jd-fields-grid">
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-person-workspace"></i> Experience Required
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="jd-input"
+                                                    placeholder="e.g. 2-4 years"
+                                                    value={formData.experience_required}
+                                                    onChange={(e) => setFormData({ ...formData, experience_required: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-currency-rupee"></i> Salary Range
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    className="jd-input"
+                                                    placeholder="e.g. ₹8-12 LPA"
+                                                    value={formData.salary}
+                                                    onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Experience Required</label>
-                                            <input
-                                                type="text"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.experience_required}
-                                                onChange={(e) => setFormData({ ...formData, experience_required: e.target.value })}
-                                                required
-                                            />
+                                    </div>
+
+                                    {/* Section: Description */}
+                                    <div className="jd-form-section">
+                                        <div className="jd-section-header">
+                                            <i className="bi bi-file-text-fill"></i>
+                                            <span>Job Description</span>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Salary Range</label>
-                                            <input
-                                                type="text"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.salary}
-                                                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="col-12">
-                                            <label className="form-label">Description</label>
+                                        <div className="jd-field">
+                                            <label className="jd-label">
+                                                <i className="bi bi-card-text"></i> Description
+                                            </label>
                                             <textarea
-                                                className="form-control bg-dark text-light border-secondary"
+                                                className="jd-input jd-textarea"
                                                 rows="4"
+                                                placeholder="Describe the role, responsibilities, and what you're looking for..."
                                                 value={formData.description}
                                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                                 required
                                             ></textarea>
                                         </div>
+                                    </div>
 
-                                        <div className="col-12">
-                                            <label className="form-label">Skills Required</label>
-                                            <div className="skills-input-container p-2 border border-secondary rounded bg-dark position-relative">
-                                                <div className="selected-skills-tags d-flex flex-wrap gap-2 mb-2">
-                                                    {formData.skills.map((skill, index) => (
-                                                        <span key={index} className="skill-tag d-flex align-items-center">
-                                                            {skill}
-                                                            <button
-                                                                type="button"
-                                                                className="btn-close-custom ms-2"
-                                                                onClick={() => {
-                                                                    const newSkills = formData.skills.filter((_, i) => i !== index);
-                                                                    setFormData({ ...formData, skills: newSkills });
-                                                                }}
-                                                            >
-                                                                <i className="bi bi-x"></i>
-                                                            </button>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                                <div className="w-100 position-relative">
+                                    {/* Section: Skills */}
+                                    <div className="jd-form-section">
+                                        <div className="jd-section-header">
+                                            <i className="bi bi-stars"></i>
+                                            <span>Skills & Benefits</span>
+                                        </div>
+                                        <div className="jd-field">
+                                            <label className="jd-label">
+                                                <i className="bi bi-lightning-charge-fill"></i> Skills Required
+                                            </label>
+                                            <div className="jd-skills-box position-relative">
+                                                {formData.skills.length > 0 && (
+                                                    <div className="jd-skills-tags">
+                                                        {formData.skills.map((skill, index) => (
+                                                            <span key={index} className="jd-skill-tag">
+                                                                {skill}
+                                                                <button
+                                                                    type="button"
+                                                                    className="jd-skill-remove"
+                                                                    onClick={() => {
+                                                                        const newSkills = formData.skills.filter((_, i) => i !== index);
+                                                                        setFormData({ ...formData, skills: newSkills });
+                                                                    }}
+                                                                >
+                                                                    <i className="bi bi-x"></i>
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <div className="jd-skill-input-row">
+                                                    <i className="bi bi-search jd-skill-search-icon"></i>
                                                     <input
                                                         type="text"
-                                                        className="form-control bg-transparent border-0 text-light shadow-none"
-                                                        placeholder="Type a skill..."
+                                                        className="jd-skill-input"
+                                                        placeholder={formData.skills.length === 0 ? "Search and add skills (e.g. React, Python)..." : "Add more skills..."}
                                                         value={skillInput}
                                                         onChange={(e) => {
                                                             setSkillInput(e.target.value);
                                                             const filtered = availableSkills
                                                                 .filter(s => s.name.toLowerCase().includes(e.target.value.toLowerCase()))
                                                                 .filter(s => !formData.skills.includes(s.name));
-                                                            setFilteredSkills(filtered);
+                                                            setFilteredSkills(e.target.value ? filtered : []);
                                                         }}
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter' || e.key === ',') {
                                                                 e.preventDefault();
                                                                 const val = skillInput.trim();
                                                                 if (val && !formData.skills.includes(val)) {
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        skills: [...formData.skills, val]
-                                                                    });
+                                                                    setFormData({ ...formData, skills: [...formData.skills, val] });
                                                                     setSkillInput('');
                                                                     setFilteredSkills([]);
                                                                 }
                                                             }
+                                                            if (e.key === 'Escape') {
+                                                                setFilteredSkills([]);
+                                                            }
                                                         }}
+                                                        onBlur={() => setTimeout(() => setFilteredSkills([]), 150)}
                                                     />
-                                                    {skillInput && filteredSkills.length > 0 && (
-                                                        <ul className="dropdown-menu show w-100 position-absolute skills-dropdown-menu">
-                                                            {filteredSkills.map(skill => (
-                                                                <li key={skill._id}>
-                                                                    <button
-                                                                        className="dropdown-item"
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            if (!formData.skills.includes(skill.name)) {
-                                                                                setFormData({
-                                                                                    ...formData,
-                                                                                    skills: [...formData.skills, skill.name]
-                                                                                });
-                                                                                setSkillInput('');
-                                                                                setFilteredSkills([]);
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        <i className={`${skill.icon} me-2 text-primary`}></i>
-                                                                        {skill.name}
-                                                                    </button>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
                                                 </div>
+                                                {filteredSkills.length > 0 && (
+                                                    <ul className="jd-skills-dropdown">
+                                                        {filteredSkills.map(skill => (
+                                                            <li key={skill._id}>
+                                                                <button
+                                                                    type="button"
+                                                                    className="jd-skills-dropdown-item"
+                                                                    onClick={() => {
+                                                                        if (!formData.skills.includes(skill.name)) {
+                                                                            setFormData({ ...formData, skills: [...formData.skills, skill.name] });
+                                                                            setSkillInput('');
+                                                                            setFilteredSkills([]);
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <i className={`${skill.icon} jd-dropdown-icon`}></i>
+                                                                    <span>{skill.name}</span>
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
                                             </div>
+                                            <p className="jd-hint">Press <kbd>Enter</kbd> or <kbd>,</kbd> to add a custom skill</p>
                                         </div>
-                                        <div className="col-12">
-                                            <label className="form-label">Benefits (comma separated)</label>
+                                        <div className="jd-field">
+                                            <label className="jd-label">
+                                                <i className="bi bi-gift-fill"></i> Benefits <span className="jd-optional">(comma separated)</span>
+                                            </label>
                                             <input
                                                 type="text"
-                                                className="form-control bg-dark text-light border-secondary"
+                                                className="jd-input"
+                                                placeholder="e.g. Health Insurance, Flexible Hours, Remote Work"
                                                 value={formData.benefits}
                                                 onChange={(e) => setFormData({ ...formData, benefits: e.target.value })}
                                             />
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Interview Questions Count</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="20"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.questions_count}
-                                                onChange={(e) => setFormData({ ...formData, questions_count: parseInt(e.target.value) || 5 })}
-                                            />
+                                    </div>
+
+                                    {/* Section: Settings */}
+                                    <div className="jd-form-section">
+                                        <div className="jd-section-header">
+                                            <i className="bi bi-gear-fill"></i>
+                                            <span>Interview Settings</span>
                                         </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Status</label>
-                                            <select
-                                                className="form-select bg-dark text-light border-secondary"
-                                                value={formData.job_status}
-                                                onChange={(e) => setFormData({ ...formData, job_status: e.target.value })}
-                                            >
-                                                <option value="Draft">Draft</option>
-                                                <option value="Active">Active</option>
-                                            </select>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <label className="form-label">Application End Date</label>
-                                            <input
-                                                type="date"
-                                                className="form-control bg-dark text-light border-secondary"
-                                                value={formData.end_date}
-                                                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                                            />
+                                        <div className="jd-fields-grid jd-fields-grid-3">
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-question-circle-fill"></i> Questions Count
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    max="20"
+                                                    className="jd-input"
+                                                    value={formData.questions_count}
+                                                    onChange={(e) => setFormData({ ...formData, questions_count: parseInt(e.target.value) || 5 })}
+                                                />
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-toggle-on"></i> Status
+                                                </label>
+                                                <select
+                                                    className="jd-select"
+                                                    value={formData.job_status}
+                                                    onChange={(e) => setFormData({ ...formData, job_status: e.target.value })}
+                                                >
+                                                    <option value="Draft">Draft</option>
+                                                    <option value="Active">Active</option>
+                                                </select>
+                                            </div>
+                                            <div className="jd-field">
+                                                <label className="jd-label">
+                                                    <i className="bi bi-calendar-x-fill"></i> Application End Date
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    className="jd-input"
+                                                    value={formData.end_date}
+                                                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="modal-footer border-secondary mt-4">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                                        <button type="submit" className="btn btn-primary">{isEditing ? 'Save Changes' : 'Create Job'}</button>
+
+                                    <div className="jd-modal-footer">
+                                        <button type="button" className="jd-btn-cancel" onClick={() => setShowCreateModal(false)}>
+                                            <i className="bi bi-x-circle me-2"></i>Cancel
+                                        </button>
+                                        <button type="submit" className="jd-btn-submit">
+                                            <i className={`bi ${isEditing ? 'bi-check-circle' : 'bi-plus-circle'} me-2`}></i>
+                                            {isEditing ? 'Save Changes' : 'Post Job'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -1403,8 +1484,8 @@ const JobDescriptions = () => {
                                     <div className="d-flex align-items-center gap-3">
                                         {selectedCandidateDetails.image_url ? (
                                             <img
-                                                src={selectedCandidateDetails.image_url.startsWith('http') 
-                                                    ? selectedCandidateDetails.image_url 
+                                                src={selectedCandidateDetails.image_url.startsWith('http')
+                                                    ? selectedCandidateDetails.image_url
                                                     : `http://localhost:5000${selectedCandidateDetails.image_url}`}
                                                 alt={selectedCandidateDetails.full_name}
                                                 className="rounded-circle"
