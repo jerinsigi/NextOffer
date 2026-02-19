@@ -7,6 +7,7 @@ const UserDashboard = () => {
     const [userName, setUserName] = useState('User');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [notifications, setNotifications] = useState([]);
     const [dashboardData, setDashboardData] = useState({
         stats: {
             totalApplications: 0,
@@ -42,6 +43,18 @@ const UserDashboard = () => {
 
                 const data = await response.json();
                 setDashboardData(data);
+
+                // Fetch notifications
+                try {
+                    const notifRes = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(user.email)}`);
+                    if (notifRes.ok) {
+                        const notifData = await notifRes.json();
+                        setNotifications(notifData.slice(0, 4));
+                    }
+                } catch (notifErr) {
+                    console.error('Error fetching notifications for dashboard:', notifErr);
+                }
+
                 setLoading(false);
 
             } catch (err) {
@@ -345,6 +358,61 @@ const UserDashboard = () => {
                                 <div className="p-3 text-center text-muted">
                                     No recommendations yet.
                                 </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Recent Notifications */}
+                    <div className="dashboard-card mb-4">
+                        <div className="card-header-custom">
+                            <h5 className="card-title mb-0">
+                                Recent Notifications
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="badge bg-danger rounded-pill ms-2" style={{ fontSize: '0.7rem' }}>
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
+                                )}
+                            </h5>
+                            <button className="btn btn-sm btn-outline-primary" onClick={() => navigate('/user/notifications')}>View All</button>
+                        </div>
+                        <div className="p-2">
+                            {notifications.length === 0 ? (
+                                <div className="p-3 text-center text-muted">
+                                    <i className="bi bi-bell-slash d-block fs-3 mb-1"></i>
+                                    <small>No notifications yet</small>
+                                </div>
+                            ) : (
+                                notifications.map(notif => (
+                                    <div
+                                        key={notif._id}
+                                        className="d-flex align-items-start gap-2 p-2 rounded mb-1"
+                                        style={{
+                                            cursor: 'pointer',
+                                            background: !notif.read ? 'rgba(99,102,241,0.08)' : 'transparent',
+                                            borderLeft: !notif.read ? '3px solid #6366f1' : '3px solid transparent',
+                                            transition: 'background 0.2s'
+                                        }}
+                                        onClick={() => notif.link && navigate(notif.link)}
+                                    >
+                                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>
+                                            {notif.type === 'interview' ? '📅' :
+                                                notif.type === 'result' ? '📊' :
+                                                    notif.type === 'application' ? '✅' : '🔔'}
+                                        </span>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p className="mb-0 small fw-semibold text-truncate" style={{ color: 'var(--text-primary)' }}>{notif.title}</p>
+                                            <small className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                                {(() => {
+                                                    const diff = (Date.now() - new Date(notif.createdAt)) / 1000;
+                                                    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                                                    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                                                    return `${Math.floor(diff / 86400)}d ago`;
+                                                })()}
+                                            </small>
+                                        </div>
+                                        {!notif.read && <span className="badge bg-primary" style={{ fontSize: '0.6rem', flexShrink: 0 }}>New</span>}
+                                    </div>
+                                ))
                             )}
                         </div>
                     </div>

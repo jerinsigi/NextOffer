@@ -2,11 +2,12 @@ const Application = require('../models/Application');
 const Job_Description = require('../models/Job_Description');
 const Candidate = require('../models/Candidate');
 const Resume = require('../models/Resume');
+const { createNotification } = require('./notificationController');
 
 // Apply for a job
 exports.applyForJob = async (req, res) => {
     try {
-        const { candidateEmail, jobId, coverLetter, resumeId } = req.body;
+        const { candidateEmail, jobId, coverLetter } = req.body;
         const resume_path = req.file ? '/uploads/resumes/' + req.file.filename : null;
 
         // Find candidate by email
@@ -25,21 +26,12 @@ exports.applyForJob = async (req, res) => {
             return res.status(400).json({ message: 'You have already applied for this job' });
         }
 
+        // Create Resume record if resume was uploaded
         let resumeRecord = null;
-
-        if (resumeId) {
-            // User selected an existing resume from their library
-            resumeRecord = await Resume.findOne({ _id: resumeId, Fk_candidate_id: candidate._id });
-            if (!resumeRecord) {
-                return res.status(400).json({ message: 'Selected resume not found in your library.' });
-            }
-        } else if (resume_path) {
-            // User uploaded a new file — create a Resume record
+        if (resume_path) {
             resumeRecord = new Resume({
                 Fk_candidate_id: candidate._id,
                 Fk_job_id: jobId,
-                tag_name: 'Uploaded for application',
-                original_filename: req.file.originalname,
                 resume_path: resume_path
             });
             await resumeRecord.save();
@@ -59,13 +51,27 @@ exports.applyForJob = async (req, res) => {
         // Increment application count in Job Description
         await Job_Description.findByIdAndUpdate(jobId, { $inc: { applications_count: 1 } });
 
+        // Send notification to candidate
+        try {
+            const job = await Job_Description.findById(jobId).populate('Fk_company_id');
+            const companyName = job?.Fk_company_id?.company_name || 'the company';
+            await createNotification(
+                candidateEmail,
+                'application',
+                'Application Submitted',
+                `Your application for ${job?.job_title || 'a job'} at ${companyName} has been submitted successfully.`,
+                '/user/applications'
+            );
+        } catch (notifErr) {
+            console.error('Notification error (applyForJob):', notifErr.message);
+        }
+
         res.status(201).json({ message: 'Application submitted successfully', application: newApplication });
     } catch (err) {
         console.error('Apply for job error:', err);
         res.status(500).json({ message: err.message });
     }
 };
-
 
 const InterviewSession = require('../models/Interview_Session');
 
@@ -210,6 +216,19 @@ exports.shortlistCandidates = async (req, res) => {
                 candidateEmail: application.Fk_candidate_id.email,
                 emailSent
             });
+
+            // In-app notification
+            try {
+                await createNotification(
+                    application.Fk_candidate_id.email,
+                    'application',
+                    'Application Shortlisted! 🎉',
+                    `Congratulations! Your application for ${application.Fk_job_id.job_title} at ${companyName} has been shortlisted.`,
+                    '/user/applications'
+                );
+            } catch (notifErr) {
+                console.error('Notification error (shortlist):', notifErr.message);
+            }
         }
 
         // Update shortlisted count in job description

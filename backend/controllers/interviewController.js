@@ -3,6 +3,7 @@ const { sendInterviewEmail } = require('../utils/emailService');
 const Candidate = require('../models/Candidate');
 const JobDescription = require('../models/Job_Description');
 const Application = require('../models/Application');
+const { createNotification } = require('./notificationController');
 
 // Schedule an interview (Bulk or Single)
 exports.scheduleInterview = async (req, res) => {
@@ -63,6 +64,22 @@ exports.scheduleInterview = async (req, res) => {
                     startedAt,
                     endedAt // Pass endedAt
                 );
+
+                // In-app notification
+                try {
+                    const interviewDate = new Date(startedAt).toLocaleString('en-US', {
+                        dateStyle: 'medium', timeStyle: 'short'
+                    });
+                    await createNotification(
+                        candidate.email,
+                        'interview',
+                        'Interview Scheduled 📅',
+                        `Your interview for ${job.job_title} at ${companyName} is scheduled on ${interviewDate}.`,
+                        '/user/applications'
+                    );
+                } catch (notifErr) {
+                    console.error('Notification error (scheduleInterview):', notifErr.message);
+                }
 
                 successCount++;
             } catch (err) {
@@ -130,6 +147,22 @@ exports.updateSchedule = async (req, res) => {
             endedAt,
             true // isReschedule flag
         );
+
+        // In-app notification
+        try {
+            const interviewDate = new Date(startedAt).toLocaleString('en-US', {
+                dateStyle: 'medium', timeStyle: 'short'
+            });
+            await createNotification(
+                candidate.email,
+                'interview',
+                'Interview Rescheduled 🔄',
+                `Your interview for ${job.job_title} at ${companyName} has been rescheduled to ${interviewDate}.`,
+                '/user/applications'
+            );
+        } catch (notifErr) {
+            console.error('Notification error (updateSchedule):', notifErr.message);
+        }
 
         res.status(200).json({ message: 'Interview rescheduled successfully' });
 
@@ -458,7 +491,25 @@ exports.completeInterview = async (req, res) => {
         if (application) {
             application.status = 'Interviewed';
             await application.save();
-            console.log('✅ Application status updated to: Interviewed');
+            console.log('\u2705 Application status updated to: Interviewed');
+
+            // In-app notification for interview completion
+            try {
+                const job = await JobDescription.findById(session.fk_job_id).populate('Fk_company_id');
+                const companyName = job?.Fk_company_id?.company_name || 'the company';
+                const candidateForNotif = await Candidate.findById(session.fk_candidate_id);
+                if (candidateForNotif) {
+                    await createNotification(
+                        candidateForNotif.email,
+                        'result',
+                        'Interview Completed — Results Available 📊',
+                        `Your interview for ${job?.job_title || 'a position'} at ${companyName} is complete. Check your results now!`,
+                        '/user/results'
+                    );
+                }
+            } catch (notifErr) {
+                console.error('Notification error (completeInterview):', notifErr.message);
+            }
         }
 
         // --- Create / Update Final Report ---

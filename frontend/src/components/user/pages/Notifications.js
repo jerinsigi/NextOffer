@@ -1,466 +1,291 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Notifications.css';
 
 const Notifications = () => {
     const [activeFilter, setActiveFilter] = useState('all');
-    const [notifications, setNotifications] = useState([
-        {
-            id: 1,
-            type: 'interview',
-            title: 'Interview Scheduled',
-            message: 'Your interview with TechCorp for Senior Developer position is scheduled for Dec 12, 2025 at 2:00 PM',
-            timestamp: '2 hours ago',
-            read: false,
-            icon: '📅',
-            color: 'primary',
-            actionRequired: true,
-            actions: [
-                { label: 'View Details', type: 'primary' },
-                { label: 'Reschedule', type: 'outline' }
-            ]
-        },
-        {
-            id: 2,
-            type: 'application',
-            title: 'Application Status Updated',
-            message: 'Your application for Full Stack Developer at StartupXYZ has been shortlisted',
-            timestamp: '5 hours ago',
-            read: false,
-            icon: '✅',
-            color: 'success',
-            actionRequired: false
-        },
-        {
-            id: 3,
-            type: 'result',
-            title: 'Interview Results Available',
-            message: 'Your interview results for Backend Engineer at CloudTech are now available',
-            timestamp: '1 day ago',
-            read: true,
-            icon: '📊',
-            color: 'info',
-            actionRequired: true,
-            actions: [
-                { label: 'View Results', type: 'primary' }
-            ]
-        },
-        {
-            id: 4,
-            type: 'course',
-            title: 'New Course Recommendation',
-            message: 'Based on your profile, we recommend "Advanced System Design" course',
-            timestamp: '1 day ago',
-            read: true,
-            icon: '📚',
-            color: 'warning',
-            actionRequired: false
-        },
-        {
-            id: 5,
-            type: 'achievement',
-            title: 'Achievement Unlocked!',
-            message: 'Congratulations! You\'ve completed 10 practice interviews',
-            timestamp: '2 days ago',
-            read: true,
-            icon: '🏆',
-            color: 'success',
-            actionRequired: false
-        },
-        {
-            id: 6,
-            type: 'interview',
-            title: 'Interview Reminder',
-            message: 'Your interview with DataCorp is in 24 hours. Make sure you\'re prepared!',
-            timestamp: '2 days ago',
-            read: false,
-            icon: '⏰',
-            color: 'primary',
-            actionRequired: true,
-            actions: [
-                { label: 'Prepare', type: 'primary' }
-            ]
-        },
-        {
-            id: 7,
-            type: 'application',
-            title: 'Application Received',
-            message: 'Your application for Machine Learning Engineer at AI Labs has been received',
-            timestamp: '3 days ago',
-            read: true,
-            icon: '📨',
-            color: 'info',
-            actionRequired: false
-        },
-        {
-            id: 8,
-            type: 'system',
-            title: 'Profile Completion',
-            message: 'Your profile is 85% complete. Add certifications to increase visibility',
-            timestamp: '4 days ago',
-            read: true,
-            icon: '👤',
-            color: 'warning',
-            actionRequired: true,
-            actions: [
-                { label: 'Complete Profile', type: 'outline' }
-            ]
-        },
-        {
-            id: 9,
-            type: 'result',
-            title: 'Practice Interview Feedback',
-            message: 'New AI feedback available for your recent JavaScript practice session',
-            timestamp: '5 days ago',
-            read: true,
-            icon: '💡',
-            color: 'info',
-            actionRequired: false
-        },
-        {
-            id: 10,
-            type: 'job',
-            title: 'New Job Match',
-            message: '3 new jobs match your skills and preferences',
-            timestamp: '1 week ago',
-            read: true,
-            icon: '💼',
-            color: 'success',
-            actionRequired: true,
-            actions: [
-                { label: 'View Jobs', type: 'primary' }
-            ]
-        }
-    ]);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
-    const [settings, setSettings] = useState({
-        emailNotifications: true,
-        pushNotifications: true,
-        interviewReminders: true,
-        applicationUpdates: true,
-        courseRecommendations: true,
-        weeklyDigest: false
-    });
+    const getUserEmail = () => {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (!userStr) return null;
+        return JSON.parse(userStr).email;
+    };
+
+    const fetchNotifications = useCallback(async () => {
+        const email = getUserEmail();
+        if (!email) return;
+        try {
+            const res = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (err) {
+            console.error('Error fetching notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
+
+    const formatTimeAgo = (dateStr) => {
+        const diff = (Date.now() - new Date(dateStr)) / 1000;
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
 
     const filterOptions = [
-        { key: 'all', label: 'All', icon: 'fa-bell' },
-        { key: 'unread', label: 'Unread', icon: 'fa-circle' },
-        { key: 'interview', label: 'Interviews', icon: 'fa-calendar' },
-        { key: 'application', label: 'Applications', icon: 'fa-file-alt' },
-        { key: 'result', label: 'Results', icon: 'fa-chart-bar' },
-        { key: 'course', label: 'Courses', icon: 'fa-graduation-cap' }
+        { key: 'all', label: 'All', icon: 'bi-bell' },
+        { key: 'unread', label: 'Unread', icon: 'bi-circle-fill' },
+        { key: 'interview', label: 'Interviews', icon: 'bi-calendar-check' },
+        { key: 'application', label: 'Applications', icon: 'bi-file-earmark-text' },
+        { key: 'result', label: 'Results', icon: 'bi-bar-chart-line' },
     ];
 
     const getFilteredNotifications = () => {
-        if (activeFilter === 'all') {
-            return notifications;
-        } else if (activeFilter === 'unread') {
-            return notifications.filter(n => !n.read);
-        } else {
-            return notifications.filter(n => n.type === activeFilter);
+        if (activeFilter === 'all') return notifications;
+        if (activeFilter === 'unread') return notifications.filter(n => !n.read);
+        return notifications.filter(n => n.type === activeFilter);
+    };
+
+    const getFilterCount = (key) => {
+        if (key === 'all') return notifications.length;
+        if (key === 'unread') return notifications.filter(n => !n.read).length;
+        return notifications.filter(n => n.type === key).length;
+    };
+
+    const markAsRead = async (id) => {
+        try {
+            await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PATCH' });
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+        } catch (err) {
+            console.error('Error marking as read:', err);
         }
     };
 
-    const markAsRead = (id) => {
-        setNotifications(notifications.map(n => 
-            n.id === id ? { ...n, read: true } : n
-        ));
+    const markAllAsRead = async () => {
+        const email = getUserEmail();
+        if (!email) return;
+        try {
+            await fetch(`http://localhost:5000/api/notifications/mark-all-read/${encodeURIComponent(email)}`, { method: 'PATCH' });
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+            window.dispatchEvent(new Event('notificationsUpdated'));
+        } catch (err) {
+            console.error('Error marking all as read:', err);
+        }
     };
 
-    const markAllAsRead = () => {
-        setNotifications(notifications.map(n => ({ ...n, read: true })));
+    const deleteNotification = async (id) => {
+        try {
+            await fetch(`http://localhost:5000/api/notifications/${id}`, { method: 'DELETE' });
+            setNotifications(prev => prev.filter(n => n._id !== id));
+            window.dispatchEvent(new Event('notificationsUpdated'));
+        } catch (err) {
+            console.error('Error deleting notification:', err);
+        }
     };
 
-    const deleteNotification = (id) => {
-        setNotifications(notifications.filter(n => n.id !== id));
+    const clearAll = async () => {
+        const email = getUserEmail();
+        if (!email) return;
+        try {
+            await fetch(`http://localhost:5000/api/notifications/clear-all/${encodeURIComponent(email)}`, { method: 'DELETE' });
+            setNotifications([]);
+            window.dispatchEvent(new Event('notificationsUpdated'));
+        } catch (err) {
+            console.error('Error clearing notifications:', err);
+        }
     };
 
-    const clearAll = () => {
-        setNotifications([]);
+    const getTypeIcon = (type) => {
+        switch (type) {
+            case 'interview': return '📅';
+            case 'result': return '📊';
+            case 'application': return '✅';
+            case 'job': return '�';
+            default: return '🔔';
+        }
     };
 
-    const toggleSetting = (key) => {
-        setSettings({ ...settings, [key]: !settings[key] });
+    const getTypeAccentColor = (type) => {
+        switch (type) {
+            case 'interview': return '#6366f1';
+            case 'result': return '#06b6d4';
+            case 'application': return '#22c55e';
+            case 'job': return '#f59e0b';
+            default: return '#94a3b8';
+        }
     };
 
     const unreadCount = notifications.filter(n => !n.read).length;
     const filteredNotifications = getFilteredNotifications();
 
+    if (loading) {
+        return (
+            <div className="notif-page">
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="notifications-container">
-            {/* Page Header */}
-            <div className="page-header">
+        <div className="notif-page">
+
+            {/* ── Header ── */}
+            <div className="notif-header">
                 <div>
-                    <h2 className="page-title">
-                        <i className="fas fa-bell me-2"></i>
+                    <h2 className="notif-title">
+                        <i className="bi bi-bell-fill me-2"></i>
                         Notifications
                         {unreadCount > 0 && (
-                            <span className="unread-badge">{unreadCount}</span>
+                            <span className="notif-unread-badge">{unreadCount}</span>
                         )}
                     </h2>
-                    <p className="text-muted">Stay updated with your latest activities</p>
+                    <p className="notif-subtitle">Stay updated with your latest activities</p>
                 </div>
-                <div className="header-actions">
+                <div className="d-flex gap-2">
                     {unreadCount > 0 && (
-                        <button className="btn btn-outline-primary" onClick={markAllAsRead}>
-                            <i className="fas fa-check-double me-1"></i> Mark All Read
+                        <button className="btn btn-outline-primary btn-sm" onClick={markAllAsRead}>
+                            <i className="bi bi-check2-all me-1"></i> Mark All Read
                         </button>
                     )}
-                    <button className="btn btn-primary" data-toggle="settings">
-                        <i className="fas fa-cog me-1"></i> Settings
-                    </button>
-                </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="notification-stats">
-                <div className="stat-item">
-                    <div className="stat-icon unread">
-                        <i className="fas fa-circle"></i>
-                    </div>
-                    <div className="stat-info">
-                        <div className="stat-value">{unreadCount}</div>
-                        <div className="stat-label">Unread</div>
-                    </div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-icon total">
-                        <i className="fas fa-bell"></i>
-                    </div>
-                    <div className="stat-info">
-                        <div className="stat-value">{notifications.length}</div>
-                        <div className="stat-label">Total</div>
-                    </div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-icon action">
-                        <i className="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div className="stat-info">
-                        <div className="stat-value">
-                            {notifications.filter(n => n.actionRequired).length}
-                        </div>
-                        <div className="stat-label">Action Required</div>
-                    </div>
-                </div>
-                <div className="stat-item">
-                    <div className="stat-icon today">
-                        <i className="fas fa-clock"></i>
-                    </div>
-                    <div className="stat-info">
-                        <div className="stat-value">
-                            {notifications.filter(n => n.timestamp.includes('hour') || n.timestamp.includes('minutes')).length}
-                        </div>
-                        <div className="stat-label">Today</div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="notifications-content">
-                {/* Filters */}
-                <div className="notifications-sidebar">
-                    <div className="filter-section">
-                        <h4>Filters</h4>
-                        <div className="filter-list">
-                            {filterOptions.map(filter => (
-                                <button
-                                    key={filter.key}
-                                    className={`filter-btn ${activeFilter === filter.key ? 'active' : ''}`}
-                                    onClick={() => setActiveFilter(filter.key)}
-                                >
-                                    <i className={`fas ${filter.icon}`}></i>
-                                    <span>{filter.label}</span>
-                                    {filter.key === 'unread' && unreadCount > 0 && (
-                                        <span className="filter-count">{unreadCount}</span>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Settings Panel */}
-                    <div className="settings-panel">
-                        <h4>
-                            <i className="fas fa-cog me-2"></i>
-                            Notification Settings
-                        </h4>
-                        <div className="settings-list">
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Email Notifications</div>
-                                    <div className="setting-description">Receive updates via email</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.emailNotifications}
-                                        onChange={() => toggleSetting('emailNotifications')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Push Notifications</div>
-                                    <div className="setting-description">Browser push notifications</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.pushNotifications}
-                                        onChange={() => toggleSetting('pushNotifications')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Interview Reminders</div>
-                                    <div className="setting-description">24h before interviews</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.interviewReminders}
-                                        onChange={() => toggleSetting('interviewReminders')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Application Updates</div>
-                                    <div className="setting-description">Status change alerts</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.applicationUpdates}
-                                        onChange={() => toggleSetting('applicationUpdates')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Course Recommendations</div>
-                                    <div className="setting-description">Learning suggestions</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.courseRecommendations}
-                                        onChange={() => toggleSetting('courseRecommendations')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <div className="setting-label">Weekly Digest</div>
-                                    <div className="setting-description">Summary every Monday</div>
-                                </div>
-                                <label className="toggle-switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={settings.weeklyDigest}
-                                        onChange={() => toggleSetting('weeklyDigest')}
-                                    />
-                                    <span className="toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Notifications List */}
-                <div className="notifications-main">
-                    <div className="notifications-header">
-                        <h3>
-                            {activeFilter === 'all' && 'All Notifications'}
-                            {activeFilter === 'unread' && 'Unread Notifications'}
-                            {activeFilter === 'interview' && 'Interview Notifications'}
-                            {activeFilter === 'application' && 'Application Notifications'}
-                            {activeFilter === 'result' && 'Result Notifications'}
-                            {activeFilter === 'course' && 'Course Notifications'}
-                        </h3>
-                        {notifications.length > 0 && (
-                            <button className="btn-text-danger" onClick={clearAll}>
-                                <i className="fas fa-trash me-1"></i> Clear All
-                            </button>
-                        )}
-                    </div>
-
-                    {filteredNotifications.length > 0 ? (
-                        <div className="notifications-list">
-                            {filteredNotifications.map(notification => (
-                                <div
-                                    key={notification.id}
-                                    className={`notification-card ${!notification.read ? 'unread' : ''} ${notification.color}`}
-                                >
-                                    {!notification.read && <div className="unread-indicator"></div>}
-                                    
-                                    <div className="notification-icon">
-                                        {notification.icon}
-                                    </div>
-                                    
-                                    <div className="notification-content">
-                                        <div className="notification-header">
-                                            <h4>{notification.title}</h4>
-                                            <span className="notification-time">
-                                                <i className="far fa-clock"></i>
-                                                {notification.timestamp}
-                                            </span>
-                                        </div>
-                                        <p className="notification-message">{notification.message}</p>
-                                        
-                                        {notification.actionRequired && notification.actions && (
-                                            <div className="notification-actions">
-                                                {notification.actions.map((action, index) => (
-                                                    <button
-                                                        key={index}
-                                                        className={`btn btn-sm ${action.type === 'primary' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                                    >
-                                                        {action.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="notification-controls">
-                                        {!notification.read && (
-                                            <button
-                                                className="control-btn"
-                                                onClick={() => markAsRead(notification.id)}
-                                                title="Mark as read"
-                                            >
-                                                <i className="fas fa-check"></i>
-                                            </button>
-                                        )}
-                                        <button
-                                            className="control-btn delete"
-                                            onClick={() => deleteNotification(notification.id)}
-                                            title="Delete"
-                                        >
-                                            <i className="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="empty-state">
-                            <i className="fas fa-bell-slash fa-4x"></i>
-                            <h5>No notifications</h5>
-                            <p className="text-muted">
-                                {activeFilter === 'all' 
-                                    ? "You're all caught up!" 
-                                    : `No ${activeFilter} notifications`}
-                            </p>
-                        </div>
+                    {notifications.length > 0 && (
+                        <button className="btn btn-outline-danger btn-sm" onClick={clearAll}>
+                            <i className="bi bi-trash me-1"></i> Clear All
+                        </button>
                     )}
                 </div>
             </div>
+
+            {/* ── Stats row ── */}
+            <div className="notif-stats-row">
+                <div className="notif-stat-card" style={{ '--accent': '#ef4444' }}>
+                    <span className="notif-stat-value">{unreadCount}</span>
+                    <span className="notif-stat-label">Unread</span>
+                </div>
+                <div className="notif-stat-card" style={{ '--accent': '#6366f1' }}>
+                    <span className="notif-stat-value">{notifications.length}</span>
+                    <span className="notif-stat-label">Total</span>
+                </div>
+                <div className="notif-stat-card" style={{ '--accent': '#f59e0b' }}>
+                    <span className="notif-stat-value">{notifications.filter(n => n.type === 'interview').length}</span>
+                    <span className="notif-stat-label">Interviews</span>
+                </div>
+                <div className="notif-stat-card" style={{ '--accent': '#22c55e' }}>
+                    <span className="notif-stat-value">{notifications.filter(n => n.type === 'application').length}</span>
+                    <span className="notif-stat-label">Applications</span>
+                </div>
+            </div>
+
+            {/* ── Filter tabs ── */}
+            <div className="notif-filter-tabs">
+                {filterOptions.map(f => {
+                    const count = getFilterCount(f.key);
+                    return (
+                        <button
+                            key={f.key}
+                            className={`notif-filter-tab ${activeFilter === f.key ? 'active' : ''}`}
+                            onClick={() => setActiveFilter(f.key)}
+                        >
+                            <i className={`bi ${f.icon} me-1`}></i>
+                            {f.label}
+                            {count > 0 && (
+                                <span className="notif-tab-count">{count}</span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* ── List ── */}
+            {filteredNotifications.length > 0 ? (
+                <div className="notif-list">
+                    {filteredNotifications.map(notif => (
+                        <div
+                            key={notif._id}
+                            className={`notif-card ${!notif.read ? 'notif-card--unread' : ''}`}
+                            style={{ '--type-color': getTypeAccentColor(notif.type) }}
+                        >
+                            <div className="notif-card-icon">
+                                {getTypeIcon(notif.type)}
+                            </div>
+
+                            <div className="notif-card-body">
+                                <div className="notif-card-top">
+                                    <span className="notif-card-title">{notif.title}</span>
+                                    <span className="notif-card-time">
+                                        <i className="bi bi-clock me-1"></i>
+                                        {formatTimeAgo(notif.createdAt)}
+                                    </span>
+                                </div>
+                                <p className="notif-card-msg">{notif.message}</p>
+                                {notif.link && (
+                                    <button
+                                        className="notif-card-cta"
+                                        onClick={() => {
+                                            if (!notif.read) markAsRead(notif._id);
+                                            navigate(notif.link);
+                                        }}
+                                    >
+                                        {notif.type === 'result' ? 'View Results' :
+                                            notif.type === 'interview' ? 'View Interview' :
+                                                'View Details'}
+                                        <i className="bi bi-arrow-right ms-1"></i>
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="notif-card-actions">
+                                {!notif.read && (
+                                    <button
+                                        className="notif-action-btn"
+                                        title="Mark as read"
+                                        onClick={() => markAsRead(notif._id)}
+                                    >
+                                        <i className="bi bi-check-lg"></i>
+                                    </button>
+                                )}
+                                <button
+                                    className="notif-action-btn notif-action-btn--delete"
+                                    title="Delete"
+                                    onClick={() => deleteNotification(notif._id)}
+                                >
+                                    <i className="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="notif-empty">
+                    <i className="bi bi-bell-slash notif-empty-icon"></i>
+                    <h5>No notifications</h5>
+                    <p className="text-muted">
+                        {activeFilter === 'all'
+                            ? "You're all caught up! Notifications will appear here when there's activity on your account."
+                            : `No ${activeFilter} notifications found.`}
+                    </p>
+                    {activeFilter === 'all' && (
+                        <button className="btn btn-primary mt-2" onClick={() => navigate('/user/jobs')}>
+                            <i className="bi bi-briefcase me-2"></i>Browse Jobs to Get Started
+                        </button>
+                    )}
+                </div>
+            )}
+
         </div>
     );
 };

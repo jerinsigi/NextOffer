@@ -83,6 +83,9 @@ app.use('/api/practice', practiceRouter);
 const resumeRouter = require('./routes/resumeRoutes');
 app.use('/api/resumes', resumeRouter);
 
+const notificationRouter = require('./routes/notificationRoutes');
+app.use('/api/notifications', notificationRouter);
+
 
 module.exports = app;
 

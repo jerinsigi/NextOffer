@@ -1,55 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import '../common/dashboard/DashboardLayout.css';
 import logo from '../../logo.svg';
 
 const UserLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [notificationCount] = useState(3);
+    const [notifications, setNotifications] = useState([]);
     const [userData, setUserData] = useState({ name: 'Guest', type: 'Candidate', avatar: null });
+    const [userEmail, setUserEmail] = useState(null);
     const location = useLocation();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const loadUserData = async () => {
-            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
-            if (userStr) {
-                const user = JSON.parse(userStr);
+    const unreadCount = notifications.filter(n => !n.read).length;
 
-                // Try to fetch latest profile data from backend
-                try {
-                    const response = await fetch('http://localhost:5000/api/users/profile', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: user.email })
+    const loadUserData = useCallback(async () => {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            setUserEmail(user.email);
+
+            // Try to fetch latest profile data from backend
+            try {
+                const response = await fetch('http://localhost:5000/api/users/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
+
+                if (response.ok) {
+                    const profileData = await response.json();
+                    setUserData({
+                        name: profileData.full_name || user.username || 'User',
+                        type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                        avatar: profileData.image_url ?
+                            (profileData.image_url.startsWith('http') || profileData.image_url.startsWith('data')
+                                ? profileData.image_url
+                                : `http://localhost:5000${profileData.image_url}`)
+                            : (profileData.full_name ? profileData.full_name.charAt(0).toUpperCase() : 'U')
                     });
-
-                    if (response.ok) {
-                        const profileData = await response.json();
-                        setUserData({
-                            name: profileData.full_name || user.username || 'User',
-                            type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
-                            avatar: profileData.image_url ?
-                                (profileData.image_url.startsWith('http') || profileData.image_url.startsWith('data')
-                                    ? profileData.image_url
-                                    : `http://localhost:5000${profileData.image_url}`)
-                                : (profileData.full_name ? profileData.full_name.charAt(0).toUpperCase() : 'U')
-                        });
-                    } else {
-                        // Fallback to localStorage data if API fails
-                        setUserData({
-                            name: user.username || 'User',
-                            type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
-                            avatar: user.image_url ?
-                                (user.image_url.startsWith('http') || user.image_url.startsWith('data')
-                                    ? user.image_url
-                                    : `http://localhost:5000${user.image_url}`)
-                                : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
-                        });
-                    }
-                } catch (error) {
-                    console.error('Error fetching profile:', error);
-                    // Fallback to localStorage data
+                } else {
                     setUserData({
                         name: user.username || 'User',
                         type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
@@ -60,18 +49,69 @@ const UserLayout = () => {
                             : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
                     });
                 }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                setUserData({
+                    name: user.username || 'User',
+                    type: user.usertype ? user.usertype.charAt(0).toUpperCase() + user.usertype.slice(1) : 'Candidate',
+                    avatar: user.image_url ?
+                        (user.image_url.startsWith('http') || user.image_url.startsWith('data')
+                            ? user.image_url
+                            : `http://localhost:5000${user.image_url}`)
+                        : (user.username ? user.username.charAt(0).toUpperCase() : 'U')
+                });
             }
-        };
+        }
+    }, []);
 
+    const fetchNotifications = useCallback(async () => {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        try {
+            const res = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(user.email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (err) {
+            console.error('Error fetching notifications:', err);
+        }
+    }, []);
+
+    const formatTimeAgo = (dateStr) => {
+        const diff = (Date.now() - new Date(dateStr)) / 1000;
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
+
+    const handleMarkRead = async (id) => {
+        try {
+            await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PATCH' });
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+        } catch (err) {
+            console.error('Error marking notification read:', err);
+        }
+    };
+
+    useEffect(() => {
         loadUserData();
+        fetchNotifications();
 
-        // Listen for profile updates
+        // Poll every 30 seconds
+        const interval = setInterval(fetchNotifications, 30000);
+
         window.addEventListener('userProfileUpdated', loadUserData);
+        window.addEventListener('notificationsUpdated', fetchNotifications);
 
         return () => {
+            clearInterval(interval);
             window.removeEventListener('userProfileUpdated', loadUserData);
+            window.removeEventListener('notificationsUpdated', fetchNotifications);
         };
-    }, []);
+    }, [loadUserData, fetchNotifications]);
 
     const menuItems = [
         {
@@ -121,7 +161,7 @@ const UserLayout = () => {
             title: 'Notifications',
             icon: 'bi-bell',
             path: '/user/notifications',
-            badge: notificationCount
+            badge: unreadCount > 0 ? unreadCount : null
         },
         {
             title: 'Help & Support',
@@ -238,36 +278,66 @@ const UserLayout = () => {
                                 data-bs-toggle="dropdown"
                             >
                                 <i className="bi bi-bell fs-5"></i>
-                                {notificationCount > 0 && (
+                                {unreadCount > 0 && (
                                     <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        {notificationCount}
+                                        {unreadCount > 9 ? '9+' : unreadCount}
                                     </span>
                                 )}
                             </button>
-                            <ul className="dropdown-menu dropdown-menu-end notification-dropdown">
-                                <li className="dropdown-header">
+                            <ul className="dropdown-menu dropdown-menu-end notification-dropdown" style={{ minWidth: '340px' }}>
+                                <li className="dropdown-header d-flex justify-content-between align-items-center px-3 py-2">
                                     <h6 className="mb-0">Notifications</h6>
+                                    {unreadCount > 0 && (
+                                        <span className="badge bg-danger rounded-pill">{unreadCount} unread</span>
+                                    )}
                                 </li>
                                 <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <a className="dropdown-item" href="#!">
-                                        <div className="d-flex align-items-start">
-                                            <i className="bi bi-check-circle text-success me-3 fs-5"></i>
-                                            <div>
-                                                <p className="mb-1 small"><strong>Interview Scheduled</strong></p>
-                                                <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>
-                                                    Your interview for Software Developer role is scheduled
-                                                </p>
-                                                <small className="text-muted">2 hours ago</small>
+
+                                {notifications.length === 0 ? (
+                                    <li className="px-3 py-3 text-center text-muted small">
+                                        <i className="bi bi-bell-slash d-block fs-4 mb-1"></i>
+                                        No notifications yet
+                                    </li>
+                                ) : (
+                                    notifications.slice(0, 5).map(notif => (
+                                        <li key={notif._id}>
+                                            <div
+                                                className={`dropdown-item d-flex align-items-start gap-2 py-2 ${!notif.read ? 'bg-primary bg-opacity-10' : ''}`}
+                                                style={{ cursor: 'pointer', borderLeft: !notif.read ? '3px solid #6366f1' : '3px solid transparent' }}
+                                                onClick={() => {
+                                                    if (!notif.read) handleMarkRead(notif._id);
+                                                    if (notif.link) navigate(notif.link);
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '1.2rem' }}>
+                                                    {notif.type === 'interview' ? '📅' :
+                                                        notif.type === 'result' ? '📊' :
+                                                            notif.type === 'application' ? '✅' : '🔔'}
+                                                </span>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <p className="mb-0 small fw-semibold text-truncate">{notif.title}</p>
+                                                    <p className="mb-0 text-muted" style={{ fontSize: '0.72rem' }}>
+                                                        {notif.message.length > 65 ? notif.message.substring(0, 65) + '…' : notif.message}
+                                                    </p>
+                                                    <small className="text-muted">{formatTimeAgo(notif.createdAt)}</small>
+                                                </div>
+                                                {!notif.read && (
+                                                    <span className="badge bg-primary rounded-pill mt-1" style={{ fontSize: '0.6rem' }}>New</span>
+                                                )}
                                             </div>
-                                        </div>
-                                    </a>
-                                </li>
+                                        </li>
+                                    ))
+                                )}
+
                                 <li><hr className="dropdown-divider" /></li>
                                 <li>
-                                    <a className="dropdown-item text-center text-primary" href="#!">
+                                    <button
+                                        className="dropdown-item text-center text-primary fw-semibold"
+                                        onClick={() => navigate('/user/notifications')}
+                                    >
+                                        <i className="bi bi-bell me-1"></i>
                                         View All Notifications
-                                    </a>
+                                    </button>
                                 </li>
                             </ul>
                         </div>
