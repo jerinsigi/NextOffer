@@ -855,7 +855,7 @@ const InterviewCenter = () => {
             const response = await fetch('http://localhost:5000/api/interviews/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId: interviewId })
+                body: JSON.stringify({ sessionId: interviewId, violationsCount: integrityStatus.violations.length })
             });
 
             console.log('📡 Completion endpoint response status:', response.status);

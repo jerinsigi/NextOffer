@@ -45,6 +45,14 @@ const UserProfile = () => {
     const [skillSearchTerm, setSkillSearchTerm] = useState('');
     const [showSkillDropdown, setShowSkillDropdown] = useState(false);
 
+    // Resume library state
+    const [userResumes, setUserResumes] = useState([]);
+    const [resumeUploadForm, setResumeUploadForm] = useState({ tagName: '', file: null });
+    const [resumeUploading, setResumeUploading] = useState(false);
+    const [resumeMessage, setResumeMessage] = useState({ type: '', text: '' });
+    const [renamingResumeId, setRenamingResumeId] = useState(null);   // which row is being renamed
+    const [renameTagValue, setRenameTagValue] = useState('');          // current edit value
+
     // Helper to resolve avatar URL (if we add image upload later)
     const getAvatarUrl = (avatarPath) => {
         if (!avatarPath) return null;
@@ -53,7 +61,7 @@ const UserProfile = () => {
         return `http://localhost:5000${avatarPath}`;
     };
 
-    // Fetch Profile on Mount
+    // Fetch Profile & Resumes on Mount
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -89,6 +97,8 @@ const UserProfile = () => {
                     });
                     // Load user's skills
                     setSkills(data.skills || []);
+                    // Fetch resumes for this user
+                    fetchUserResumes(data.email);
                 }
             } catch (error) {
                 console.error('Error fetching profile:', error);
@@ -99,6 +109,111 @@ const UserProfile = () => {
 
         fetchProfile();
     }, []);
+
+    const fetchUserResumes = async (email) => {
+        try {
+            const emailToUse = email || profileData.email;
+            if (!emailToUse) return;
+            const res = await fetch(`http://localhost:5000/api/resumes/user/${encodeURIComponent(emailToUse)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setUserResumes(data);
+            }
+        } catch (err) {
+            console.error('Error fetching resumes:', err);
+        }
+    };
+
+    const handleResumeUpload = async (e) => {
+        e.preventDefault();
+        if (!resumeUploadForm.file) {
+            setResumeMessage({ type: 'error', text: 'Please select a file.' });
+            return;
+        }
+        if (!resumeUploadForm.tagName.trim()) {
+            setResumeMessage({ type: 'error', text: 'Please enter a tag name.' });
+            return;
+        }
+        setResumeUploading(true);
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            const user = JSON.parse(userStr);
+            const formData = new FormData();
+            formData.append('candidateEmail', user.email);
+            formData.append('tag_name', resumeUploadForm.tagName.trim());
+            formData.append('resumeFile', resumeUploadForm.file);
+            const res = await fetch('http://localhost:5000/api/resumes/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setResumeMessage({ type: 'success', text: 'Resume uploaded successfully!' });
+                setResumeUploadForm({ tagName: '', file: null });
+                fetchUserResumes(user.email);
+                setTimeout(() => setResumeMessage({ type: '', text: '' }), 3000);
+            } else {
+                setResumeMessage({ type: 'error', text: data.message || 'Upload failed.' });
+            }
+        } catch (err) {
+            console.error('Resume upload error:', err);
+            setResumeMessage({ type: 'error', text: 'Server error uploading resume.' });
+        } finally {
+            setResumeUploading(false);
+        }
+    };
+
+    const handleResumeDelete = async (resumeId) => {
+        if (!window.confirm('Are you sure you want to delete this resume?')) return;
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            const user = JSON.parse(userStr);
+            const res = await fetch(`http://localhost:5000/api/resumes/${resumeId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidateEmail: user.email })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setResumeMessage({ type: 'success', text: 'Resume deleted.' });
+                fetchUserResumes(user.email);
+                setTimeout(() => setResumeMessage({ type: '', text: '' }), 3000);
+            } else {
+                setResumeMessage({ type: 'error', text: data.message || 'Delete failed.' });
+            }
+        } catch (err) {
+            console.error('Resume delete error:', err);
+            setResumeMessage({ type: 'error', text: 'Server error deleting resume.' });
+        }
+    };
+
+    const handleResumeRename = async (resumeId) => {
+        if (!renameTagValue.trim()) {
+            setResumeMessage({ type: 'error', text: 'Tag name cannot be empty.' });
+            return;
+        }
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            const user = JSON.parse(userStr);
+            const res = await fetch(`http://localhost:5000/api/resumes/${resumeId}/rename`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ candidateEmail: user.email, tag_name: renameTagValue.trim() })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setRenamingResumeId(null);
+                fetchUserResumes(user.email);
+                setResumeMessage({ type: 'success', text: 'Tag renamed successfully.' });
+                setTimeout(() => setResumeMessage({ type: '', text: '' }), 3000);
+            } else {
+                setResumeMessage({ type: 'error', text: data.message || 'Rename failed.' });
+            }
+        } catch (err) {
+            console.error('Resume rename error:', err);
+            setResumeMessage({ type: 'error', text: 'Server error renaming tag.' });
+        }
+    };
 
     // Fetch available skills from database for autocomplete
     useEffect(() => {
@@ -466,6 +581,13 @@ const UserProfile = () => {
                     >
                         <i className="bi bi-shield-lock"></i>
                         Security
+                    </button>
+                    <button
+                        className={`profile-tab ${activeTab === 'resumes' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('resumes')}
+                    >
+                        <i className="bi bi-file-earmark-person"></i>
+                        My Resumes
                     </button>
                 </div>
 
@@ -870,6 +992,162 @@ const UserProfile = () => {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* My Resumes Tab */}
+                    {activeTab === 'resumes' && (
+                        <div className="tab-pane">
+                            <div className="profile-section-card">
+                                <h5 className="mb-4">My Resumes</h5>
+                                <p className="text-muted mb-4">Upload and manage your resumes with custom tag names. Select them when applying for jobs.</p>
+
+                                {resumeMessage.text && (
+                                    <div className={`alert alert-${resumeMessage.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {resumeMessage.text}
+                                    </div>
+                                )}
+
+                                {/* Upload Form */}
+                                <div className="resume-upload-card mb-4">
+                                    <h6 className="mb-3"><i className="bi bi-cloud-upload me-2"></i>Upload New Resume</h6>
+                                    <form onSubmit={handleResumeUpload}>
+                                        <div className="row g-3">
+                                            <div className="col-md-5">
+                                                <label className="form-label">Tag Name</label>
+                                                <div className="input-group">
+                                                    <span className="input-group-text"><i className="bi bi-tag"></i></span>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-dark"
+                                                        placeholder="e.g. Software Dev CV, Data Science"
+                                                        value={resumeUploadForm.tagName}
+                                                        onChange={(e) => setResumeUploadForm({ ...resumeUploadForm, tagName: e.target.value })}
+                                                        maxLength={50}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-5">
+                                                <label className="form-label">File (PDF, DOC, DOCX — max 5MB)</label>
+                                                <input
+                                                    type="file"
+                                                    className="form-control form-control-dark"
+                                                    accept=".pdf,.doc,.docx"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (!file) return;
+                                                        if (file.size > 5000000) {
+                                                            setResumeMessage({ type: 'error', text: 'File size must be less than 5MB.' });
+                                                            e.target.value = '';
+                                                            return;
+                                                        }
+                                                        setResumeUploadForm({ ...resumeUploadForm, file });
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="col-md-2 d-flex align-items-end">
+                                                <button
+                                                    type="submit"
+                                                    className="btn btn-primary w-100"
+                                                    disabled={resumeUploading}
+                                                >
+                                                    {resumeUploading ? (
+                                                        <><span className="spinner-border spinner-border-sm me-1"></span>Uploading...</>
+                                                    ) : (
+                                                        <><i className="bi bi-upload me-1"></i>Upload</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                {/* Resume List */}
+                                {userResumes.length === 0 ? (
+                                    <div className="resume-empty-state">
+                                        <i className="bi bi-file-earmark-person"></i>
+                                        <p>No resumes uploaded yet.</p>
+                                        <span>Upload your first resume above to get started.</span>
+                                    </div>
+                                ) : (
+                                    <div className="resume-list">
+                                        {userResumes.map((resume) => (
+                                            <div key={resume._id} className="resume-list-item">
+                                                <div className="resume-icon-wrap">
+                                                    <i className="bi bi-file-earmark-pdf"></i>
+                                                </div>
+                                                <div className="resume-info">
+                                                    {renamingResumeId === resume._id ? (
+                                                        <div className="resume-rename-row">
+                                                            <input
+                                                                type="text"
+                                                                className="form-control form-control-dark form-control-sm resume-rename-input"
+                                                                value={renameTagValue}
+                                                                onChange={(e) => setRenameTagValue(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleResumeRename(resume._id);
+                                                                    if (e.key === 'Escape') setRenamingResumeId(null);
+                                                                }}
+                                                                maxLength={50}
+                                                                autoFocus
+                                                            />
+                                                            <button
+                                                                className="btn-resume-action save"
+                                                                onClick={() => handleResumeRename(resume._id)}
+                                                                title="Save"
+                                                            >
+                                                                <i className="bi bi-check-lg"></i>
+                                                            </button>
+                                                            <button
+                                                                className="btn-resume-action cancel"
+                                                                onClick={() => setRenamingResumeId(null)}
+                                                                title="Cancel"
+                                                            >
+                                                                <i className="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="resume-tag-name">{resume.tag_name}</div>
+                                                    )}
+                                                    <div className="resume-filename">{resume.original_filename}</div>
+                                                    <div className="resume-date">
+                                                        <i className="bi bi-calendar3 me-1"></i>
+                                                        {new Date(resume.uploaded_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                    </div>
+                                                </div>
+                                                <div className="resume-actions">
+                                                    <a
+                                                        href={`http://localhost:5000${resume.resume_path}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="btn-resume-action view"
+                                                        title="View Resume"
+                                                    >
+                                                        <i className="bi bi-eye"></i> View
+                                                    </a>
+                                                    <button
+                                                        className="btn-resume-action rename"
+                                                        onClick={() => {
+                                                            setRenamingResumeId(resume._id);
+                                                            setRenameTagValue(resume.tag_name);
+                                                        }}
+                                                        title="Rename Tag"
+                                                    >
+                                                        <i className="bi bi-pencil"></i> Rename
+                                                    </button>
+                                                    <button
+                                                        className="btn-resume-action delete"
+                                                        onClick={() => handleResumeDelete(resume._id)}
+                                                        title="Delete Resume"
+                                                    >
+                                                        <i className="bi bi-trash"></i> Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

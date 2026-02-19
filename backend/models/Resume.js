@@ -6,10 +6,18 @@ const resumeSchema = new mongoose.Schema({
         ref: 'Candidate',
         required: true
     },
+    // Optional — only set when resume is linked to a specific application
     Fk_job_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Job_Description',
-        required: true
+        ref: 'Job_Description'
+    },
+    tag_name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    original_filename: {
+        type: String
     },
     resume_path: {
         type: String

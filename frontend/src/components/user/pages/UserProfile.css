@@ -793,8 +793,212 @@ input:checked+.toggle-slider:before {
     .skill-card {
         margin-bottom: 0.75rem;
     }
-    
+
     .add-skill-form {
         padding: 1rem;
+    }
+}
+
+/* ===== My Resumes Tab ===== */
+.resume-upload-card {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.resume-upload-card h6 {
+    color: var(--light-text);
+    font-weight: 600;
+}
+
+.resume-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.resume-list-item {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: rgba(2, 6, 23, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.resume-list-item:hover {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.1);
+}
+
+.resume-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.resume-icon-wrap i {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+.resume-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.resume-tag-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--light-text);
+    margin-bottom: 0.2rem;
+}
+
+.resume-filename {
+    font-size: 0.8rem;
+    color: var(--muted-text);
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.resume-date {
+    font-size: 0.75rem;
+    color: var(--muted-text);
+    opacity: 0.7;
+}
+
+.resume-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.btn-resume-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-resume-action.view {
+    background: rgba(59, 130, 246, 0.12);
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+.btn-resume-action.view:hover {
+    background: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+}
+
+.btn-resume-action.delete {
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.btn-resume-action.delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.btn-resume-action.rename {
+    background: rgba(245, 158, 11, 0.08);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.btn-resume-action.rename:hover {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde68a;
+}
+
+.btn-resume-action.save {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border-color: rgba(16, 185, 129, 0.25);
+    padding: 0.3rem 0.6rem;
+}
+
+.btn-resume-action.save:hover {
+    background: rgba(16, 185, 129, 0.25);
+    color: #6ee7b7;
+}
+
+.btn-resume-action.cancel {
+    background: rgba(148, 163, 184, 0.08);
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.2);
+    padding: 0.3rem 0.6rem;
+}
+
+.btn-resume-action.cancel:hover {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+
+.resume-rename-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+}
+
+.resume-rename-input {
+    max-width: 220px;
+    font-size: 0.9rem !important;
+    padding: 0.25rem 0.6rem !important;
+}
+
+
+.resume-empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted-text);
+}
+
+.resume-empty-state i {
+    font-size: 3.5rem;
+    opacity: 0.25;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.resume-empty-state p {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--light-text);
+    margin-bottom: 0.25rem;
+}
+
+.resume-empty-state span {
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .resume-list-item {
+        flex-wrap: wrap;
+    }
+
+    .resume-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }

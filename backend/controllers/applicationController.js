@@ -6,7 +6,7 @@ const Resume = require('../models/Resume');
 // Apply for a job
 exports.applyForJob = async (req, res) => {
     try {
-        const { candidateEmail, jobId, coverLetter } = req.body;
+        const { candidateEmail, jobId, coverLetter, resumeId } = req.body;
         const resume_path = req.file ? '/uploads/resumes/' + req.file.filename : null;
 
         // Find candidate by email
@@ -25,12 +25,21 @@ exports.applyForJob = async (req, res) => {
             return res.status(400).json({ message: 'You have already applied for this job' });
         }
 
-        // Create Resume record if resume was uploaded
         let resumeRecord = null;
-        if (resume_path) {
+
+        if (resumeId) {
+            // User selected an existing resume from their library
+            resumeRecord = await Resume.findOne({ _id: resumeId, Fk_candidate_id: candidate._id });
+            if (!resumeRecord) {
+                return res.status(400).json({ message: 'Selected resume not found in your library.' });
+            }
+        } else if (resume_path) {
+            // User uploaded a new file — create a Resume record
             resumeRecord = new Resume({
                 Fk_candidate_id: candidate._id,
                 Fk_job_id: jobId,
+                tag_name: 'Uploaded for application',
+                original_filename: req.file.originalname,
                 resume_path: resume_path
             });
             await resumeRecord.save();
@@ -56,6 +65,7 @@ exports.applyForJob = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 const InterviewSession = require('../models/Interview_Session');
 

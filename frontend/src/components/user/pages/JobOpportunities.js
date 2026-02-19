@@ -23,6 +23,11 @@ const JobOpportunities = () => {
     });
     const [resumeFile, setResumeFile] = useState(null);
 
+    // Saved resumes state
+    const [savedResumes, setSavedResumes] = useState([]);
+    const [resumeSource, setResumeSource] = useState('library'); // 'library' | 'upload'
+    const [selectedResumeId, setSelectedResumeId] = useState('');
+
     const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
     const user = React.useMemo(() => userStr ? JSON.parse(userStr) : null, [userStr]);
 
@@ -63,7 +68,7 @@ const JobOpportunities = () => {
     };
 
     const fetchUserApplications = async () => {
-        if (!user || !user.email) return; // Ensure we have email
+        if (!user || !user.email) return;
         try {
             const response = await fetch(`http://localhost:5000/api/applications/user/${encodeURIComponent(user.email)}`);
             if (response.ok) {
@@ -72,6 +77,26 @@ const JobOpportunities = () => {
             }
         } catch (error) {
             console.error('Error fetching applications:', error);
+        }
+    };
+
+    const fetchSavedResumes = async () => {
+        if (!user || !user.email) return;
+        try {
+            const res = await fetch(`http://localhost:5000/api/resumes/user/${encodeURIComponent(user.email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setSavedResumes(data);
+                // Auto-select first resume if available
+                if (data.length > 0) {
+                    setSelectedResumeId(data[0]._id);
+                    setResumeSource('library');
+                } else {
+                    setResumeSource('upload');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching saved resumes:', error);
         }
     };
 
@@ -86,7 +111,11 @@ const JobOpportunities = () => {
             return;
         }
 
-        if (!resumeFile) {
+        if (resumeSource === 'library' && !selectedResumeId) {
+            alert('Please select a resume from your library or upload a new one.');
+            return;
+        }
+        if (resumeSource === 'upload' && !resumeFile) {
             alert('Please upload your resume.');
             return;
         }
@@ -94,24 +123,30 @@ const JobOpportunities = () => {
         setApplying(true);
         try {
             const formData = new FormData();
-            formData.append('candidateEmail', user.email); // Use email to find candidate
+            formData.append('candidateEmail', user.email);
             formData.append('jobId', selectedJob._id);
-            formData.append('resumeFile', resumeFile);
             formData.append('coverLetter', applicationForm.coverLetter);
+
+            if (resumeSource === 'library') {
+                formData.append('resumeId', selectedResumeId);
+            } else {
+                formData.append('resumeFile', resumeFile);
+            }
 
             const response = await fetch('http://localhost:5000/api/applications/apply', {
                 method: 'POST',
-                body: formData // Don't set Content-Type header, browser will set it with boundary
+                body: formData
             });
 
             const data = await response.json();
 
             if (response.ok) {
                 alert('Application submitted successfully!');
-                fetchUserApplications(); // Update application list
+                fetchUserApplications();
                 setShowDetailModal(false);
                 setApplicationForm({ coverLetter: '' });
                 setResumeFile(null);
+                setSelectedResumeId(savedResumes.length > 0 ? savedResumes[0]._id : '');
             } else {
                 alert(data.message || 'Failed to submit application');
             }
@@ -126,7 +161,8 @@ const JobOpportunities = () => {
     const handleViewDetails = (job) => {
         setSelectedJob(job);
         setShowDetailModal(true);
-        setResumeFile(null); // Clear any previously selected file
+        setResumeFile(null);
+        fetchSavedResumes(); // Load saved resumes when modal opens
     };
 
     const filteredJobs = jobs.filter(job => {
@@ -385,44 +421,98 @@ const JobOpportunities = () => {
                                         <h5 className="mb-3">Apply Now</h5>
                                         <form onSubmit={handleApply}>
                                             <div className="mb-3">
-                                                <label className="form-label text-muted">Upload Resume (PDF, DOC, DOCX)</label>
-                                                <input
-                                                    type="file"
-                                                    className="form-control bg-dark-input"
-                                                    accept=".pdf,.doc,.docx"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file) {
-                                                            // Validate file size (5MB)
-                                                            if (file.size > 5000000) {
-                                                                alert('File size must be less than 5MB');
-                                                                e.target.value = '';
-                                                                return;
-                                                            }
-                                                            // Validate file type
-                                                            const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-                                                            if (!validTypes.includes(file.type)) {
-                                                                alert('Please upload a PDF or Word document');
-                                                                e.target.value = '';
-                                                                return;
-                                                            }
-                                                            setResumeFile(file);
-                                                        }
-                                                    }}
-                                                    required
-                                                />
-                                                {resumeFile && (
-                                                    <div className="mt-2 d-flex align-items-center gap-2">
-                                                        <i className="bi bi-file-earmark-text text-success"></i>
-                                                        <span className="text-muted small">{resumeFile.name}</span>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-sm btn-outline-danger ms-auto"
-                                                            onClick={() => setResumeFile(null)}
-                                                        >
-                                                            <i className="bi bi-x"></i> Remove
-                                                        </button>
-                                                    </div>
+                                                <label className="form-label text-muted">Resume</label>
+
+                                                {/* Toggle: Library vs Upload */}
+                                                <div className="d-flex gap-2 mb-3">
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${resumeSource === 'library' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                                        onClick={() => setResumeSource('library')}
+                                                    >
+                                                        <i className="bi bi-folder2-open me-1"></i> My Library
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${resumeSource === 'upload' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                                        onClick={() => setResumeSource('upload')}
+                                                    >
+                                                        <i className="bi bi-upload me-1"></i> Upload New
+                                                    </button>
+                                                </div>
+
+                                                {resumeSource === 'library' ? (
+                                                    savedResumes.length === 0 ? (
+                                                        <div className="text-muted small p-3 border border-secondary rounded">
+                                                            <i className="bi bi-info-circle me-1"></i>
+                                                            No saved resumes. Go to <strong>Profile → My Resumes</strong> to upload one, or switch to "Upload New".
+                                                        </div>
+                                                    ) : (
+                                                        <div className="d-flex flex-column gap-2">
+                                                            {savedResumes.map(r => (
+                                                                <label
+                                                                    key={r._id}
+                                                                    className={`d-flex align-items-center gap-3 p-3 rounded cursor-pointer ${selectedResumeId === r._id ? 'border border-primary bg-primary bg-opacity-10' : 'border border-secondary'}`}
+                                                                    style={{ cursor: 'pointer' }}
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="savedResume"
+                                                                        value={r._id}
+                                                                        checked={selectedResumeId === r._id}
+                                                                        onChange={() => setSelectedResumeId(r._id)}
+                                                                        style={{ accentColor: 'var(--bs-primary)' }}
+                                                                    />
+                                                                    <i className="bi bi-file-earmark-pdf text-primary fs-5"></i>
+                                                                    <div className="flex-grow-1">
+                                                                        <div className="fw-semibold text-light">{r.tag_name}</div>
+                                                                        <div className="small text-muted">{r.original_filename}</div>
+                                                                    </div>
+                                                                    <span className="small text-muted">
+                                                                        {new Date(r.uploaded_at).toLocaleDateString()}
+                                                                    </span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )
+                                                ) : (
+                                                    <>
+                                                        <input
+                                                            type="file"
+                                                            className="form-control bg-dark-input"
+                                                            accept=".pdf,.doc,.docx"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files[0];
+                                                                if (file) {
+                                                                    if (file.size > 5000000) {
+                                                                        alert('File size must be less than 5MB');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                                                                    if (!validTypes.includes(file.type)) {
+                                                                        alert('Please upload a PDF or Word document');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                    setResumeFile(file);
+                                                                }
+                                                            }}
+                                                        />
+                                                        {resumeFile && (
+                                                            <div className="mt-2 d-flex align-items-center gap-2">
+                                                                <i className="bi bi-file-earmark-text text-success"></i>
+                                                                <span className="text-muted small">{resumeFile.name}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-danger ms-auto"
+                                                                    onClick={() => setResumeFile(null)}
+                                                                >
+                                                                    <i className="bi bi-x"></i> Remove
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                             <div className="mb-3">

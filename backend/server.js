@@ -80,6 +80,9 @@ app.use('/api/dashboard', dashboardRouter);
 const practiceRouter = require('./routes/practiceRoutes');
 app.use('/api/practice', practiceRouter);
 
+const resumeRouter = require('./routes/resumeRoutes');
+app.use('/api/resumes', resumeRouter);
+
 
 module.exports = app;
 

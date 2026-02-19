@@ -429,7 +429,7 @@ exports.getUserInterviewResults = async (req, res) => {
 // Complete interview and update application status
 exports.completeInterview = async (req, res) => {
     try {
-        const { sessionId } = req.body;
+        const { sessionId, violationsCount } = req.body;
         console.log('🔄 Complete Interview - Received sessionId:', sessionId);
 
         if (!sessionId) {
@@ -492,10 +492,9 @@ exports.completeInterview = async (req, res) => {
             // In getInterviewSession we used 85 as mock.
             const resumeScore = 85;
 
-            // 3. Integrity Score (Mock logic based on violations?)
-            // We don't have violations stored in DB yet (frontend tracks them but maybe doesn't send all). 
-            // Assuming 100 for now.
-            const integrityScore = 100;
+            // 3. Integrity Score (based on actual violations count from frontend)
+            const numViolations = typeof violationsCount === 'number' ? violationsCount : 0;
+            const integrityScore = Math.max(0, 100 - numViolations * 10);
 
             // 4. Final Trust Score (Weighted Average)
             // e.g. 60% Interview, 30% Resume, 10% Integrity
