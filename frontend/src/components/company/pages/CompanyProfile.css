@@ -68,7 +68,7 @@
 }
 
 .btn-change-avatar:hover {
-    background: #5558e3;
+    background: #2f77ec;
     transform: scale(1.1);
 }
 
@@ -85,7 +85,7 @@
 }
 
 .profile-role {
-    color: #a78bfa;
+    color: #ffffff;
     /* Slightly lighter purple */
     font-weight: 600;
     font-size: 1.1rem;

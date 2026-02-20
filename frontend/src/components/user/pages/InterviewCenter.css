@@ -72,13 +72,13 @@
     font-size: 0.875rem;
 }
 
-.btn-warning {
+.interview-center-container .btn-warning {
     background: linear-gradient(135deg, #f59e0b, #d97706);
     color: white;
     box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
 }
 
-.btn-warning:hover {
+.interview-center-container .btn-warning:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 24px rgba(245, 158, 11, 0.6);
 }
@@ -826,7 +826,7 @@
 }
 
 /* ==================== BUTTONS ==================== */
-.btn {
+.interview-center-container .btn {
     padding: 12px 24px;
     border-radius: 8px;
     font-weight: 600;
@@ -840,61 +840,61 @@
     gap: 8px;
 }
 
-.btn-primary {
+.interview-center-container .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.btn-primary:hover {
+.interview-center-container .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
-.btn-success {
+.interview-center-container .btn-success {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.btn-success:hover {
+.interview-center-container .btn-success:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
-.btn-outline-primary {
+.interview-center-container .btn-outline-primary {
     background: transparent;
     border: 2px solid var(--primary-color);
     color: var(--primary-color);
 }
 
-.btn-outline-primary:hover {
+.interview-center-container .btn-outline-primary:hover {
     background: var(--primary-color);
     color: white;
 }
 
-.btn-outline-secondary {
+.interview-center-container .btn-outline-secondary {
     background: transparent;
     border: 2px solid var(--muted-text);
     color: var(--muted-text);
 }
 
-.btn-outline-secondary:hover {
+.interview-center-container .btn-outline-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: var(--light-text);
     color: var(--light-text);
 }
 
-.btn-lg {
+.interview-center-container .btn-lg {
     padding: 16px 32px;
     font-size: 1rem;
 }
 
-.w-100 {
+.interview-center-container .w-100 {
     width: 100%;
 }
 
-.mt-4 {
+.interview-center-container .mt-4 {
     margin-top: 1.5rem;
 }
 

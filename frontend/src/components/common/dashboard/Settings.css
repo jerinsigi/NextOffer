@@ -4,7 +4,7 @@
 }
 
 /* Page Header */
-.page-header {
+.settings-container .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -13,7 +13,7 @@
     gap: 20px;
 }
 
-.page-title {
+.settings-container .page-title {
     font-size: 2rem;
     font-weight: 700;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -26,17 +26,17 @@
 }
 
 /* Layout */
-.settings-content-single {
+.settings-container .settings-content-single {
     max-width: 800px;
     margin: 0 auto;
     animation: slideUp 0.4s ease;
 }
 
-.settings-section {
+.settings-container .settings-section {
     margin-bottom: 40px;
 }
 
-.settings-section h3 {
+.settings-container .settings-section h3 {
     color: var(--light-text);
     font-size: 1.5rem;
     font-weight: 600;
@@ -46,13 +46,13 @@
     gap: 10px;
 }
 
-.section-description {
+.settings-container .section-description {
     color: var(--muted-text);
     margin-bottom: 24px;
     font-size: 0.95rem;
 }
 
-.settings-card {
+.settings-container .settings-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
@@ -60,25 +60,25 @@
     transition: all 0.3s ease;
 }
 
-.settings-card:hover {
+.settings-container .settings-card:hover {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.04);
 }
 
 /* Form Elements */
-.form-group {
+.settings-container .form-group {
     display: flex;
     flex-direction: column;
 }
 
-.form-group label {
+.settings-container .form-group label {
     color: var(--light-text);
     font-weight: 500;
     margin-bottom: 10px;
     font-size: 0.9rem;
 }
 
-.form-control-dark {
+.settings-container .form-control-dark {
     padding: 14px 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
@@ -89,7 +89,7 @@
     width: 100%;
 }
 
-.form-control-dark:focus {
+.settings-container .form-control-dark:focus {
     outline: none;
     border-color: var(--primary-color);
     background: rgba(0, 0, 0, 0.3);
@@ -97,17 +97,17 @@
 }
 
 /* Danger Zone */
-.danger-zone {
+.settings-container .danger-zone {
     border: 1px solid rgba(239, 68, 68, 0.3);
     background: rgba(239, 68, 68, 0.02);
 }
 
-.danger-zone:hover {
+.settings-container .danger-zone:hover {
     background: rgba(239, 68, 68, 0.04);
     border-color: rgba(239, 68, 68, 0.4);
 }
 
-.danger-zone h4 {
+.settings-container .danger-zone h4 {
     color: #ef4444;
     font-size: 1.1rem;
     margin-bottom: 6px;
@@ -115,7 +115,7 @@
 }
 
 /* Buttons */
-.btn {
+.settings-container .btn {
     padding: 12px 24px;
     border-radius: 10px;
     font-weight: 600;
@@ -129,53 +129,53 @@
     justify-content: center;
 }
 
-.btn-primary {
+.settings-container .btn-primary {
     background: var(--primary-color);
     color: white;
 }
 
-.btn-primary:hover {
+.settings-container .btn-primary:hover {
     background: var(--secondary-color);
     transform: translateY(-1px);
 }
 
-.btn-primary:active {
+.settings-container .btn-primary:active {
     transform: translateY(0);
 }
 
-.btn-primary:disabled {
+.settings-container .btn-primary:disabled {
     opacity: 0.7;
     cursor: not-allowed;
     transform: none;
 }
 
-.btn-danger {
+.settings-container .btn-danger {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.btn-danger:hover {
+.settings-container .btn-danger:hover {
     background: #ef4444;
     color: white;
     border-color: #ef4444;
     transform: translateY(-1px);
 }
 
-.btn-outline-secondary {
+.settings-container .btn-outline-secondary {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: var(--muted-text);
 }
 
-.btn-outline-secondary:hover {
+.settings-container .btn-outline-secondary:hover {
     border-color: var(--light-text);
     color: var(--light-text);
     background: rgba(255, 255, 255, 0.05);
 }
 
 /* Modal */
-.modal-overlay {
+.settings-container .modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.8);
@@ -188,7 +188,7 @@
     animation: fadeIn 0.2s ease;
 }
 
-.modal-content {
+.settings-container .modal-content {
     background: #1e293b;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
@@ -199,7 +199,7 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.modal-header {
+.settings-container .modal-header {
     padding: 24px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
@@ -207,14 +207,14 @@
     align-items: center;
 }
 
-.modal-header.danger h3 {
+.settings-container .modal-header.danger h3 {
     color: #ef4444;
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
 }
 
-.close-btn {
+.settings-container .close-btn {
     background: transparent;
     border: none;
     color: var(--muted-text);
@@ -226,16 +226,16 @@
     transition: all 0.2s;
 }
 
-.close-btn:hover {
+.settings-container .close-btn:hover {
     color: var(--light-text);
     background: rgba(255, 255, 255, 0.1);
 }
 
-.modal-body {
+.settings-container .modal-body {
     padding: 24px;
 }
 
-.warning-box {
+.settings-container .warning-box {
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.2);
     border-radius: 12px;
@@ -246,20 +246,20 @@
     align-items: flex-start;
 }
 
-.warning-box i {
+.settings-container .warning-box i {
     color: #ef4444;
     font-size: 1.25rem;
     margin-top: 2px;
 }
 
-.warning-box p {
+.settings-container .warning-box p {
     color: #ef4444;
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.5;
 }
 
-.modal-footer {
+.settings-container .modal-footer {
     padding: 24px;
     background: rgba(0, 0, 0, 0.2);
     display: flex;
@@ -303,34 +303,34 @@
 }
 
 /* Utilities */
-.text-muted {
+.settings-container .text-muted {
     color: var(--muted-text);
 }
 
-.text-danger {
+.settings-container .text-danger {
     color: #ef4444;
 }
 
-.mb-0 {
+.settings-container .mb-0 {
     margin-bottom: 0;
 }
 
-.mb-3 {
+.settings-container .mb-3 {
     margin-bottom: 1rem;
 }
 
-.mb-4 {
+.settings-container .mb-4 {
     margin-bottom: 1.5rem;
 }
 
-.mt-3 {
+.settings-container .mt-3 {
     margin-top: 1rem;
 }
 
-.mt-5 {
+.settings-container .mt-5 {
     margin-top: 3rem;
 }
 
-.me-2 {
+.settings-container .me-2 {
     margin-right: 0.5rem;
 }

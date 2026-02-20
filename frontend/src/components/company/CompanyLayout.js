@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import '../common/dashboard/DashboardLayout.css';
+import '../common/Navbar.css';
 import logo from '../../logo.svg';
 
 const CompanyLayout = () => {
@@ -54,7 +55,7 @@ const CompanyLayout = () => {
             badge: null
         },
 
-        
+
         {
             title: 'Job Descriptions',
             icon: 'bi-file-text',
@@ -169,7 +170,7 @@ const CompanyLayout = () => {
             {/* Main Content Area */}
             <div className="dashboard-main">
                 {/* Top Navbar */}
-                <header className="dashboard-navbar">
+                <header className="dashboard-navbar enhanced-navbar scrolled">
                     <div className="navbar-left">
                         {/* Breadcrumb */}
                         <nav aria-label="breadcrumb">

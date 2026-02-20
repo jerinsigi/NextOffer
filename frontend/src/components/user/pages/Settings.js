@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Settings.css';
+import '../../common/dashboard/Settings.css';
 
 const Settings = () => {
     const navigate = useNavigate();

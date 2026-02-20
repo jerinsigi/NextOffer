@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Notifications.css';
-
+import '../../common/dashboard/Notifications.css';
 const Notifications = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [notifications, setNotifications] = useState([]);
