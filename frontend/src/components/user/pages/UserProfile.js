@@ -33,11 +33,7 @@ const UserProfile = () => {
         }
     });
 
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
+
 
     // Skills state
     const [skills, setSkills] = useState([]);
@@ -360,12 +356,7 @@ const UserProfile = () => {
         return url;
     };
 
-    const handlePasswordChange = (field, value) => {
-        setPasswordData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
+
 
     const handlePhotoUpload = (e) => {
         const file = e.target.files[0];
@@ -480,37 +471,7 @@ const UserProfile = () => {
         }
     };
 
-    const handleChangePassword = async () => {
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            setMessage({ type: 'error', text: 'New passwords do not match' });
-            return;
-        }
 
-        try {
-            const response = await fetch('http://localhost:5000/api/auth/change-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: profileData.email,
-                    currentPassword: passwordData.currentPassword,
-                    newPassword: passwordData.newPassword
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setMessage({ type: 'success', text: 'Password changed successfully!' });
-                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-            } else {
-                setMessage({ type: 'error', text: data.message || 'Failed to change password' });
-            }
-        } catch (error) {
-            console.error('Password change error:', error);
-            setMessage({ type: 'error', text: 'Server error changing password' });
-        }
-    };
 
     // Skills Management Handlers
     const handleAddSkill = async () => {
@@ -719,13 +680,7 @@ const UserProfile = () => {
                         <i className="bi bi-stars"></i>
                         Skills
                     </button>
-                    <button
-                        className={`profile-tab ${activeTab === 'security' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('security')}
-                    >
-                        <i className="bi bi-shield-lock"></i>
-                        Security
-                    </button>
+
                     <button
                         className={`profile-tab ${activeTab === 'resumes' ? 'active' : ''}`}
                         onClick={() => setActiveTab('resumes')}
@@ -1131,66 +1086,7 @@ const UserProfile = () => {
                         </div>
                     )}
 
-                    {/* Security Tab */}
-                    {activeTab === 'security' && (
-                        <div className="tab-pane">
-                            <div className="profile-section-card">
-                                <h5 className="mb-4">Change Password</h5>
-                                {/* Alert Messages for Security */}
-                                {message.text && activeTab === 'security' && (
-                                    <div className={`alert alert-${message.type === 'success' ? 'success' : 'danger'} mb-4`}>
-                                        {message.text}
-                                    </div>
-                                )}
-                                <div className="row g-4">
-                                    <div className="col-md-12">
-                                        <label className="form-label">Current Password</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-key"></i></span>
-                                            <input
-                                                type="password"
-                                                className="form-control form-control-dark"
-                                                value={passwordData.currentPassword}
-                                                onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                                                placeholder="Enter current password"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">New Password</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-shield-lock"></i></span>
-                                            <input
-                                                type="password"
-                                                className="form-control form-control-dark"
-                                                value={passwordData.newPassword}
-                                                onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                                                placeholder="Enter new password"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="form-label">Confirm New Password</label>
-                                        <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-shield-lock-fill"></i></span>
-                                            <input
-                                                type="password"
-                                                className="form-control form-control-dark"
-                                                value={passwordData.confirmPassword}
-                                                onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                                                placeholder="Confirm new password"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-12">
-                                        <button className="btn btn-primary" onClick={handleChangePassword}>
-                                            <i className="bi bi-check-circle me-2"></i>Update Password
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* My Resumes Tab */}
                     {activeTab === 'resumes' && (

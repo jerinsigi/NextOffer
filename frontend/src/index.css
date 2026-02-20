@@ -232,21 +232,6 @@ h6 {
   transform: none;
 }
 
-/* Wave Fills - Match the START of the NEXT section */
-.wave-fill-features {
-  fill: #4338ca;
-  /* Matches start of features */
-}
-
-.wave-fill-benefits {
-  fill: #7c3aed;
-  /* Matches start of benefits */
-}
-
-.wave-fill-footer {
-  fill: #020617;
-  /* Matches footer bg (var(--darker-bg)) */
-}
 
 /* Adjust spacing for waves */
 section {

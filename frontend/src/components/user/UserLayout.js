@@ -121,12 +121,6 @@ const UserLayout = () => {
             badge: null
         },
         {
-            title: 'My Profile',
-            icon: 'bi-person',
-            path: '/user/profile',
-            badge: null
-        },
-        {
             title: 'Job Opportunities',
             icon: 'bi-briefcase',
             path: '/user/jobs',
@@ -162,6 +156,18 @@ const UserLayout = () => {
             icon: 'bi-bell',
             path: '/user/notifications',
             badge: unreadCount > 0 ? unreadCount : null
+        },
+        {
+            title: 'My Profile',
+            icon: 'bi-person',
+            path: '/user/profile',
+            badge: null
+        },
+        {
+            title: 'Settings',
+            icon: 'bi-gear',
+            path: '/user/settings',
+            badge: null
         },
         {
             title: 'Help & Support',
