@@ -344,6 +344,9 @@ exports.getUserInterviewResults = async (req, res) => {
             return res.json([]);
         }
 
+        const results = [];
+
+        // --- FETCH REAL INTERVIEW SESSIONS ---
         // 3. Find Applications where status indicates interview completion (or post-interview)
         const Application = require('../models/Application');
         const applications = await Application.find({
@@ -354,8 +357,6 @@ exports.getUserInterviewResults = async (req, res) => {
         const jobIds = applications.map(app => app.Fk_job_id);
 
         // 4. Find sessions for these jobs for this candidate
-        // We fetch sessions regardless of their specific 'session_status' if the application indicates an interview happened,
-        // but typically they should be completed. 
         const sessions = await InterviewSession.find({
             fk_candidate_id: candidate._id,
             fk_job_id: { $in: jobIds }
@@ -366,7 +367,6 @@ exports.getUserInterviewResults = async (req, res) => {
             })
             .sort({ ended_at: -1 });
 
-        const results = [];
 
         for (const session of sessions) {
             if (!session.fk_job_id) continue; // Skip if job ref is missing
@@ -374,7 +374,7 @@ exports.getUserInterviewResults = async (req, res) => {
             const job = session.fk_job_id;
             const company = job.Fk_company_id;
 
-            // 4. Fetch Questions and Responses for this session
+            // Fetch Questions and Responses for this session
             const InterviewQuestion = require('../models/Interview_Question');
             const InterviewResponse = require('../models/Interview_Response');
 
@@ -385,7 +385,7 @@ exports.getUserInterviewResults = async (req, res) => {
                 Fk_question_id: { $in: questionIds }
             });
 
-            // 5. Calculate Scores and Build Response
+            // Calculate Scores and Build Response
             // Try to fetch Final Report first
             const FinalReport = require('../models/Final_Report');
             const finalReport = await FinalReport.findOne({
@@ -425,9 +425,6 @@ exports.getUserInterviewResults = async (req, res) => {
             const integrityScore = finalReport ? finalReport.integrity_score : 100; // Fallback mock
             const finalTrustScore = finalReport ? finalReport.final_trust_score : Math.round((interviewScore * 0.6) + (resumeScore * 0.3) + (integrityScore * 0.1));
 
-            // Use Final Trust Score as the main "Overall Score" or just Interview Score? 
-            // Usually "Overall Score" implies the technical performance in the interview. 
-            // Let's use Final Trust Score as it's the "Final Report" highlight.
             const overallScore = finalTrustScore;
             const recommendation = finalReport ? finalReport.recommendation : (overallScore >= 85 ? 'Highly Recommended' : (overallScore >= 70 ? 'Recommended' : 'Needs Improvement'));
 
@@ -474,6 +471,79 @@ exports.getUserInterviewResults = async (req, res) => {
                 transcriptAvailable: true
             });
         }
+
+        // --- FETCH PRACTICE SESSIONS ---
+        try {
+            const PracticeSession = require('../models/Practice_Session');
+            const PracticeQuestion = require('../models/Practice_Question');
+            const PracticeResponse = require('../models/Practice_Response');
+
+            const practiceSessions = await PracticeSession.find({
+                candidateEmail: loginUser.email,
+                status: 'completed'
+            }).sort({ completedAt: -1 });
+
+            for (const pSession of practiceSessions) {
+                // Fetch questions and responses for this practice session
+                const pQuestions = await PracticeQuestion.find({ practiceSessionId: pSession._id }).sort({ order: 1 });
+                const pResponses = await PracticeResponse.find({ practiceSessionId: pSession._id });
+
+                const pQuestionsWithResults = pQuestions.map(q => {
+                    const response = pResponses.find(r => r.practiceQuestionId.toString() === q._id.toString());
+                    const score = response && response.ai_score !== undefined ? response.ai_score : 0;
+                    return {
+                        question: q.question_text,
+                        answer: response && response.candidate_answer ? response.candidate_answer : 'No answer recorded',
+                        score: score,
+                        aiComment: response && response.feedback ? response.feedback : 'No feedback available',
+                        topic: q.topic || 'General'
+                    };
+                });
+
+                // Generate basic strengths/improvements if not stored
+                const strengths = [];
+                const improvements = [];
+                pQuestionsWithResults.forEach(q => {
+                    if (q.score >= 80) strengths.push(`Strong: ${q.topic}`);
+                    else if (q.score < 70 && q.score > 0) improvements.push(`Needs Work: ${q.topic}`);
+                });
+                if (strengths.length === 0) strengths.push('Practice completed.');
+                if (improvements.length === 0) improvements.push('Review practice questions again.');
+
+                results.push({
+                    id: pSession._id,
+                    jobTitle: `Practice: ${pSession.skills.join(', ')}`,
+                    company: 'NextOffer Practice',
+                    companyLogo: null, // UI handles null
+                    date: pSession.completedAt || pSession.createdAt,
+                    type: 'Practice',
+                    status: 'completed',
+                    overallScore: pSession.overallScore || 0,
+                    scores: {
+                        'Practice Score': pSession.overallScore || 0
+                    },
+                    feedback: {
+                        strengths: strengths.slice(0, 4),
+                        improvements: improvements.slice(0, 4),
+                        aiSummary: pSession.aiFeedbackSummary || 'Practice session feedback.',
+                        recommendation: pSession.overallScore >= 80 ? 'Excellent Practice' : 'Keep Practicing'
+                    },
+                    questions: pQuestionsWithResults,
+                    integrityStatus: 'Clean', // Practice doesn't track integrity strictly yet
+                    violations: 0,
+                    duration: Math.ceil((pSession.questionCount || 5) * 3), // Estimate
+                    recordingAvailable: false,
+                    transcriptAvailable: true
+                });
+            }
+
+        } catch (practiceErr) {
+            console.error("Error fetching practice sessions:", practiceErr);
+            // Don't fail the whole request
+        }
+
+        // Sort combined results by date (descending)
+        results.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         res.json(results);
 

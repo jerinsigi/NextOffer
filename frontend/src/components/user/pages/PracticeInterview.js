@@ -479,8 +479,8 @@ const PracticeInterview = () => {
                                             onClick={() => setDifficulty(level)}
                                         >
                                             <i className={`bi bi-${level === 'Easy' ? 'emoji-smile' :
-                                                    level === 'Medium' ? 'emoji-neutral' :
-                                                        'emoji-dizzy'
+                                                level === 'Medium' ? 'emoji-neutral' :
+                                                    'emoji-dizzy'
                                                 } me-2`}></i>
                                             <span className="diff-label">{level}</span>
                                             <small className="diff-desc">

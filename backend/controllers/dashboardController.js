@@ -88,6 +88,7 @@ exports.getUserDashboardStats = async (req, res) => {
     try {
         const { candidateEmail } = req.params;
         const Application = require('../models/Application'); // Ensure Application model is loaded
+        const PracticeSession = require('../models/Practice_Session'); // Import PracticeSession
 
         if (!candidateEmail) {
             return res.status(400).json({ message: 'Candidate email is required' });
@@ -120,8 +121,11 @@ exports.getUserDashboardStats = async (req, res) => {
         }
 
 
-        // Practice Sessions (Placeholder)
-        const practiceSessions = 0;
+        // Practice Sessions (Count completed sessions)
+        const practiceSessions = await PracticeSession.countDocuments({
+            candidateEmail: candidateEmail,
+            status: 'completed'
+        });
 
         // 2. Upcoming Interviews (Pending/Scheduled and in future)
         // Using session_status 'pending' or 'active' roughly translates to scheduled/ongoing
