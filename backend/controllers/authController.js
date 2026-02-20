@@ -618,7 +618,57 @@ exports.updateProfile = async (req, res) => {
         });
 
     } catch (err) {
+
         console.error('Update profile error:', err);
+
         res.status(500).json({ message: 'Server error updating profile', error: err.message });
+
     }
+
+};
+
+
+
+// Check Username Availability
+
+exports.checkUsernameAvailability = async (req, res) => {
+
+    try {
+
+        const { username } = req.body;
+
+
+
+        if (!username) {
+
+            return res.status(400).json({ message: 'Username is required' });
+
+        }
+
+
+
+        const user = await Login.findOne({ username });
+
+
+
+        if (user) {
+
+            return res.json({ available: false, message: 'Username is taken' });
+
+        }
+
+
+
+        res.json({ available: true, message: 'Username is available' });
+
+
+
+    } catch (err) {
+
+        console.error('Check username error:', err);
+
+        res.status(500).json({ message: 'Server error checking username', error: err.message });
+
+    }
+
 };

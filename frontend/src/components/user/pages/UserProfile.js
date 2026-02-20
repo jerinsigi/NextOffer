@@ -8,6 +8,10 @@ const UserProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [initialUsername, setInitialUsername] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState(null);
 
     // Profile data derived from backend
     const [profileData, setProfileData] = useState({
@@ -97,6 +101,7 @@ const UserProfile = () => {
                             portfolio: data.social_links?.portfolio || ''
                         }
                     });
+                    setInitialUsername(data.username || '');
                     // Load user's skills
                     setSkills(data.skills || []);
                     // Fetch resumes for this user
@@ -233,11 +238,126 @@ const UserProfile = () => {
         fetchSkills();
     }, []);
 
+    // Debounced Username Check
+    useEffect(() => {
+        const checkUsername = async () => {
+            if (!profileData.username || profileData.username === initialUsername) {
+                if (!profileData.username) setUsernameError('Username is required');
+                else if (profileData.username.length < 3) {
+                    setUsernameError('Username must be at least 3 characters');
+                    setUsernameAvailable(false);
+                } else {
+                    setUsernameError('');
+                    setUsernameAvailable(true); // Current username is valid
+                }
+                setIsCheckingUsername(false);
+                return;
+            }
+
+            if (profileData.username.length < 3) {
+                setUsernameError('Username must be at least 3 characters');
+                setUsernameAvailable(false);
+                setIsCheckingUsername(false);
+                return;
+            }
+
+            setIsCheckingUsername(true);
+            setUsernameAvailable(null); // Reset while checking
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: profileData.username })
+                });
+                const data = await response.json();
+                if (data.available) {
+                    setUsernameError('');
+                    setUsernameAvailable(true);
+                } else {
+                    setUsernameError(data.message || 'Username is taken');
+                    setUsernameAvailable(false);
+                }
+            } catch (error) {
+                console.error('Username check error:', error);
+                setUsernameError('Error checking username');
+                setUsernameAvailable(false);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            if (profileData.username) {
+                if (profileData.username !== initialUsername) setIsCheckingUsername(true);
+                checkUsername();
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [profileData.username, initialUsername]);
+
     const handleProfileChange = (field, value) => {
+        if (field === 'username') {
+            // Enforce lowercase and allowed characters
+            const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            setProfileData(prev => ({ ...prev, [field]: sanitized }));
+            return;
+        }
+
         setProfileData(prev => ({
             ...prev,
             [field]: value
         }));
+    };
+
+    const handleSocialInput = (network, value) => {
+        // If user clears input, set to empty
+        if (!value || value.trim() === '') {
+            setProfileData(prev => ({
+                ...prev,
+                socialLinks: { ...prev.socialLinks, [network]: '' }
+            }));
+            return;
+        }
+
+        let cleanValue = value.trim();
+
+        // Strip existing prefixes if user pasted a full URL
+        if (network === 'github') {
+            cleanValue = cleanValue.replace('https://github.com/', '').replace('http://github.com/', '').replace('github.com/', '');
+            setProfileData(prev => ({
+                ...prev,
+                socialLinks: { ...prev.socialLinks, github: `https://github.com/${cleanValue}` }
+            }));
+        } else if (network === 'linkedin') {
+            cleanValue = cleanValue.replace('https://linkedin.com/', '').replace('http://linkedin.com/', '').replace('https://www.linkedin.com/', '').replace('http://www.linkedin.com/', '').replace('linkedin.com/', '').replace('www.linkedin.com/', '');
+            setProfileData(prev => ({
+                ...prev,
+                socialLinks: { ...prev.socialLinks, linkedin: `https://linkedin.com/${cleanValue}` }
+            }));
+        } else if (network === 'portfolio') {
+            cleanValue = cleanValue.replace('https://', '').replace('http://', '');
+            setProfileData(prev => ({
+                ...prev,
+                socialLinks: { ...prev.socialLinks, portfolio: `https://${cleanValue}` }
+            }));
+        }
+    };
+
+    // Helper to extract handle from URL for display
+    const getSocialHandle = (network, url) => {
+        if (!url) return '';
+        if (network === 'github') {
+            return url.replace('https://github.com/', '').replace('http://github.com/', '');
+        }
+        if (network === 'linkedin') {
+            return url.replace('https://linkedin.com/', '').replace('http://linkedin.com/', '').replace('https://www.linkedin.com/', '').replace('http://www.linkedin.com/', '');
+        }
+        if (network === 'portfolio') {
+            return url.replace('https://', '').replace('http://', '');
+        }
+        return url;
     };
 
     const handlePasswordChange = (field, value) => {
@@ -263,10 +383,30 @@ const UserProfile = () => {
     };
 
     const handleSaveProfile = async () => {
+        if (usernameError) {
+            setMessage({ type: 'error', text: 'Please resolve the username error.' });
+            return;
+        }
+
         try {
             const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
             if (!userStr) return;
             const user = JSON.parse(userStr);
+
+            // Format Social Links - Ensure they are not just the prefix
+            const formattedLinks = { ...profileData.socialLinks };
+
+            // GitHub validation
+            if (formattedLinks.github === 'https://github.com/') formattedLinks.github = '';
+
+            // LinkedIn validation
+            if (formattedLinks.linkedin === 'https://linkedin.com/') formattedLinks.linkedin = '';
+
+            // Portfolio validation
+            if (formattedLinks.portfolio === 'https://') formattedLinks.portfolio = '';
+
+            // Update state with formatted links so UI reflects changes (if any adjustment needed)
+            setProfileData(prev => ({ ...prev, socialLinks: formattedLinks }));
 
             // Construct FormData
             const formData = new FormData();
@@ -279,9 +419,11 @@ const UserProfile = () => {
             if (profileData.bio) formData.append('bio', profileData.bio);
             if (profileData.education) formData.append('education', profileData.education);
             if (profileData.experienceYears) formData.append('experience_years', profileData.experienceYears);
-            if (profileData.socialLinks) {
-                formData.append('social_links', JSON.stringify(profileData.socialLinks));
-            }
+
+            // Use formatted links
+            formData.append('social_links', JSON.stringify(formattedLinks));
+
+            // Add skills as JSON string
 
             // Add skills as JSON string
             if (skills && skills.length > 0) {
@@ -550,7 +692,7 @@ const UserProfile = () => {
                         <p className="profile-role">{profileData.currentRole || 'Candidate'}</p>
                         <div className="profile-meta">
                             <span><i className="bi bi-envelope"></i> {profileData.email}</span>
-                            <span><i className="bi bi-phone"></i> {profileData.phone || 'N/A'}</span>
+                            <span><i className="bi bi-phone"></i> +{profileData.phone || 'N/A'}</span>
                             <span><i className="bi bi-geo-alt"></i> {profileData.location || 'N/A'}</span>
                             {profileData.experienceYears > 0 && (
                                 <span><i className="bi bi-briefcase-fill"></i> {profileData.experienceYears} years exp</span>
@@ -608,16 +750,35 @@ const UserProfile = () => {
                                 <div className="row g-4">
                                     <div className="col-md-6">
                                         <label className="form-label">Username</label>
-                                        <div className="input-group">
+                                        <div className={`input-group ${usernameError ? 'is-invalid' : (usernameAvailable && profileData.username !== initialUsername ? 'is-valid' : '')}`}>
                                             <span className="input-group-text"><i className="bi bi-person-badge"></i></span>
                                             <input
                                                 type="text"
-                                                className="form-control form-control-dark"
+                                                className={`form-control form-control-dark ${usernameError ? 'is-invalid' : (usernameAvailable && profileData.username !== initialUsername ? 'is-valid' : '')}`}
                                                 value={profileData.username}
-                                                onChange={(e) => handleProfileChange('username', e.target.value)}
+                                                onChange={(e) => {
+                                                    handleProfileChange('username', e.target.value);
+                                                    setIsCheckingUsername(true); // Indicate checking on change
+                                                }}
                                                 disabled={!isEditing}
                                             />
                                         </div>
+                                        {isCheckingUsername && (
+                                            <div className="text-secondary mt-1 small">
+                                                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                                                Checking availability...
+                                            </div>
+                                        )}
+                                        {usernameAvailable && !usernameError && profileData.username !== initialUsername && !isCheckingUsername && (
+                                            <div className="valid-feedback d-block text-success mt-1">
+                                                <i className="bi bi-check-circle me-1"></i> Username is available
+                                            </div>
+                                        )}
+                                        {usernameError && (
+                                            <div className="invalid-feedback d-block">
+                                                {usernameError}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Full Name</label>
@@ -730,7 +891,7 @@ const UserProfile = () => {
                                         </div>
                                     </div>
                                     <div className="col-md-6">
-                                        <label className="form-label">Years of Experience</label>
+                                        <label className="form-label">Years of Experience in Current Role</label>
                                         <div className="input-group">
                                             <span className="input-group-text"><i className="bi bi-calendar-check"></i></span>
                                             <input
@@ -762,42 +923,48 @@ const UserProfile = () => {
                                     <div className="col-md-4">
                                         <label className="form-label">LinkedIn</label>
                                         <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-linkedin"></i></span>
+                                            <span className="input-group-text text-muted" style={{ fontSize: '0.85rem' }}>
+                                                <i className="bi bi-linkedin me-2"></i>https://linkedin.com/
+                                            </span>
                                             <input
-                                                type="url"
+                                                type="text"
                                                 className="form-control form-control-dark"
-                                                value={profileData.socialLinks.linkedin}
-                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, linkedin: e.target.value })}
+                                                value={getSocialHandle('linkedin', profileData.socialLinks.linkedin)}
+                                                onChange={(e) => handleSocialInput('linkedin', e.target.value)}
                                                 disabled={!isEditing}
-                                                placeholder="LinkedIn profile URL"
+                                                placeholder="username"
                                             />
                                         </div>
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label">GitHub</label>
                                         <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-github"></i></span>
+                                            <span className="input-group-text text-muted" style={{ fontSize: '0.85rem' }}>
+                                                <i className="bi bi-github me-2"></i>https://github.com/
+                                            </span>
                                             <input
-                                                type="url"
+                                                type="text"
                                                 className="form-control form-control-dark"
-                                                value={profileData.socialLinks.github}
-                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, github: e.target.value })}
+                                                value={getSocialHandle('github', profileData.socialLinks.github)}
+                                                onChange={(e) => handleSocialInput('github', e.target.value)}
                                                 disabled={!isEditing}
-                                                placeholder="GitHub profile URL"
+                                                placeholder="username"
                                             />
                                         </div>
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label">Portfolio</label>
                                         <div className="input-group">
-                                            <span className="input-group-text"><i className="bi bi-globe"></i></span>
+                                            <span className="input-group-text text-muted" style={{ fontSize: '0.85rem' }}>
+                                                <i className="bi bi-globe me-2"></i>https://
+                                            </span>
                                             <input
-                                                type="url"
+                                                type="text"
                                                 className="form-control form-control-dark"
-                                                value={profileData.socialLinks.portfolio}
-                                                onChange={(e) => handleProfileChange('socialLinks', { ...profileData.socialLinks, portfolio: e.target.value })}
+                                                value={getSocialHandle('portfolio', profileData.socialLinks.portfolio)}
+                                                onChange={(e) => handleSocialInput('portfolio', e.target.value)}
                                                 disabled={!isEditing}
-                                                placeholder="Portfolio website URL"
+                                                placeholder="www.example.com"
                                             />
                                         </div>
                                     </div>
@@ -1058,11 +1225,11 @@ const UserProfile = () => {
                                                 </div>
                                             </div>
                                             <div className="col-md-5">
-                                                <label className="form-label">File (PDF, DOC, DOCX — max 5MB)</label>
+                                                <label className="form-label">File (PDF — max 5MB)</label>
                                                 <input
                                                     type="file"
                                                     className="form-control form-control-dark"
-                                                    accept=".pdf,.doc,.docx"
+                                                    accept=".pdf"
                                                     onChange={(e) => {
                                                         const file = e.target.files[0];
                                                         if (!file) return;
