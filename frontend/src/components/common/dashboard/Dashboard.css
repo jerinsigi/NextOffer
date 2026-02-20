@@ -147,6 +147,15 @@
     color: #f59e0b;
 }
 
+.stat-card-danger {
+    border-left: 3px solid #ef4444;
+}
+
+.stat-card-danger .stat-icon {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
 .stat-trend {
     width: 32px;
     height: 32px;

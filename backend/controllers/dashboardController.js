@@ -3,6 +3,7 @@ const Candidate = require('../models/Candidate');
 const InterviewSession = require('../models/Interview_Session');
 const IntegrityLog = require('../models/Integrity_Log');
 const JobDescription = require('../models/Job_Description'); // Added for populate
+const ContactSubmission = require('../models/ContactSubmission');
 
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -27,45 +28,47 @@ exports.getDashboardStats = async (req, res) => {
             return acc + (log.tab_switch_count || 0) + (log.gaze_away_count || 0) + (log.face_absent_count || 0);
         }, 0);
 
-        // 5. Recent Interview Sessions (Top 5)
-        // Schema uses fk_candidate_id, fk_job_id
-        const recentInterviews = await InterviewSession.find()
-            .sort({ started_at: -1 })
+        // 5. Recent Job Postings (Top 5)
+        const recentJobs = await JobDescription.find()
+            .sort({ createdAt: -1 })
             .limit(5)
-            .populate('fk_candidate_id', 'full_name image_url')
-            .populate({
-                path: 'fk_job_id',
-                select: 'job_title Fk_company_id',
-                populate: {
-                    path: 'Fk_company_id',
-                    select: 'company_name'
-                }
-            });
+            .populate('Fk_company_id', 'company_name logo');
 
-        // Map recentInterviews to a cleaner format
-        const recentInterviewsFormatted = recentInterviews.map(session => {
-            // Safe navigation for populated fields
-            const candidateName = session.fk_candidate_id?.full_name || 'Unknown Candidate';
-            const candidateInitials = candidateName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const recentJobsFormatted = recentJobs.map(job => ({
+            id: job._id,
+            title: job.job_title,
+            company: job.Fk_company_id?.company_name || 'Unknown Company',
+            location: job.location || 'Remote',
+            status: job.job_status,
+            applications: job.applications_count || 0,
+            date: job.createdAt || job.start_date
+        }));
 
-            return {
-                id: session._id,
-                candidate: candidateName,
-                candidateInitials: candidateInitials,
-                company: session.fk_job_id?.Fk_company_id?.company_name || 'Unknown Company',
-                position: session.fk_job_id?.job_title || 'Unknown Position',
-                status: session.session_status,
-                // Score is not in the schema I viewed, assume calculated or placeholder for now if missing
-                // Actually I didn't see a score in Interview_Session schema. 
-                // There is a 'Final_Report.js' maybe? Or 'Interview_Response.js'. 
-                // For now, I'll return a placeholder strictly if not in session, but let's check schema again.
-                // Schema had: fk_candidate_id, fk_job_id, session_status, started_at, ended_at.
-                // It did NOT have total_score.
-                // I will use a placeholder or 0 for now to avoid errors.
-                score: 0,
-                time: session.started_at
-            };
-        });
+        // 6. Recent Companies Joined (Top 5)
+        const recentCompanies = await Company.find()
+            .sort({ created_at: -1 })
+            .limit(5);
+
+        const recentCompaniesFormatted = recentCompanies.map(comp => ({
+            id: comp._id,
+            name: comp.company_name,
+            industry: comp.industry || 'N/A',
+            status: comp.status,
+            date: comp.created_at
+        }));
+
+        // 7. Recent Support Tickets (Top 4)
+        const recentTickets = await ContactSubmission.find()
+            .sort({ createdAt: -1 })
+            .limit(4);
+
+        const recentTicketsFormatted = recentTickets.map(ticket => ({
+            id: ticket._id,
+            subject: ticket.subject,
+            email: ticket.email,
+            status: ticket.status,
+            date: ticket.createdAt
+        }));
 
         res.status(200).json({
             stats: {
@@ -74,7 +77,9 @@ exports.getDashboardStats = async (req, res) => {
                 interviewsToday,
                 totalViolations
             },
-            recentInterviews: recentInterviewsFormatted
+            recentJobs: recentJobsFormatted,
+            recentCompanies: recentCompaniesFormatted,
+            recentSupportTickets: recentTicketsFormatted
         });
 
     } catch (error) {
