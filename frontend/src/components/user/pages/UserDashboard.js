@@ -116,11 +116,8 @@ const UserDashboard = () => {
                 <div className="col-xl-3 col-md-6">
                     <div className="stat-card stat-card-primary">
                         <div className="stat-icon-wrapper">
-                            <div className="stat-icon bg-primary bg-opacity-20 text-primary">
+                            <div className="stat-icon">
                                 <i className="bi bi-file-earmark-check fs-3"></i>
-                            </div>
-                            <div className="stat-trend">
-                                <i className="bi bi-arrow-up-short"></i>
                             </div>
                         </div>
                         <div className="stat-content">
@@ -136,11 +133,8 @@ const UserDashboard = () => {
                 <div className="col-xl-3 col-md-6">
                     <div className="stat-card stat-card-success">
                         <div className="stat-icon-wrapper">
-                            <div className="stat-icon bg-success bg-opacity-20 text-success">
+                            <div className="stat-icon">
                                 <i className="bi bi-camera-video fs-3"></i>
-                            </div>
-                            <div className="stat-trend">
-                                <i className="bi bi-arrow-up-short"></i>
                             </div>
                         </div>
                         <div className="stat-content">
@@ -156,11 +150,8 @@ const UserDashboard = () => {
                 <div className="col-xl-3 col-md-6">
                     <div className="stat-card stat-card-info">
                         <div className="stat-icon-wrapper">
-                            <div className="stat-icon bg-info bg-opacity-20 text-info">
+                            <div className="stat-icon">
                                 <i className="bi bi-graph-up fs-3"></i>
-                            </div>
-                            <div className="stat-trend success">
-                                <i className="bi bi-arrow-up-short"></i>
                             </div>
                         </div>
                         <div className="stat-content">
@@ -176,11 +167,8 @@ const UserDashboard = () => {
                 <div className="col-xl-3 col-md-6">
                     <div className="stat-card stat-card-warning">
                         <div className="stat-icon-wrapper">
-                            <div className="stat-icon bg-warning bg-opacity-20 text-warning">
+                            <div className="stat-icon">
                                 <i className="bi bi-lightbulb fs-3"></i>
-                            </div>
-                            <div className="stat-trend">
-                                <i className="bi bi-arrow-up-short"></i>
                             </div>
                         </div>
                         <div className="stat-content">
@@ -205,34 +193,61 @@ const UserDashboard = () => {
                         </div>
                         <div className="interview-list">
                             {dashboardData.upcomingInterviews.length > 0 ? (
-                                dashboardData.upcomingInterviews.map((interview) => (
-                                    <div key={interview.id} className="interview-item">
-                                        <div className="interview-icon">
-                                            <i className="bi bi-camera-video-fill text-primary"></i>
-                                        </div>
-                                        <div className="interview-details">
-                                            <h6 className="interview-title">{interview.jobTitle}</h6>
-                                            <p className="interview-company">
-                                                <i className="bi bi-building me-2"></i>{interview.company}
-                                            </p>
-                                            <div className="interview-meta">
-                                                <span className="badge bg-primary me-2">
-                                                    <i className="bi bi-calendar me-1"></i>
-                                                    {new Date(interview.date).toLocaleDateString()}
-                                                </span>
-                                                <span className="badge bg-info">
-                                                    <i className="bi bi-clock me-1"></i>
-                                                    {new Date(interview.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                dashboardData.upcomingInterviews.map((interview) => {
+                                    const now = new Date();
+                                    const startDate = new Date(interview.startDate);
+                                    const endDate = new Date(interview.endDate);
+                                    const isOngoing = now >= startDate && now <= endDate;
+                                    const isEnded = now > endDate;
+                                    // Allow start if status is explicitly ongoing OR if we are in the time window
+                                    const canStart = interview.status === 'ongoing' || isOngoing;
+
+                                    return (
+                                        <div key={interview.id} className="interview-item">
+                                            <div className="interview-icon">
+                                                {interview.logo ? (
+                                                    <img src={`http://localhost:5000${interview.logo}`} alt={interview.company} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0.5rem' }} />
+                                                ) : (
+                                                    <i className="bi bi-camera-video-fill text-primary"></i>
+                                                )}
+                                            </div>
+                                            <div className="interview-details">
+                                                <h6 className="interview-title">{interview.jobTitle}</h6>
+                                                <p className="interview-company">
+                                                    <i className="bi bi-building me-2"></i>{interview.company}
+                                                </p>
+                                                <div className="interview-meta">
+                                                    <span className="badge bg-primary me-2">
+                                                        Start: {startDate.toLocaleDateString()}
+                                                    </span>
+                                                    <span className="badge bg-danger me-2">
+                                                        End: {endDate.toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="interview-actions">
+                                                {isEnded ? (
+                                                    <button className="btn btn-sm btn-secondary" disabled>
+                                                        <i className="bi bi-clock-history me-1"></i>Ended
+                                                    </button>
+                                                ) : isOngoing ? (
+                                                    <button
+                                                        className="btn btn-sm btn-primary"
+                                                        onClick={() => navigate(`/user/interview/${interview.interviewId}`)}
+                                                    >
+                                                        <i className="bi bi-play-circle me-1"></i>
+                                                        Start Interview
+                                                    </button>
+                                                ) : (
+                                                    <button className="btn btn-sm btn-outline-primary" disabled>
+                                                        <i className="bi bi-calendar-event me-1"></i>
+                                                        Scheduled
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="interview-actions">
-                                            <button className="btn btn-sm btn-primary" onClick={() => navigate(`/user/interview/${interview.id}`)}>
-                                                <i className="bi bi-play-circle me-1"></i>Join
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="p-4 text-center text-muted">
                                     <i className="bi bi-calendar-x fs-1 mb-2 d-block"></i>
@@ -291,76 +306,6 @@ const UserDashboard = () => {
 
                 {/* Sidebar */}
                 <div className="col-xl-4">
-                    {/* Profile Strength */}
-                    <div className="dashboard-card mb-4">
-                        <div className="card-header-custom">
-                            <h5 className="card-title mb-0">Profile Strength</h5>
-                        </div>
-                        <div className="p-3">
-                            <div className="text-center mb-3">
-                                <div className="progress-circle mx-auto mb-3" style={{ width: '120px', height: '120px' }}>
-                                    <svg viewBox="0 0 120 120">
-                                        <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
-                                        <circle cx="60" cy="60" r="54" fill="none" stroke="#6366f1" strokeWidth="8" strokeDasharray={`${dashboardData.profileStrength * 3.39} 339.29`} strokeLinecap="round" transform="rotate(-90 60 60)" />
-                                    </svg>
-                                    <div className="progress-text">
-                                        <span className="fs-3 fw-bold text-primary">{dashboardData.profileStrength}%</span>
-                                    </div>
-                                </div>
-                                <p className="text-muted mb-0">Complete your profile to increase visibility.</p>
-                            </div>
-                            <div className="profile-checklist">
-                                <div className={`checklist-item ${dashboardData.profileStrength > 0 ? 'completed' : ''}`}>
-                                    <i className={`bi bi-${dashboardData.profileStrength > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
-                                    <span>Account Created</span>
-                                </div>
-                                <div className={`checklist-item ${dashboardData.stats.totalApplications > 0 ? 'completed' : ''}`}>
-                                    <i className={`bi bi-${dashboardData.stats.totalApplications > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
-                                    <span>First Application</span>
-                                </div>
-                                <div className={`checklist-item ${dashboardData.stats.interviews > 0 ? 'completed' : ''}`}>
-                                    <i className={`bi bi-${dashboardData.stats.interviews > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
-                                    <span>First Interview</span>
-                                </div>
-                                <div className={`checklist-item ${dashboardData.stats.averageScore > 0 ? 'completed' : ''}`}>
-                                    <i className={`bi bi-${dashboardData.stats.averageScore > 0 ? 'check-circle-fill text-success' : 'circle text-muted'}`}></i>
-                                    <span>Performance Score</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Recommended Jobs */}
-                    <div className="dashboard-card mb-4">
-                        <div className="card-header-custom">
-                            <h5 className="card-title mb-0">Recommended for You</h5>
-                        </div>
-                        <div className="job-list">
-                            {dashboardData.recommendedJobs.length > 0 ? (
-                                dashboardData.recommendedJobs.map(job => (
-                                    <div key={job.id} className="job-item">
-                                        <div className="job-header">
-                                            <h6 className="job-title">{job.title}</h6>
-                                            <span className="badge bg-success">{job.match}% Match</span>
-                                        </div>
-                                        <p className="job-company">
-                                            <i className="bi bi-building me-2"></i>{job.company}
-                                        </p>
-                                        <p className="job-location">
-                                            <i className="bi bi-geo-alt me-2"></i>{job.location}
-                                        </p>
-                                        <button className="btn btn-sm btn-outline-primary w-100" onClick={() => navigate('/user/jobs')}>
-                                            <i className="bi bi-arrow-right me-1"></i>View Details
-                                        </button>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="p-3 text-center text-muted">
-                                    No recommendations yet.
-                                </div>
-                            )}
-                        </div>
-                    </div>
 
                     {/* Recent Notifications */}
                     <div className="dashboard-card mb-4">
@@ -429,7 +374,7 @@ const UserDashboard = () => {
                             <button className="btn btn-outline-primary w-100 mb-2" onClick={() => navigate('/user/profile')}>
                                 <i className="bi bi-file-earmark-arrow-up me-2"></i>Update Resume
                             </button>
-                            <button className="btn btn-outline-primary w-100" onClick={() => navigate('/user/applications')}>
+                            <button className="btn btn-outline-primary w-100" onClick={() => navigate('/user/results')}>
                                 <i className="bi bi-graph-up-arrow me-2"></i>View Analytics
                             </button>
                         </div>

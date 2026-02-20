@@ -127,12 +127,22 @@ exports.getUserDashboardStats = async (req, res) => {
             status: 'completed'
         });
 
-        // 2. Upcoming Interviews (Pending/Scheduled and in future)
-        // Using session_status 'pending' or 'active' roughly translates to scheduled/ongoing
+        // 2. Upcoming Interviews (Based on Application Status 'Scheduled' or 'Interviewing')
+        const scheduledApps = await Application.find({
+            Fk_candidate_id: candidate._id,
+            status: { $in: ['Scheduled', 'Interviewing'] }
+        });
+
+        const scheduledJobIds = scheduledApps.map(app => app.Fk_job_id);
+
         const upcomingInterviews = await InterviewSession.find({
             fk_candidate_id: candidate._id,
-            session_status: { $in: ['pending', 'active'] },
-            started_at: { $gte: new Date() }
+            fk_job_id: { $in: scheduledJobIds },
+            // Optional: still restrict to future/ongoing if desired, 
+            // but relying on Application status 'Scheduled' is what user asked.
+            // However, we usually still want to show them in order of date.
+            // Strict requirement: Interview must not be ended (ended_at > now)
+            ended_at: { $gt: new Date() }
         })
             .sort({ started_at: 1 })
             .limit(3)
@@ -144,10 +154,15 @@ exports.getUserDashboardStats = async (req, res) => {
 
         const formattedUpcoming = upcomingInterviews.map(session => ({
             id: session._id,
+            interviewId: session._id,
             jobTitle: session.fk_job_id?.job_title || 'Unknown Role',
             company: session.fk_job_id?.Fk_company_id?.company_name || 'Unknown Company',
+            logo: session.fk_job_id?.Fk_company_id?.logo, // Include company logo if available
             date: session.started_at,
-            type: 'Technical Interview' // Hardcoded for now
+            startDate: session.started_at,
+            endDate: session.ended_at,
+            status: session.session_status,
+            type: 'Technical Interview'
         }));
 
         // 3. Recent Applications
