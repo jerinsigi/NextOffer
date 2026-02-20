@@ -598,8 +598,44 @@
 /* Override Bootstrap modal-dialog-centered */
 .modal-dialog-centered {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     min-height: calc(100% - 3.5rem);
+    max-height: calc(100vh - 3.5rem);
+    margin-top: 1.75rem;
+    margin-bottom: 1.75rem;
+}
+
+/* Ensure modal content doesn't exceed viewport */
+.modal-dialog-centered .modal-content {
+    max-height: calc(100vh - 3.5rem);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make modal body scrollable for job posting form */
+.modal-dialog-centered .modal-body {
+    overflow-y: auto;
+    max-height: calc(100vh - 12rem);
+    flex: 1;
+}
+
+/* Custom scrollbar for modal body */
+.modal-dialog-centered .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-dialog-centered .modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.modal-dialog-centered .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5);
+    border-radius: 4px;
+}
+
+.modal-dialog-centered .modal-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.7);
 }
 
 .skills-dropdown-menu {

@@ -86,6 +86,8 @@ app.use('/api/resumes', resumeRouter);
 const notificationRouter = require('./routes/notificationRoutes');
 app.use('/api/notifications', notificationRouter);
 
+const settingsRouter = require('./routes/settingsRoutes');
+app.use('/api/settings', settingsRouter);
 
 module.exports = app;
 

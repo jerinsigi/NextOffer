@@ -1,0 +1,28 @@
+.maintenance-container {
+    background-color: #0f172a;
+    font-family: 'Inter', sans-serif;
+}
+
+.bg-slate-900 {
+    background-color: #0f172a !important;
+}
+
+.bg-slate-800 {
+    background-color: #1e293b !important;
+}
+
+.border-slate-700 {
+    border-color: #334155 !important;
+}
+
+.maintenance-container .btn-outline-primary {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    transition: all 0.3s ease;
+}
+
+.maintenance-container .btn-outline-primary:hover {
+    color: #ffffff;
+    background-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+}

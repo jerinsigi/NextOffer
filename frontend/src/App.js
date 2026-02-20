@@ -9,6 +9,7 @@ import TermsOfService from './components/home/TermsOfService';
 import PrivacyPolicy from './components/home/PrivacyPolicy';
 import Help from './components/home/Help';
 import CompanyRegister from './components/home/CompanyRegister';
+import MaintenancePage from './components/home/MaintenancePage';
 
 
 import AdminLayout from './components/admin/AdminLayout';
@@ -58,25 +59,17 @@ import CompanyInterviewMonitoring from './components/company/pages/InterviewMoni
 import CompanyDocumentation from './components/company/pages/Documentation';
 // import CompanyComingSoon from './components/company/pages/ComingSoon';
 import ProtectedRoute from './components/common/ProtectedRoute';
-
+import MaintenanceGuard from './components/common/MaintenanceGuard';
 
 function App() {
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Unrestricted Routes that bypass maintenance mode explicitly in logic or handle it themselves */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/help" element={<Help />} />
-        <Route path="/company/register" element={<CompanyRegister />} />
-        <Route path="/speech-test" element={<SpeechTest />} />
-        <Route path="/native-speech-test" element={<NativeSpeechTest />} />
+        <Route path="/maintenance" element={<MaintenancePage />} />
 
-        {/* Admin Routes */}
+        {/* Admin Routes (Explicitly bypassed in MaintenanceGuard logic based on URL or role) */}
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
@@ -95,43 +88,55 @@ function App() {
           </Route>
         </Route>
 
-        {/* User Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['candidate', 'user']} />}>
-          <Route path="/user" element={<UserLayout />}>
-            <Route index element={<UserDashboard />} />
-            <Route path="dashboard" element={<UserDashboard />} />
-            <Route path="profile" element={<UserProfile />} />
-            <Route path="jobs" element={<JobOpportunities />} />
-            <Route path="applications" element={<MyApplications />} />
-            <Route path="interview/:interviewId" element={<InterviewCenter />} />
-            <Route path="practice" element={<PracticeInterview />} />
-            <Route path="results" element={<ResultsFeedback />} />
-            <Route path="skills" element={<SkillDevelopment />} />
-            <Route path="notifications" element={<Notifications />} />
-            <Route path="help" element={<HelpSupport />} />
-            <Route path="settings" element={<UserSettings />} />
+        {/* Global Maintenance Wrapper for all other routes */}
+        <Route element={<MaintenanceGuard />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/company/register" element={<CompanyRegister />} />
+          <Route path="/speech-test" element={<SpeechTest />} />
+          <Route path="/native-speech-test" element={<NativeSpeechTest />} />
+
+          {/* User Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['candidate', 'user']} />}>
+            <Route path="/user" element={<UserLayout />}>
+              <Route index element={<UserDashboard />} />
+              <Route path="dashboard" element={<UserDashboard />} />
+              <Route path="profile" element={<UserProfile />} />
+              <Route path="jobs" element={<JobOpportunities />} />
+              <Route path="applications" element={<MyApplications />} />
+              <Route path="interview/:interviewId" element={<InterviewCenter />} />
+              <Route path="practice" element={<PracticeInterview />} />
+              <Route path="results" element={<ResultsFeedback />} />
+              <Route path="skills" element={<SkillDevelopment />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="help" element={<HelpSupport />} />
+              <Route path="settings" element={<UserSettings />} />
+            </Route>
+          </Route>
+
+          {/* Company Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['company']} />}>
+            <Route path="/company" element={<CompanyLayout />}>
+              <Route index element={<CompanyDashboard />} />
+              <Route path="dashboard" element={<CompanyDashboard />} />
+              <Route path="profile" element={<CompanyProfile />} />
+              <Route path="jobs" element={<CompanyJobDescriptions />} />
+
+              <Route path="interviews" element={<CompanyInterviewMonitoring />} />
+              <Route path="integrity" element={<CompanyIntegrity />} />
+              <Route path="reports" element={<CompanyReports />} />
+              <Route path="logs" element={<CompanyLogs />} />
+              <Route path="support" element={<CompanySupport />} />
+              <Route path="documentation" element={<CompanyDocumentation />} />
+              <Route path="settings" element={<CompanySettings />} />
+            </Route>
           </Route>
         </Route>
-
-        {/* Company Routes */}
-        <Route element={<ProtectedRoute allowedRoles={['company']} />}>
-          <Route path="/company" element={<CompanyLayout />}>
-            <Route index element={<CompanyDashboard />} />
-            <Route path="dashboard" element={<CompanyDashboard />} />
-            <Route path="profile" element={<CompanyProfile />} />
-            <Route path="jobs" element={<CompanyJobDescriptions />} />
-
-            <Route path="interviews" element={<CompanyInterviewMonitoring />} />
-            <Route path="integrity" element={<CompanyIntegrity />} />
-            <Route path="reports" element={<CompanyReports />} />
-            <Route path="logs" element={<CompanyLogs />} />
-            <Route path="support" element={<CompanySupport />} />
-            <Route path="documentation" element={<CompanyDocumentation />} />
-            <Route path="settings" element={<CompanySettings />} />
-
-          </Route>
-        </Route>
-
       </Routes>
     </div>
   );
