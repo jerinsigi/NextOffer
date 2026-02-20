@@ -93,7 +93,7 @@ const UserDashboard = () => {
                     </div>
                     <div className="motivation-card">
                         <i className="bi bi-star-fill text-warning"></i>
-                        <span className="motivation-text">"Success is not final, failure is not fatal"</span>
+                        <span className="motivation-text">"Preparation today creates opportunities tomorrow"</span>
                     </div>
                 </div>
                 <div className="header-actions">

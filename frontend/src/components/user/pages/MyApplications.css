@@ -83,6 +83,7 @@
 
 .applications-container .stat-details {
     flex: 1;
+    text-align: center;
 }
 
 .applications-container .stat-value {

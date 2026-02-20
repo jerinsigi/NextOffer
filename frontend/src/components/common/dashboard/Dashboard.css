@@ -168,6 +168,7 @@
     flex: 1;
     position: relative;
     z-index: 1;
+    text-align: center;
 }
 
 .stat-label {
@@ -191,6 +192,7 @@
     font-size: 0.8rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.25rem;
     font-weight: 500;
 }
@@ -310,12 +312,14 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--muted-text);
+    text-align: center;
 }
 
 .table-dark tbody td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     padding: 1rem 1.5rem;
     vertical-align: middle;
+    text-align: center;
 }
 
 .table-dark tbody tr:last-child td {

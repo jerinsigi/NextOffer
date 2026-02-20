@@ -312,8 +312,8 @@ section {
 }
 
 .form-control-dark {
-  background-color: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(100, 116, 139, 0.25);
   color: var(--light-text);
   transition: all 0.3s ease;
 }
@@ -324,7 +324,7 @@ section {
 }
 
 .form-control-dark:focus {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.15);
   border-color: var(--primary-color);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25);
   color: var(--light-text);
