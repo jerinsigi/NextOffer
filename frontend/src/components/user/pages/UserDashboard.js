@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../common/dashboard/Dashboard.css';
+import Loader from '../../common/Loader';
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -68,13 +69,7 @@ const UserDashboard = () => {
     }, [navigate]);
 
     if (loading) {
-        return (
-            <div className="dashboard-container d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     if (error) {

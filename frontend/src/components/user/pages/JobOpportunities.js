@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './JobOpportunities.css';
+import Loader from '../../common/Loader';
 
 const JobOpportunities = () => {
     const [jobs, setJobs] = useState([]);
@@ -230,11 +231,7 @@ const JobOpportunities = () => {
 
             {/* Job Grid */}
             {loading ? (
-                <div className="text-center py-5">
-                    <div className="spinner-grow text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <Loader inline />
             ) : (
                 <div className="jobs-grid-modern">
                     {filteredJobs.length === 0 ? (

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 // import 'regenerator-runtime/runtime'; // Moved to index.js
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { FaceDetection } from '@mediapipe/face_detection';
+import Loader from '../../common/Loader';
 
 // Handle potential ESM/CJS interop issues with SpeechRecognition
 import './InterviewCenter.css';
@@ -908,9 +909,8 @@ const InterviewCenter = () => {
 
     if (loading) {
         return (
-            <div className="interview-center-container d-flex justify-content-center align-items-center text-white">
-                <div className="spinner-border text-primary me-3" role="status"></div>
-                <h2>Loading Interview Environment...</h2>
+            <div className="interview-center-container">
+                <Loader />
             </div>
         );
     }

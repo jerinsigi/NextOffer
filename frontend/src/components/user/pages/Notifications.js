@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../common/dashboard/Notifications.css';
+import Loader from '../../common/Loader';
 const Notifications = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const [notifications, setNotifications] = useState([]);
@@ -131,11 +132,7 @@ const Notifications = () => {
     if (loading) {
         return (
             <div className="notif-page">
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <Loader />
             </div>
         );
     }

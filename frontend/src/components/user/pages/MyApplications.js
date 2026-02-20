@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './MyApplications.css';
+import Loader from '../../common/Loader';
 
 const MyApplications = () => {
     const [filterStatus, setFilterStatus] = useState('all');
@@ -226,12 +227,7 @@ const MyApplications = () => {
             {/* Applications List */}
             <div className="applications-list">
                 {loading ? (
-                    <div className="empty-state">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                        </div>
-                        <p className="mt-3 text-muted">Loading your applications...</p>
-                    </div>
+                    <Loader inline />
                 ) : error ? (
                     <div className="empty-state">
                         <i className="bi bi-exclamation-triangle fs-1 mb-3 text-danger"></i>

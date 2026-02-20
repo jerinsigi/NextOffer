@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../../common/dashboard/Profile.css';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import Loader from '../../common/Loader';
 
 const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -589,7 +590,7 @@ const UserProfile = () => {
         }
     };
 
-    if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
+    if (loading) return <Loader />;
 
     const avatarUrl = getAvatarUrl(profileData.avatar);
 

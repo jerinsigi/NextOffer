@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PracticeInterview.css';
+import Loader from '../../common/Loader';
 
 const SKILL_CATEGORIES = [
     {
@@ -907,13 +908,7 @@ const PracticeInterview = () => {
     }
 
     // Default loading fallback
-    return (
-        <div className="practice-interview-container d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
-            <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    );
+    return <Loader />;
 };
 
 export default PracticeInterview;

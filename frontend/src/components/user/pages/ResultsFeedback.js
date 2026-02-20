@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ResultsFeedback.css';
+import Loader from '../../common/Loader';
 
 const ResultsFeedback = () => {
     const [activeTab, setActiveTab] = useState('all');
@@ -79,10 +80,7 @@ const ResultsFeedback = () => {
 
             {/* Loading / Error */}
             {loading && (
-                <div className="rf-center-state">
-                    <div className="rf-spinner"></div>
-                    <p>Loading your results…</p>
-                </div>
+                <Loader inline />
             )}
 
             {!loading && error && (
