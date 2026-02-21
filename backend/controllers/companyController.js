@@ -161,8 +161,25 @@ exports.resendCompanyOTP = async (req, res) => {
 // Get all companies
 exports.getAllCompanies = async (req, res) => {
     try {
-        const companies = await Company.find().sort({ created_at: -1 });
-        res.json(companies);
+        const companies = await Company.find().sort({ created_at: -1 }).lean();
+
+        // Fetch all related logins in one go to get usernames
+        const emails = companies.map(c => c.email);
+        const logins = await Login.find({ email: { $in: emails } }).select('email username').lean();
+
+        // Create a map for quick lookup
+        const loginMap = {};
+        logins.forEach(l => {
+            loginMap[l.email] = l.username;
+        });
+
+        // Attach username to each company
+        const companiesWithUsernames = companies.map(company => ({
+            ...company,
+            username: loginMap[company.email] || 'N/A'
+        }));
+
+        res.json(companiesWithUsernames);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

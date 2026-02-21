@@ -274,12 +274,16 @@ const Companies = () => {
                                         <h5 className="border-bottom border-secondary pb-2 mb-3">Basic Information</h5>
                                         <div className="row g-3 mb-4">
                                             <div className="col-sm-6">
+                                                <small className="text-muted d-block">Username</small>
+                                                <span>{currentCompany.username || 'N/A'}</span>
+                                            </div>
+                                            <div className="col-sm-6">
                                                 <small className="text-muted d-block">Email</small>
                                                 <span>{currentCompany.email}</span>
                                             </div>
                                             <div className="col-sm-6">
                                                 <small className="text-muted d-block">Phone</small>
-                                                <span>{currentCompany.phone || 'N/A'}</span>
+                                                <span>+{currentCompany.phone || 'N/A'}</span>
                                             </div>
                                             <div className="col-sm-6">
                                                 <small className="text-muted d-block">Industry</small>
@@ -329,7 +333,7 @@ const Companies = () => {
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content bg-dark text-white">
                             <div className="modal-header border-secondary">
-                                <h5 className="modal-title">{isEdit ? 'Edit Company' : 'Add New Company'}</h5>
+                                <h5 className="modal-title">Edit Company Status</h5>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
                             </div>
                             <form onSubmit={handleSubmit}>
@@ -339,74 +343,9 @@ const Companies = () => {
                                         <input
                                             type="text"
                                             className="form-control form-control-dark"
-                                            name="company_name"
                                             value={formData.company_name}
-                                            onChange={handleInputChange}
-                                            required
+                                            disabled
                                         />
-                                    </div>
-                                    <div className="row">
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Email</label>
-                                            <input
-                                                type="email"
-                                                className="form-control form-control-dark"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Phone</label>
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-dark"
-                                                name="phone"
-                                                value={formData.phone}
-                                                onChange={handleInputChange}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Industry</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-dark"
-                                            name="industry"
-                                            value={formData.industry}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Location</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-dark"
-                                            name="location"
-                                            value={formData.location}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Website</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-dark"
-                                            name="website"
-                                            value={formData.website}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Description</label>
-                                        <textarea
-                                            className="form-control form-control-dark"
-                                            name="company_desc"
-                                            rows="3"
-                                            value={formData.company_desc}
-                                            onChange={handleInputChange}
-                                        ></textarea>
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Status</label>
