@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import './AdminProfile.css';
+import '../../common/dashboard/Profile.css';
 import Loader from '../../common/Loader';
 
 const AdminProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [initialUsername, setInitialUsername] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const [usernameAvailable, setUsernameAvailable] = useState(null);
 
     // Profile data
     const [profileData, setProfileData] = useState({
@@ -42,6 +46,7 @@ const AdminProfile = () => {
                         status: data.status,
                         id: data._id
                     });
+                    setInitialUsername(data.username || '');
                 } else {
                     console.error('Failed to fetch profile');
                 }
@@ -56,13 +61,83 @@ const AdminProfile = () => {
     }, []);
 
     const handleProfileChange = (field, value) => {
+        if (field === 'username') {
+            const sanitized = value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+            setProfileData(prev => ({ ...prev, [field]: sanitized }));
+            return;
+        }
+
         setProfileData(prev => ({
             ...prev,
             [field]: value
         }));
     };
 
+    // Debounced Username Check
+    useEffect(() => {
+        const checkUsername = async () => {
+            if (!profileData.username || profileData.username === initialUsername) {
+                if (!profileData.username) setUsernameError('Username is required');
+                else if (profileData.username.length < 3) {
+                    setUsernameError('Username must be at least 3 characters');
+                    setUsernameAvailable(false);
+                } else {
+                    setUsernameError('');
+                    setUsernameAvailable(true); // Current username is valid
+                }
+                setIsCheckingUsername(false);
+                return;
+            }
+
+            if (profileData.username.length < 3) {
+                setUsernameError('Username must be at least 3 characters');
+                setUsernameAvailable(false);
+                setIsCheckingUsername(false);
+                return;
+            }
+
+            setIsCheckingUsername(true);
+            setUsernameAvailable(null); // Reset while checking
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: profileData.username })
+                });
+                const data = await response.json();
+                if (data.available) {
+                    setUsernameError('');
+                    setUsernameAvailable(true);
+                } else {
+                    setUsernameError(data.message || 'Username is taken');
+                    setUsernameAvailable(false);
+                }
+            } catch (error) {
+                console.error('Username check error:', error);
+                setUsernameError('Error checking username');
+                setUsernameAvailable(false);
+            } finally {
+                setIsCheckingUsername(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            if (profileData.username) {
+                if (profileData.username !== initialUsername) setIsCheckingUsername(true);
+                checkUsername();
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [profileData.username, initialUsername]);
+
     const handleSaveProfile = async () => {
+        if (usernameError) {
+            setMessage({ type: 'error', text: 'Please resolve the username error.' });
+            return;
+        }
+
         try {
             const response = await fetch('http://localhost:5000/api/auth/profile', {
                 method: 'PUT',
@@ -163,16 +238,35 @@ const AdminProfile = () => {
                 <div className="row g-4">
                     <div className="col-md-6">
                         <label className="form-label">Username</label>
-                        <div className="input-group">
+                        <div className={`input-group ${usernameError ? 'is-invalid' : (usernameAvailable && profileData.username !== initialUsername ? 'is-valid' : '')}`}>
                             <span className="input-group-text"><i className="bi bi-person"></i></span>
                             <input
                                 type="text"
-                                className="form-control form-control-dark"
+                                className={`form-control form-control-dark ${usernameError ? 'is-invalid' : (usernameAvailable && profileData.username !== initialUsername ? 'is-valid' : '')}`}
                                 value={profileData.username}
-                                onChange={(e) => handleProfileChange('username', e.target.value)}
+                                onChange={(e) => {
+                                    handleProfileChange('username', e.target.value);
+                                    setIsCheckingUsername(true);
+                                }}
                                 disabled={!isEditing}
                             />
                         </div>
+                        {isCheckingUsername && (
+                            <div className="text-secondary mt-1 small">
+                                <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Checking availability...
+                            </div>
+                        )}
+                        {usernameAvailable && !usernameError && profileData.username !== initialUsername && !isCheckingUsername && (
+                            <div className="valid-feedback d-block text-success mt-1">
+                                <i className="bi bi-check-circle me-1"></i> Username is available
+                            </div>
+                        )}
+                        {usernameError && (
+                            <div className="invalid-feedback d-block">
+                                {usernameError}
+                            </div>
+                        )}
                     </div>
                     <div className="col-md-6">
                         <label className="form-label">Email Address</label>
