@@ -2,9 +2,7 @@ const Candidate = require('../models/Candidate');
 const InterviewSession = require('../models/Interview_Session');
 const Company = require('../models/Company');
 const Application = require('../models/Application');
-const IntegrityLog = require('../models/Integrity_Log');
 const JobDescription = require('../models/Job_Description');
-const FinalReport = require('../models/Final_Report');
 const mongoose = require('mongoose');
 
 exports.getDashboardStats = async (req, res) => {
@@ -23,40 +21,53 @@ exports.getDashboardStats = async (req, res) => {
             startOfDay.setHours(0, 0, 0, 0);
             dateFilter = { $gte: startOfDay };
         }
-        // Default to all time if no range or custom logic is needed
+
+        const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+        const interviewDateQuery = Object.keys(dateFilter).length > 0 ? { started_at: dateFilter } : {};
 
         // --- 1. Overview Metrics ---
-        // Parallel Usage promises for performance
+        // Fetch core totals
         const [
             totalCandidates,
-            interviewsConducted,
-            totalApplications,
-            hiredApplications,
-            shortlistedApplications,
-            integrityLogs
+            totalCompanies,
+            totalJobs,
+            interviewsConducted
         ] = await Promise.all([
-            Candidate.countDocuments(),
-            InterviewSession.countDocuments({ session_status: 'completed' }),
-            Application.countDocuments(),
-            Application.countDocuments({ status: 'Hired' }),
-            Application.countDocuments({ status: 'Shortlisted' }),
-            IntegrityLog.find() // Retrieve all for summing (or aggregate if large)
+            Candidate.countDocuments(dateQuery),
+            Company.countDocuments(dateQuery),
+            JobDescription.countDocuments(dateQuery),
+            InterviewSession.countDocuments({ ...interviewDateQuery, session_status: 'completed' })
         ]);
 
-        const totalSuccessful = hiredApplications + shortlistedApplications;
-        const avgSuccessRate = totalApplications > 0 ? ((totalSuccessful / totalApplications) * 100).toFixed(1) : 0;
+        // --- 2. Application Status Overview ---
+        const applicationStats = await Application.aggregate([
+            { $match: dateQuery },
+            { $group: { _id: "$status", count: { $sum: 1 } } }
+        ]);
 
-        const totalIntegrityViolations = integrityLogs.reduce((acc, log) => {
-            return acc + (log.tab_switch_count || 0) + (log.gaze_away_count || 0) + (log.face_absent_count || 0);
-        }, 0);
+        const appStatusMap = {
+            'Applied': 0, 'Shortlisted': 0, 'Interviewing': 0, 'Hired': 0, 'Rejected': 0
+        };
+        applicationStats.forEach(s => {
+            if (s._id in appStatusMap) {
+                appStatusMap[s._id] = s.count;
+            } else if (!s._id) {
+                appStatusMap['Applied'] += s.count; // Default if unassigned
+            }
+        });
 
-        // --- 2. Interview Trends (Last 7 Days generally) ---
-        // Using Aggregation for daily trend
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const applicationStatus = Object.keys(appStatusMap).map(status => ({
+            status,
+            count: appStatusMap[status]
+        }));
+
+        // --- 3. Interview Trends (Last 7 Days generally) ---
+        const daysToLookBack = dateRange === 'last30days' ? 30 : 7;
+        const trendStartDate = new Date();
+        trendStartDate.setDate(trendStartDate.getDate() - daysToLookBack);
 
         const interviewTrends = await InterviewSession.aggregate([
-            { $match: { started_at: { $gte: sevenDaysAgo } } },
+            { $match: { started_at: { $gte: trendStartDate } } },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$started_at" } },
@@ -69,135 +80,53 @@ exports.getDashboardStats = async (req, res) => {
             { $sort: { _id: 1 } }
         ]);
 
-        // Map trend data to frontend format, filling in missing days if needed or just sending as is
-        // For simpler implementation, sending gathered data. 
+        // --- 4. Company Performance ---
+        // Get recent/top 15 companies
+        const companies = await Company.find().sort({ createdAt: -1 }).limit(15);
 
-        // --- 3. Company Performance ---
-        // Limit to top 5-10 for performance if list is long
-        const FinalReport = require('../models/Final_Report'); // Ensure to require this model
-
-        // ... existing code ...
-
-        // --- 3. Company Performance ---
-        // Limit to top 5-10 for performance if list is long
-        const companiesData = await Company.aggregate([
-            {
-                $lookup: {
-                    from: 'job_descriptions',
-                    localField: '_id',
-                    foreignField: 'Fk_company_id',
-                    as: 'jobs'
-                }
-            },
-            {
-                $project: {
-                    name: '$company_name',
-                    jobIds: '$jobs._id'
-                }
-            }
-        ]);
-
-        const enrichedCompanies = await Promise.all(companiesData.map(async (comp) => {
-            const jobIds = comp.jobIds;
+        const enrichedCompanies = await Promise.all(companies.map(async (comp) => {
+            const jobsCount = await JobDescription.countDocuments({ Fk_company_id: comp._id });
+            const jobs = await JobDescription.find({ Fk_company_id: comp._id }).select('_id');
+            const jobIds = jobs.map(j => j._id);
             const interviewCount = await InterviewSession.countDocuments({ fk_job_id: { $in: jobIds } });
             const applicationCount = await Application.countDocuments({ Fk_job_id: { $in: jobIds } });
 
-            // Calculate avg score from FinalReport
-            const reports = await FinalReport.find({ Fk_job_id: { $in: jobIds } });
-            const totalScore = reports.reduce((acc, rep) => acc + (rep.final_trust_score || 0), 0);
-            const avgScore = reports.length > 0 ? Math.round(totalScore / reports.length) : 0;
-
-            // Violations calculation
-            const sessions = await InterviewSession.find({ fk_job_id: { $in: jobIds } }).select('_id');
-            const sessionIds = sessions.map(s => s._id);
-            const violations = await IntegrityLog.aggregate([
-                { $match: { Fk_session_id: { $in: sessionIds } } },
-                { $group: { _id: null, total: { $sum: { $add: ["$tab_switch_count", "$gaze_away_count", "$face_absent_count"] } } } }
-            ]);
-
             return {
-                name: comp.name,
+                name: comp.company_name,
+                totalJobs: jobsCount,
                 interviews: interviewCount,
-                candidates: applicationCount,
-                avgScore: avgScore,
-                violations: violations[0]?.total || 0
+                candidates: applicationCount
             };
         }));
 
-        // --- 4. Skills Analysis ---
+        // Sort by most active (jobs + interviews)
+        enrichedCompanies.sort((a, b) => (b.totalJobs + b.interviews) - (a.totalJobs + a.interviews));
+
+        // --- 5. Skills Analysis ---
         const skillsAnalysis = await JobDescription.aggregate([
+            { $match: dateQuery },
             { $unwind: "$skills" },
             { $group: { _id: "$skills", demand: { $sum: 1 } } },
             { $sort: { demand: -1 } },
-            { $limit: 7 }
+            { $limit: 10 }
         ]);
-
-        // Enrich skills with data (this is expensive potentially, simplified here)
-        // Ideally we'd aggregate FinalReports -> Job -> Skills, but that's complex.
-        // For now, we will leave score as 0 if not easily linked, OR attempt a rough avg.
-        // Let's settle for 0 to show real data (or lack thereof) rather than fake.
 
         const enrichedSkills = skillsAnalysis.map(r => ({
             skill: r._id,
-            demand: r.demand,
-            avgScore: 0, // Real calculation requires complex join: Report -> Job -> unwind skills -> group.
-            passRate: 0  // Placeholder for now, removing random.
+            demand: r.demand
         }));
-
-        // --- 5. Hiring Funnel ---
-        const funnelStats = await Application.aggregate([
-            { $group: { _id: "$status", count: { $sum: 1 } } }
-        ]);
-
-        // Map to specific stages required by frontend
-        const totalApps = funnelStats.reduce((acc, curr) => acc + curr.count, 0);
-        const funnelMap = {
-            'Applied': 0, 'Shortlisted': 0, 'Interviewing': 0, 'Hired': 0, 'Rejected': 0
-        };
-        funnelStats.forEach(s => funnelMap[s._id] = s.count);
-
-        // Construct funnel array
-        const hiringFunnel = [
-            { stage: 'Total Applications', count: totalApps, percentage: 100 },
-            { stage: 'Resume Screened', count: totalApps - (funnelMap['Rejected'] || 0), percentage: totalApps ? Math.round(((totalApps - (funnelMap['Rejected'] || 0)) / totalApps) * 100) : 0 },
-            { stage: 'Interview Completed', count: interviewsConducted, percentage: totalApps ? Math.round((interviewsConducted / totalApps) * 100) : 0 },
-            { stage: 'Passed Integrity', count: interviewsConducted - (Math.round(totalIntegrityViolations / 5)), percentage: totalApps ? Math.round(((interviewsConducted - (totalIntegrityViolations / 5)) / totalApps) * 100) : 0 }, // Rough estimate
-            { stage: 'Shortlisted', count: funnelMap['Shortlisted'], percentage: totalApps ? Math.round((funnelMap['Shortlisted'] / totalApps) * 100) : 0 }
-        ];
-
-
-        // --- 6. Integrity Metrics Breakdown ---
-        const integrityBreakdown = await IntegrityLog.aggregate([
-            {
-                $group: {
-                    _id: null,
-                    tabSwitch: { $sum: "$tab_switch_count" },
-                    gazeAway: { $sum: "$gaze_away_count" },
-                    faceAbsent: { $sum: "$face_absent_count" },
-                    total: { $sum: { $add: ["$tab_switch_count", "$gaze_away_count", "$face_absent_count"] } }
-                }
-            }
-        ]);
-
-        const iMetrics = integrityBreakdown[0] || { tabSwitch: 0, gazeAway: 0, faceAbsent: 0, total: 1 };
-        const integrityMetrics = [
-            { type: 'Tab Switching', count: iMetrics.tabSwitch, percentage: ((iMetrics.tabSwitch / (iMetrics.total || 1)) * 100).toFixed(1) },
-            { type: 'Gaze Aversion', count: iMetrics.gazeAway, percentage: ((iMetrics.gazeAway / (iMetrics.total || 1)) * 100).toFixed(1) },
-            { type: 'Presence Anomaly', count: iMetrics.faceAbsent, percentage: ((iMetrics.faceAbsent / (iMetrics.total || 1)) * 100).toFixed(1) }
-        ];
 
         res.status(200).json({
             overview: {
                 totalCandidates,
-                interviewsConducted,
-                avgSuccessRate: `${avgSuccessRate}%`,
-                integrityViolations: totalIntegrityViolations
+                totalCompanies,
+                totalJobs,
+                interviewsConducted
             },
+            applicationStatus,
             interviewTrends,
             companiesData: enrichedCompanies,
-            skillsAnalysis: enrichedSkills,
-            hiringFunnel,
-            integrityMetrics
+            skillsAnalysis: enrichedSkills
         });
 
     } catch (error) {
