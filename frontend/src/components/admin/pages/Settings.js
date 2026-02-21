@@ -11,6 +11,15 @@ const Settings = () => {
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    // Password State
+    const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
+    const [passwordLoading, setPasswordLoading] = useState(false);
+
     useEffect(() => {
         fetchSettings();
     }, []);
@@ -60,6 +69,54 @@ const Settings = () => {
         } catch (error) {
             console.error('Error saving settings:', error);
             alert('Failed to save settings');
+        }
+    };
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault();
+
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            setPasswordMessage({ type: 'error', text: 'New passwords do not match' });
+            return;
+        }
+
+        if (passwordData.newPassword.length < 6) {
+            setPasswordMessage({ type: 'error', text: 'Password must be at least 6 characters' });
+            return;
+        }
+
+        setPasswordLoading(true);
+        setPasswordMessage({ type: '', text: '' });
+
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+
+            const response = await fetch('http://localhost:5000/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    currentPassword: passwordData.currentPassword,
+                    newPassword: passwordData.newPassword
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setTimeout(() => setPasswordMessage({ type: '', text: '' }), 5000);
+            } else {
+                setPasswordMessage({ type: 'error', text: data.message || 'Failed to change password' });
+            }
+        } catch (error) {
+            console.error('Password change error:', error);
+            setPasswordMessage({ type: 'error', text: 'Server error changing password' });
+        } finally {
+            setPasswordLoading(false);
         }
     };
 
@@ -114,6 +171,64 @@ const Settings = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Security Section (Change Password) */}
+                <div className="col-lg-12">
+                    <div className="dashboard-card mb-4">
+                        <div className="card-header-custom">
+                            <h5 className="card-title mb-0">Security Settings</h5>
+                        </div>
+                        <div className="p-4">
+                            <form onSubmit={handlePasswordChange}>
+                                {passwordMessage.text && (
+                                    <div className={`alert alert-${passwordMessage.type === 'success' ? 'success' : 'danger'} mb-4`}>
+                                        {passwordMessage.text}
+                                    </div>
+                                )}
+
+                                <div className="form-group mb-3">
+                                    <label>Current Password</label>
+                                    <input
+                                        type="password"
+                                        className="form-control form-control-dark"
+                                        value={passwordData.currentPassword}
+                                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="row">
+                                    <div className="col-md-6 form-group mb-3">
+                                        <label>New Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control form-control-dark"
+                                            value={passwordData.newPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-6 form-group mb-3">
+                                        <label>Confirm New Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control form-control-dark"
+                                            value={passwordData.confirmPassword}
+                                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="d-flex justify-content-end mt-3">
+                                    <button type="submit" className="btn btn-primary" disabled={passwordLoading}>
+                                        {passwordLoading ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

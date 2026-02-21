@@ -107,10 +107,16 @@ const AdminLayout = () => {
             badge: null
         },
         {
-            title: 'System Settings',
+            title: 'Settings',
             icon: 'bi-gear',
             path: '/admin/settings',
             badge: null
+        },
+        {
+            title:'My Profile',
+            icon:'bi-person',
+            path:'/admin/profile',
+            badge:null
         },
         {
             title: 'Logs & Audit',
