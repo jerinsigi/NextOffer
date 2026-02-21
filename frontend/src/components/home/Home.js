@@ -7,11 +7,13 @@ import { TestimonialsColumns } from './TestimonialsColumns';
 import { LogoCloud } from '../ui/LogoCloud';
 import Footer from '../common/Footer';
 import Navbar from '../common/Navbar';
+import Loader from '../common/Loader';
 
 class Home extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
+            pageLoading: true,
             scrolled: false,
             activeSection: 'home',
             contactForm: {
@@ -29,14 +31,19 @@ class Home extends PureComponent {
     }
 
     componentDidMount() {
-        initAnimations();
         window.addEventListener('scroll', this.handleScroll);
 
-        // Handle initial hash scroll with retry
-        if (this.props.location && this.props.location.hash) {
-            const id = this.props.location.hash.substring(1);
-            this.scrollToSection(id);
-        }
+        // Simulate a brief loading state for the home page to ensure assets and animations are ready
+        setTimeout(() => {
+            this.setState({ pageLoading: false }, () => {
+                initAnimations();
+                // Handle initial hash scroll with retry after loading
+                if (this.props.location && this.props.location.hash) {
+                    const id = this.props.location.hash.substring(1);
+                    this.scrollToSection(id);
+                }
+            });
+        }, 800);
     }
 
     scrollToSection = (id, attempt = 0) => {
@@ -150,7 +157,12 @@ class Home extends PureComponent {
     };
 
     render() {
-        const { activeSection } = this.state;
+        const { activeSection, pageLoading } = this.state;
+
+        if (pageLoading) {
+            return <Loader />;
+        }
+
         return (
             <div className="d-flex flex-column min-vh-100 position-relative overflow-hidden">
 

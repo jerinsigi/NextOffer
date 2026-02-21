@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { initAnimations } from '../../assets/js/animations';
 import Navbar from '../common/Navbar';
 import Footer from '../common/Footer';
+import Loader from '../common/Loader';
 import { auth, googleProvider } from '../../firebase';
 import { signInWithPopup } from 'firebase/auth';
 
@@ -13,13 +14,23 @@ const Login = () => {
         password: ''
     });
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [rememberMe, setRememberMe] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        initAnimations();
+        const timer = setTimeout(() => {
+            setPageLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (!pageLoading) {
+            initAnimations();
+        }
+    }, [pageLoading]);
 
     const handleChange = (e) => {
         setFormData({
@@ -158,160 +169,163 @@ const Login = () => {
             {/* Spacer for fixed navbar */}
             <div style={{ height: '80px' }}></div>
 
-            {/* Login Section */}
-            <div className="flex-grow-1 d-flex align-items-center py-5">
-                <div className="container">
-                    <div className="row justify-content-center">
-                        <div className="col-lg-5 col-md-7">
-                            {/* Login Card */}
-                            <div className="glass-card p-5 rounded-4 shadow-lg animate-on-scroll">
-                                {/* Header with Message */}
-                                <div className="text-center mb-4">
-                                    <div className="mb-3">
-                                        <div className="icon-box bg-primary bg-opacity-20 text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                                            <i className="bi bi-person-lock fs-3"></i>
+            {pageLoading ? (
+                <Loader />
+            ) : (
+                <div className="flex-grow-1 d-flex align-items-center py-5">
+                    <div className="container">
+                        <div className="row justify-content-center">
+                            <div className="col-lg-5 col-md-7">
+                                {/* Login Card */}
+                                <div className="glass-card p-5 rounded-4 shadow-lg animate-on-scroll">
+                                    {/* Header with Message */}
+                                    <div className="text-center mb-4">
+                                        <div className="mb-3">
+                                            <div className="icon-box bg-primary bg-opacity-20 text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                                <i className="bi bi-person-lock fs-3"></i>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <h2 className="fw-bold text-light mb-2">Welcome Back</h2>
-                                    <p className="text-muted">Sign in to continue to NextOffer</p>
+                                        <h2 className="fw-bold text-light mb-2">Welcome Back</h2>
+                                        <p className="text-muted">Sign in to continue to NextOffer</p>
 
-                                    {/* Success/Error/Warning Message */}
-                                    {message.text && (
-                                        <div className={`alert ${message.type === 'success' ? 'alert-success' : message.type === 'warning' ? 'alert-warning' : 'alert-danger'} mt-3`} role="alert">
-                                            <i className={`bi ${message.type === 'success' ? 'bi-check-circle' : message.type === 'warning' ? 'bi-exclamation-circle' : 'bi-exclamation-triangle'} me-2`}></i>
-                                            {message.text}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Login Form */}
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-4">
-                                        <label className="form-label text-light small fw-bold mb-2">
-                                            <i className="bi bi-envelope me-2"></i>Email or Username
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="email"
-                                            className="form-control form-control-dark p-3 rounded-3"
-                                            placeholder="Enter your email or username"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <label className="form-label text-light small fw-bold mb-2">
-                                            <i className="bi bi-lock me-2"></i>Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            className="form-control form-control-dark p-3 rounded-3"
-                                            placeholder="Enter your password"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-
-                                    {/* Remember & Forgot */}
-                                    <div className="d-flex justify-content-between align-items-center mb-4">
-                                        <div className="form-check">
-                                            <input
-                                                className="form-check-input"
-                                                type="checkbox"
-                                                id="rememberMe"
-                                                checked={rememberMe}
-                                                onChange={(e) => setRememberMe(e.target.checked)}
-                                            />
-                                            <label className="form-check-label text-light small" htmlFor="rememberMe">
-                                                Remember me
-                                            </label>
-                                        </div>
-                                        <Link to="/forgot-password" className="text-primary text-decoration-none small">
-                                            Forgot Password?
-                                        </Link>
-                                    </div>
-
-                                    {/* Submit Button */}
-                                    <button
-                                        type="submit"
-                                        className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg mb-3"
-                                        disabled={loading}
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Signing in...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i className="bi bi-box-arrow-in-right me-2"></i>Sign In
-                                            </>
+                                        {/* Success/Error/Warning Message */}
+                                        {message.text && (
+                                            <div className={`alert ${message.type === 'success' ? 'alert-success' : message.type === 'warning' ? 'alert-warning' : 'alert-danger'} mt-3`} role="alert">
+                                                <i className={`bi ${message.type === 'success' ? 'bi-check-circle' : message.type === 'warning' ? 'bi-exclamation-circle' : 'bi-exclamation-triangle'} me-2`}></i>
+                                                {message.text}
+                                            </div>
                                         )}
-                                    </button>
-
-                                    {/* Divider */}
-                                    <div className="position-relative my-4">
-                                        <hr className="text-muted" />
-                                        <span className="position-absolute top-50 start-50 translate-middle bg-dark px-3 text-muted small">
-                                            or continue with
-                                        </span>
                                     </div>
 
-                                    {/* Social Login */}
-                                    <div className="row g-2 mb-4">
-                                        <div className="col-6">
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-light w-100 py-2 rounded-3"
-                                                onClick={handleGoogleSignIn}
-                                                disabled={loading}
-                                            >
-                                                <i className="bi bi-google me-2"></i>Google
-                                            </button>
+                                    {/* Login Form */}
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="mb-4">
+                                            <label className="form-label text-light small fw-bold mb-2">
+                                                <i className="bi bi-envelope me-2"></i>Email or Username
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="email"
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                placeholder="Enter your email or username"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required
+                                            />
                                         </div>
-                                        <div className="col-6">
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-light w-100 py-2 rounded-3"
-                                            >
-                                                <i className="bi bi-microsoft me-2"></i>Microsoft
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
 
-                                {/* Sign Up Link */}
-                                <div className="text-center pt-3 border-top border-secondary">
-                                    <p className="text-muted small mb-2">
-                                        Don't have an account?
-                                        <Link to="/register" className="text-primary text-decoration-none ms-1 fw-bold">
-                                            Sign Up
-                                        </Link>
-                                    </p>
-                                    <p className="text-muted small mb-0">
-                                        Want to hire talent?
-                                        <Link to="/company/register" className="text-info text-decoration-none ms-1 fw-bold">
-                                            Register Company
-                                        </Link>
-                                    </p>
+                                        <div className="mb-4">
+                                            <label className="form-label text-light small fw-bold mb-2">
+                                                <i className="bi bi-lock me-2"></i>Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                name="password"
+                                                className="form-control form-control-dark p-3 rounded-3"
+                                                placeholder="Enter your password"
+                                                value={formData.password}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
+
+                                        {/* Remember & Forgot */}
+                                        <div className="d-flex justify-content-between align-items-center mb-4">
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rememberMe"
+                                                    checked={rememberMe}
+                                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                                />
+                                                <label className="form-check-label text-light small" htmlFor="rememberMe">
+                                                    Remember me
+                                                </label>
+                                            </div>
+                                            <Link to="/forgot-password" className="text-primary text-decoration-none small">
+                                                Forgot Password?
+                                            </Link>
+                                        </div>
+
+                                        {/* Submit Button */}
+                                        <button
+                                            type="submit"
+                                            className="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg mb-3"
+                                            disabled={loading}
+                                        >
+                                            {loading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Signing in...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-box-arrow-in-right me-2"></i>Sign In
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {/* Divider */}
+                                        <div className="position-relative my-4">
+                                            <hr className="text-muted" />
+                                            <span className="position-absolute top-50 start-50 translate-middle bg-dark px-3 text-muted small">
+                                                or continue with
+                                            </span>
+                                        </div>
+
+                                        {/* Social Login */}
+                                        <div className="row g-2 mb-4">
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-light w-100 py-2 rounded-3"
+                                                    onClick={handleGoogleSignIn}
+                                                    disabled={loading}
+                                                >
+                                                    <i className="bi bi-google me-2"></i>Google
+                                                </button>
+                                            </div>
+                                            <div className="col-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-light w-100 py-2 rounded-3"
+                                                >
+                                                    <i className="bi bi-microsoft me-2"></i>Microsoft
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    {/* Sign Up Link */}
+                                    <div className="text-center pt-3 border-top border-secondary">
+                                        <p className="text-muted small mb-2">
+                                            Don't have an account?
+                                            <Link to="/register" className="text-primary text-decoration-none ms-1 fw-bold">
+                                                Sign Up
+                                            </Link>
+                                        </p>
+                                        <p className="text-muted small mb-0">
+                                            Want to hire talent?
+                                            <Link to="/company/register" className="text-info text-decoration-none ms-1 fw-bold">
+                                                Register Company
+                                            </Link>
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* Security Badge */}
-                            <div className="text-center mt-4 animate-on-scroll delay-100">
-                                <small className="text-light opacity-75">
-                                    <i className="bi bi-shield-check me-2"></i>
-                                    Your data is secure with 256-bit encryption
-                                </small>
+                                {/* Security Badge */}
+                                <div className="text-center mt-4 animate-on-scroll delay-100">
+                                    <small className="text-light opacity-75">
+                                        <i className="bi bi-shield-check me-2"></i>
+                                        Your data is secure with 256-bit encryption
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Footer */}
             <Footer />
