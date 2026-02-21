@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Support.css';
+import Loader from '../../common/Loader';
 
 const Support = () => {
     const [activeTab, setActiveTab] = useState('tickets');
@@ -183,6 +184,10 @@ const Support = () => {
             ></i>
         ));
     };
+
+    if (loading) {
+        return <Loader />;
+    }
 
     return (
         <div className="dashboard-container">

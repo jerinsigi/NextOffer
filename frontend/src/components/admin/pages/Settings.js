@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../common/dashboard/Settings.css';
 import axios from 'axios';
+import Loader from '../../common/Loader';
 
 const Settings = () => {
     const [settings, setSettings] = useState({
@@ -121,7 +122,7 @@ const Settings = () => {
     };
 
     if (loading) {
-        return <div className="text-center p-5"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div></div>;
+        return <Loader />;
     }
 
     return (
@@ -174,7 +175,7 @@ const Settings = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Security Section (Change Password) */}
                 <div className="col-lg-12">
                     <div className="dashboard-card mb-4">

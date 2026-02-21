@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './JobCategories.css';
+import Loader from '../../common/Loader';
 
 const JobCategories = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -139,16 +140,7 @@ const JobCategories = () => {
     };
 
     if (loading) {
-        return (
-            <div className="dashboard-container">
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3">Loading categories...</p>
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     return (
@@ -174,7 +166,7 @@ const JobCategories = () => {
                 </div>
             )}
 
-            
+
 
             {/* Categories Table */}
             <div className="dashboard-card">

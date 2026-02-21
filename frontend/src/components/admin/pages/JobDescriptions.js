@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './JobDescriptions.css';
+import Loader from '../../common/Loader';
 
 const JobDescriptions = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -33,7 +34,7 @@ const JobDescriptions = () => {
         }
     };
 
-    const companies = ['All Companies', ...new Set(jobsData.map(job => 
+    const companies = ['All Companies', ...new Set(jobsData.map(job =>
         job.Fk_company_id?.company_name || 'Unknown Company'
     ))];
 
@@ -160,16 +161,7 @@ const JobDescriptions = () => {
     };
 
     if (loading) {
-        return (
-            <div className="dashboard-container">
-                <div className="text-center py-5">
-                    <div className="spinner-border text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                    <p className="mt-3">Loading job descriptions...</p>
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     if (error) {

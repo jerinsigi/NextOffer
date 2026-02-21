@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './Users.css'; const Skills = () => {
+import './Users.css';
+import Loader from '../../common/Loader';
+
+const Skills = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -100,11 +103,7 @@ import './Users.css'; const Skills = () => {
     return (
         <div className="dashboard-container">
             {loading ? (
-                <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
-                        <span className="visually-hidden">Loading...</span>
-                    </div>
-                </div>
+                <Loader />
             ) : (
                 <>
                     <div className="page-header mb-4">

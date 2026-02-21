@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './AdminProfile.css';
+import Loader from '../../common/Loader';
 
 const AdminProfile = () => {
     const [isEditing, setIsEditing] = useState(false);
@@ -100,7 +101,7 @@ const AdminProfile = () => {
         }
     };
 
-    if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
+    if (loading) return <Loader />;
 
     // Helper to get initials for avatar
     const getInitials = (name) => {

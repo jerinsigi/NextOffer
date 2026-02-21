@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../../common/dashboard/Dashboard.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Loader from '../../common/Loader';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -46,6 +47,10 @@ const Dashboard = () => {
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
         return date.toLocaleDateString();
     };
+
+    if (loading) {
+        return <Loader />;
+    }
 
     return (
         <div className="dashboard-container">

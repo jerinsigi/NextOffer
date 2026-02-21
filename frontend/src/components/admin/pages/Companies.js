@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Users.css';
+import Loader from '../../common/Loader';
 
 const Companies = () => {
     const [companies, setCompanies] = useState([]);
@@ -8,6 +9,7 @@ const Companies = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [currentCompany, setCurrentCompany] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [pageLoading, setPageLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All Status');
 
@@ -30,12 +32,15 @@ const Companies = () => {
     }, []);
 
     const fetchCompanies = async () => {
+        setPageLoading(true);
         try {
             const response = await fetch(API_URL);
             const data = await response.json();
             setCompanies(data);
         } catch (error) {
             console.error('Error fetching companies:', error);
+        } finally {
+            setPageLoading(false);
         }
     };
 
@@ -148,6 +153,10 @@ const Companies = () => {
 
         return matchesSearch && matchesStatus;
     });
+
+    if (pageLoading) {
+        return <Loader />;
+    }
 
     return (
         <div className="dashboard-container">

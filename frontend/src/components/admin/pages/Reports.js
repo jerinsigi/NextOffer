@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Reports.css';
 import axios from 'axios';
+import Loader from '../../common/Loader';
 
 const Reports = () => {
     const [dateRange, setDateRange] = useState('last7days');
@@ -46,13 +47,7 @@ const Reports = () => {
     };
 
     if (loading) {
-        return (
-            <div className="dashboard-container d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
+        return <Loader />;
     }
 
     const { overview, interviewTrends, companiesData, skillsAnalysis, applicationStatus } = stats;
