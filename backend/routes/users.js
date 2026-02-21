@@ -11,6 +11,7 @@ router.put('/admin/users/:userId/suspend', userController.suspendUser);
 router.put('/admin/users/:userId/activate', userController.activateUser);
 router.delete('/admin/users/:userId', userController.deleteUser);
 router.post('/admin/users/:userId/reset-password', userController.resetUserPassword);
+router.post('/admin/users/admin', userController.addAdmin);
 
 // Get Profile
 router.post('/profile', userController.getProfile);

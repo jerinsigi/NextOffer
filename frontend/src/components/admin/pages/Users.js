@@ -3,19 +3,14 @@ import './Users.css';
 
 const Users = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('all');
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [roleFilter, setRoleFilter] = useState('All Roles');
+    const [statusFilter, setStatusFilter] = useState('All Status');
     const [selectedUser, setSelectedUser] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showViewModal, setShowViewModal] = useState(false);
     const [usersData, setUsersData] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statistics, setStatistics] = useState({
-        total: 0,
-        active: 0,
-        suspended: 0,
-        newThisMonth: 0
-    });
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -33,10 +28,9 @@ const Users = () => {
             setLoading(true);
             const response = await fetch('/api/users/admin/users');
             const data = await response.json();
-            
+
             if (response.ok) {
                 setUsersData(data.users);
-                setStatistics(data.statistics);
             } else {
                 console.error('Failed to fetch users:', data.message);
             }
@@ -50,77 +44,24 @@ const Users = () => {
     const filteredUsers = usersData.filter(user => {
         const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.company.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+            (user.company && user.company.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesRole = roleFilter === 'All Roles' || user.role === roleFilter;
+        const matchesStatus = statusFilter === 'All Status' || user.status === statusFilter;
         return matchesSearch && matchesRole && matchesStatus;
     });
 
     const getStatusBadge = (status) => {
-        const badges = {
-            'Active': 'status-badge-active',
-            'Inactive': 'status-badge-inactive',
-            'Suspended': 'status-badge-suspended'
-        };
-        return badges[status] || 'status-badge-inactive';
+        switch (status) {
+            case 'Active': return 'bg-success';
+            case 'Suspended': return 'bg-danger';
+            case 'Inactive': return 'bg-secondary';
+            default: return 'bg-secondary';
+        }
     };
 
-    const getRoleBadge = (role) => {
-        const badges = {
-            'Candidate': 'role-badge-candidate',
-            'HR Manager': 'role-badge-hr',
-            'Recruiter': 'role-badge-recruiter',
-            'Company Admin': 'role-badge-admin'
-        };
-        return badges[role] || 'role-badge-candidate';
-    };
-
-    const handleUserClick = (user) => {
+    const handleViewClick = (user) => {
         setSelectedUser(user);
-    };
-
-    const handleSuspendUser = async (userId) => {
-        try {
-            const response = await fetch(`/api/users/admin/users/${userId}/suspend`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                alert('User suspended successfully');
-                fetchUsers();
-            } else {
-                const data = await response.json();
-                alert(`Failed to suspend user: ${data.message}`);
-            }
-        } catch (error) {
-            console.error('Error suspending user:', error);
-            alert('Failed to suspend user');
-        }
-    };
-
-    const handleActivateUser = async (userId) => {
-        try {
-            const response = await fetch(`/api/users/admin/users/${userId}/activate`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                alert('User activated successfully');
-                fetchUsers();
-            } else {
-                const data = await response.json();
-                alert(`Failed to activate user: ${data.message}`);
-            }
-        } catch (error) {
-            console.error('Error activating user:', error);
-            alert('Failed to activate user');
-        }
+        setShowViewModal(true);
     };
 
     const handleDeleteUser = async (userId) => {
@@ -129,10 +70,11 @@ const Users = () => {
                 const response = await fetch(`/api/users/admin/users/${userId}`, {
                     method: 'DELETE'
                 });
-                
+
                 if (response.ok) {
                     alert('User deleted successfully');
                     setSelectedUser(null);
+                    setShowViewModal(false);
                     fetchUsers();
                 } else {
                     const data = await response.json();
@@ -151,31 +93,10 @@ const Users = () => {
             name: user.name,
             email: user.email,
             role: user.role,
-            company: user.company,
+            company: user.company || '',
             status: user.status
         });
         setShowEditModal(true);
-    };
-
-    const handleResetPassword = async (userId) => {
-        try {
-            const response = await fetch(`/api/users/admin/users/${userId}/reset-password`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.ok) {
-                alert('Password reset email sent successfully');
-            } else {
-                const data = await response.json();
-                alert(`Failed to send reset email: ${data.message}`);
-            }
-        } catch (error) {
-            console.error('Error sending password reset:', error);
-            alert('Failed to send password reset email');
-        }
     };
 
     const handleAddUser = () => {
@@ -195,463 +116,438 @@ const Users = () => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    };
+    const handleSubmitAddEdit = async (e) => {
+        e.preventDefault();
 
-    const formatDateTime = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
+        try {
+            if (showEditModal) {
+                // Determine the correct endpoint based on status
+                let endpoint = '';
+                if (formData.status === 'suspended') {
+                    endpoint = `/api/users/admin/users/${selectedUser.id}/suspend`;
+                } else if (formData.status === 'active') {
+                    endpoint = `/api/users/admin/users/${selectedUser.id}/activate`;
+                } else {
+                    alert('Currently only Active and Suspended status changes are supported via this modal directly');
+                    return;
+                }
 
+                if (endpoint) {
+                    const response = await fetch(endpoint, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('User status updated successfully!');
+                        fetchUsers();
+                        setShowEditModal(false);
+                    } else {
+                        const data = await response.json();
+                        alert(`Failed to update user status: ${data.message || 'Unknown error'}`);
+                    }
+                }
+            } else {
+                // Add new Admin user
+                const response = await fetch('/api/users/admin/users/admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: formData.name,
+                        email: formData.email
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Admin user added successfully!');
+                    fetchUsers();
+                    setShowAddModal(false);
+                } else {
+                    const data = await response.json();
+                    alert(`Failed to add admin user: ${data.message || 'Unknown error'}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred while saving.');
+        }
+    };
 
     return (
         <div className="dashboard-container">
             {loading ? (
-                <div className="loading-container">
-                    <div className="spinner-border text-primary" role="status">
+                <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
             ) : (
                 <>
-                        <div className="page-header mb-4">
-                <div>
-                    <h1 className="page-title">User Management</h1>
-                    <p className="text-muted">Manage all users, roles, and permissions</p>
-                </div>
-                <div className="header-actions">
-                    <button className="btn btn-primary" onClick={handleAddUser}>
-                        <i className="bi bi-plus-circle me-2"></i>Add New User
-                    </button>
-                </div>
-            </div>
+                    <div className="page-header mb-4">
+                        <div className="d-flex justify-content-between align-items-center w-100 flex-wrap">
+                            <div>
+                                <h1 className="page-title">User Management</h1>
+                                <p className="text-muted">Manage all users, roles, and permissions</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={handleAddUser}>
+                                <i className="bi bi-plus-circle me-2"></i>Add New Admin
+                            </button>
+                        </div>
+                    </div>
 
-            {/* Stats Cards */}
-            <div className="row g-4 mb-4">
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-people fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Total Users</div>
-                            <div className="stat-value">{statistics.total.toLocaleString()}</div>
-                            <div className="stat-trend text-muted">
-                                <i className="bi bi-info-circle"></i> All registered users
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-person-check fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Active Users</div>
-                            <div className="stat-value">{statistics.active.toLocaleString()}</div>
-                            <div className="stat-trend text-success">
-                                <i className="bi bi-check-circle"></i> {statistics.total > 0 ? ((statistics.active / statistics.total) * 100).toFixed(1) : 0}% active rate
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-person-x fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Suspended Users</div>
-                            <div className="stat-value">{statistics.suspended.toLocaleString()}</div>
-                            <div className="stat-trend text-muted">
-                                <i className="bi bi-ban"></i> Temporarily blocked
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-person-plus fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">New This Month</div>
-                            <div className="stat-value">{statistics.newThisMonth.toLocaleString()}</div>
-                            <div className="stat-trend text-muted">
-                                <i className="bi bi-calendar"></i> Recent signups
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* User Table */}
-            <div className="dashboard-card">
-                <div className="card-header-custom">
-                    <h5 className="card-title mb-0">All Users</h5>
-                    <div className="users-filters">
-                        <div className="search-box">
-                            <i className="bi bi-search"></i>
-                            <input
-                                type="text"
-                                className="form-control-dark"
-                                placeholder="Search users..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <select
-                            className="form-select-dark"
-                            value={roleFilter}
-                            onChange={(e) => setRoleFilter(e.target.value)}
-                        >
-                            <option value="all">All Roles</option>
-                            <option value="Candidate">Candidate</option>
-                            <option value="HR Manager">HR Manager</option>
-                            <option value="Recruiter">Recruiter</option>
-                            <option value="Company Admin">Company Admin</option>
-                        </select>
-                        <select
-                            className="form-select-dark"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                            <option value="Suspended">Suspended</option>
-                        </select>
-                    </div>
-                </div>
-                <div className="users-content">
-                    <div className="users-table-wrapper">
-                        <table className="users-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Company</th>
-                                    <th>Status</th>
-                                    <th>Last Login</th>
-                                    <th>Interviews</th>
-                                    <th>Violations</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredUsers.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>
-                                            <i className="bi bi-inbox" style={{ fontSize: '3rem', color: 'var(--text-muted)' }}></i>
-                                            <p className="mt-3 text-muted">No users found</p>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredUsers.map(user => (
-                                    <tr
-                                        key={user.id}
-                                        onClick={() => handleUserClick(user)}
-                                        className={selectedUser?.id === user.id ? 'selected' : ''}
+                    <div className="dashboard-card">
+                        <div className="card-header-custom">
+                            <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap w-100">
+                                <input
+                                    type="text"
+                                    className="form-control form-control-dark"
+                                    placeholder="Search users..."
+                                    style={{ maxWidth: '400px' }}
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <div className="d-flex gap-2" style={{ flexWrap: 'wrap' }}>
+                                    <select
+                                        className="form-select form-select-dark"
+                                        style={{ maxWidth: '200px' }}
+                                        value={roleFilter}
+                                        onChange={(e) => setRoleFilter(e.target.value)}
                                     >
-                                        <td>
-                                            <div className="user-info">
-                                                <div className="user-avatar">{getInitials(user.name)}</div>
-                                                <span className="user-name">{user.name || 'N/A'}</span>
+                                        <option value="All Roles">All Roles</option>
+                                        <option value="Candidate">Candidate</option>
+                                        <option value="Admin">Admin</option>
+                                    </select>
+                                    <select
+                                        className="form-select form-select-dark"
+                                        style={{ maxWidth: '200px' }}
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                    >
+                                        <option value="All Status">All Status</option>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Suspended">Suspended</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="table-responsive">
+                            <table className="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Company</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredUsers.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center p-5">
+                                                <i className="bi bi-inbox fs-1 text-muted"></i>
+                                                <p className="mt-3 text-muted">No users found</p>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredUsers.map(user => (
+                                            <tr key={user.id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="company-avatar rounded-circle d-flex align-items-center justify-content-center me-2" style={{ overflow: 'hidden' }}>
+                                                            {user.image_url ? (
+                                                                <img src={`http://localhost:5000${user.image_url}`} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                getInitials(user.name)
+                                                            )}
+                                                        </div>
+                                                        <span className="fw-bold">{user.name || 'N/A'}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{user.email}</td>
+                                                <td>{user.role}</td>
+                                                <td>{user.company || '-'}</td>
+                                                <td>
+                                                    <span className={`badge ${getStatusBadge(user.status)}`}>
+                                                        {user.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex gap-2">
+                                                        <button className="btn btn-sm btn-outline-info" onClick={() => handleViewClick(user)} title="View Details">
+                                                            <i className="bi bi-eye"></i>
+                                                        </button>
+                                                        <button className="btn btn-sm btn-outline-warning" onClick={() => handleEditUser(user)} title="Edit User">
+                                                            <i className="bi bi-pencil"></i>
+                                                        </button>
+
+                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteUser(user.id)} title="Delete User">
+                                                            <i className="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* View Modal */}
+                    {showViewModal && selectedUser && (
+                        <div className="modal fade show d-block modal-extra-wide" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                            <div className="modal-dialog modal-dialog-centered modal-xl">
+                                <div className="modal-content bg-dark text-white">
+                                    <div className="modal-header border-secondary">
+                                        <h5 className="modal-title">User Details</h5>
+                                        <button type="button" className="btn-close btn-close-white" onClick={() => setShowViewModal(false)}></button>
+                                    </div>
+                                    <div className="modal-body">
+                                        <div className="row">
+                                            <div className="col-md-4 text-center mb-4 mb-md-0">
+                                                <div className="d-flex flex-column align-items-center">
+                                                    <div className="company-avatar-large rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '120px', height: '120px', fontSize: '2.5rem', overflow: 'hidden' }}>
+                                                        {selectedUser.image_url ? (
+                                                            <img src={`http://localhost:5000${selectedUser.image_url}`} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            getInitials(selectedUser.name)
+                                                        )}
+                                                    </div>
+                                                    <h4 className="mb-1">{selectedUser.name || 'N/A'}</h4>
+                                                    <span className={`badge ${getStatusBadge(selectedUser.status)}`}>
+                                                        {selectedUser.status}
+                                                    </span>
+
+                                                    <div className="mt-4 pt-4 border-top border-secondary w-100">
+                                                        <div className="d-flex justify-content-around">
+                                                            <div>
+                                                                <h4 className="mb-0 text-primary">{selectedUser.interviews || 0}</h4>
+                                                                <small className="text-muted">Interviews</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </td>
-                                        <td>{user.email}</td>
-                                        <td>
-                                            <span className={`role-badge ${getRoleBadge(user.role)}`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td>{user.company || 'N/A'}</td>
-                                        <td>
-                                            <span className={`status-badge ${getStatusBadge(user.status)}`}>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td>{formatDateTime(user.lastLogin)}</td>
-                                        <td>
-                                            <span className="interview-count">{user.interviews || 0}</span>
-                                        </td>
-                                        <td>
-                                            {user.violationCount > 0 ? (
-                                                <span className="violation-count danger">
-                                                    {user.violationCount}
-                                                </span>
-                                            ) : (
-                                                <span className="violation-count safe">0</span>
-                                            )}
-                                        </td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="btn-icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEditUser(user);
-                                                    }}
-                                                    title="Edit User"
-                                                >
-                                                    <i className="bi bi-pencil"></i>
-                                                </button>
-                                                <button
-                                                    className="btn-icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleResetPassword(user.id);
-                                                    }}
-                                                    title="Reset Password"
-                                                >
-                                                    <i className="bi bi-key"></i>
-                                                </button>
-                                                {user.status === 'Active' ? (
-                                                    <button
-                                                        className="btn-icon danger"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleSuspendUser(user.id);
-                                                        }}
-                                                        title="Suspend User"
-                                                    >
-                                                        <i className="bi bi-ban"></i>
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        className="btn-icon success"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleActivateUser(user.id);
-                                                        }}
-                                                        title="Activate User"
-                                                    >
-                                                        <i className="bi bi-check-circle"></i>
-                                                    </button>
+                                            <div className="col-md-8">
+                                                <h5 className="border-bottom border-secondary pb-2 mb-3">Basic Information</h5>
+                                                <div className="row g-3 mb-4">
+                                                    <div className="col-sm-6">
+                                                        <small className="text-muted d-block">Username</small>
+                                                        <span>{selectedUser.username || 'N/A'}</span>
+                                                    </div>
+                                                    <div className="col-sm-6">
+                                                        <small className="text-muted d-block">Email</small>
+                                                        <span>{selectedUser.email}</span>
+                                                    </div>
+                                                    <div className="col-sm-6">
+                                                        <small className="text-muted d-block">Role</small>
+                                                        <span>{selectedUser.role}</span>
+                                                    </div>
+                                                    <div className="col-sm-6">
+                                                        <small className="text-muted d-block">Company</small>
+                                                        <span>{selectedUser.company || 'N/A'}</span>
+                                                    </div>
+                                                    {selectedUser.phone && (
+                                                        <div className="col-sm-6">
+                                                            <small className="text-muted d-block">Phone</small>
+                                                            <span>+{selectedUser.phone}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedUser.location && (
+                                                        <div className="col-sm-6">
+                                                            <small className="text-muted d-block">Location</small>
+                                                            <span>{selectedUser.location}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedUser.education && (
+                                                        <div className="col-sm-6">
+                                                            <small className="text-muted d-block">Education</small>
+                                                            <span>{selectedUser.education}</span>
+                                                        </div>
+                                                    )}
+                                                    {selectedUser.experience_years !== undefined && selectedUser.experience_years !== null && (
+                                                        <div className="col-sm-6">
+                                                            <small className="text-muted d-block">Experience</small>
+                                                            <span>{selectedUser.experience_years} Years</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {selectedUser.skills && selectedUser.skills.length > 0 && (
+                                                    <>
+                                                        <h5 className="border-bottom border-secondary pb-2 mb-3 mt-4">Skills</h5>
+                                                        <div className="d-flex flex-wrap gap-2 mb-4">
+                                                            {selectedUser.skills.map((skill, index) => (
+                                                                <div key={index} className="badge bg-secondary d-flex align-items-center" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+                                                                    <span>{skill.name}</span>
+                                                                    {skill.years && <span className="ms-2 opacity-75 fw-normal">({skill.years} yrs)</span>}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {selectedUser.bio && (
+                                                    <>
+                                                        <h5 className="border-bottom border-secondary pb-2 mb-3 mt-4">Bio</h5>
+                                                        <p className="text-light mb-4 text-justify" style={{ whiteSpace: 'pre-line' }}>{selectedUser.bio}</p>
+                                                    </>
+                                                )}
+
+                                                {selectedUser.social_links && (selectedUser.social_links.linkedin || selectedUser.social_links.github || selectedUser.social_links.portfolio) && (
+                                                    <>
+                                                        <h5 className="border-bottom border-secondary pb-2 mb-3 mt-4">Social Links</h5>
+                                                        <div className="d-flex gap-3 mb-4 flex-wrap">
+                                                            {selectedUser.social_links.linkedin && (
+                                                                <a href={selectedUser.social_links.linkedin.startsWith('http') ? selectedUser.social_links.linkedin : `https://${selectedUser.social_links.linkedin}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-primary d-flex align-items-center gap-2">
+                                                                    <i className="bi bi-linkedin"></i> LinkedIn
+                                                                </a>
+                                                            )}
+                                                            {selectedUser.social_links.github && (
+                                                                <a href={selectedUser.social_links.github.startsWith('http') ? selectedUser.social_links.github : `https://${selectedUser.social_links.github}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-light d-flex align-items-center gap-2">
+                                                                    <i className="bi bi-github"></i> GitHub
+                                                                </a>
+                                                            )}
+                                                            {selectedUser.social_links.portfolio && (
+                                                                <a href={selectedUser.social_links.portfolio.startsWith('http') ? selectedUser.social_links.portfolio : `https://${selectedUser.social_links.portfolio}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-info d-flex align-items-center gap-2">
+                                                                    <i className="bi bi-person-badge"></i> Portfolio
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
-                                        </td>
-                                    </tr>
-                                )))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* User Details Panel */}
-                    {selectedUser && (
-                        <div className="user-details-panel">
-                            <div className="panel-header">
-                                <h5>User Details</h5>
-                                <button
-                                    className="btn-close"
-                                    onClick={() => setSelectedUser(null)}
-                                >
-                                    <i className="bi bi-x-lg"></i>
-                                </button>
-                            </div>
-                            <div className="panel-content">
-                                <div className="user-profile">
-                                    <div className="user-avatar-large">{getInitials(selectedUser.name)}</div>
-                                    <h4>{selectedUser.name || 'N/A'}</h4>
-                                    <p className="text-muted">{selectedUser.email}</p>
-                                    <span className={`status-badge ${getStatusBadge(selectedUser.status)}`}>
-                                        {selectedUser.status}
-                                    </span>
-                                </div>
-
-                                <div className="detail-section">
-                                    <h6>Account Information</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">User ID:</span>
-                                        <span className="detail-value">{selectedUser.id}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Role:</span>
-                                        <span className={`role-badge ${getRoleBadge(selectedUser.role)}`}>
-                                            {selectedUser.role}
-                                        </span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Company:</span>
-                                        <span className="detail-value">{selectedUser.company || 'N/A'}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Join Date:</span>
-                                        <span className="detail-value">{formatDate(selectedUser.joinDate)}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Last Login:</span>
-                                        <span className="detail-value">{formatDateTime(selectedUser.lastLogin)}</span>
-                                    </div>
-                                    {selectedUser.phone && (
-                                        <div className="detail-item">
-                                            <span className="detail-label">Phone:</span>
-                                            <span className="detail-value">{selectedUser.phone}</span>
                                         </div>
-                                    )}
-                                    {selectedUser.location && (
-                                        <div className="detail-item">
-                                            <span className="detail-label">Location:</span>
-                                            <span className="detail-value">{selectedUser.location}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="detail-section">
-                                    <h6>Activity Summary</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Total Interviews:</span>
-                                        <span className="detail-value">{selectedUser.interviews || 0}</span>
                                     </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Violations:</span>
-                                        <span className={selectedUser.violationCount > 0 ? "detail-value text-danger" : "detail-value text-success"}>
-                                            {selectedUser.violationCount || 0}
-                                        </span>
+                                    <div className="modal-footer border-secondary">
+                                        <button type="button" className="btn btn-secondary" onClick={() => setShowViewModal(false)}>Close</button>
+                                        <button type="button" className="btn btn-outline-warning" onClick={() => { setShowViewModal(false); handleEditUser(selectedUser); }}>
+                                            <i className="bi bi-pencil me-2"></i>Edit
+                                        </button>
                                     </div>
-                                </div>
-
-                                <div className="detail-section">
-                                    <h6>Actions</h6>
-                                    <button className="btn btn-sm btn-primary w-100 mb-2" onClick={() => handleEditUser(selectedUser)}>
-                                        <i className="bi bi-pencil me-2"></i>Edit User
-                                    </button>
-                                    <button className="btn btn-sm btn-secondary w-100 mb-2" onClick={() => handleResetPassword(selectedUser.id)}>
-                                        <i className="bi bi-key me-2"></i>Reset Password
-                                    </button>
-                                    {selectedUser.status === 'Active' ? (
-                                        <button className="btn btn-sm btn-warning w-100 mb-2" onClick={() => handleSuspendUser(selectedUser.id)}>
-                                            <i className="bi bi-ban me-2"></i>Suspend User
-                                        </button>
-                                    ) : (
-                                        <button className="btn btn-sm btn-success w-100 mb-2" onClick={() => handleActivateUser(selectedUser.id)}>
-                                            <i className="bi bi-check-circle me-2"></i>Activate User
-                                        </button>
-                                    )}
-                                    <button className="btn btn-sm btn-danger w-100" onClick={() => handleDeleteUser(selectedUser.id)}>
-                                        <i className="bi bi-trash me-2"></i>Delete User
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Modal */}
-            {(showAddModal || showEditModal) && (
-                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content bg-dark text-white">
-                            <div className="modal-header border-secondary">
-                                <h5 className="modal-title">{showEditModal ? 'Edit User' : 'Add New User'}</h5>
-                                <button
-                                    type="button"
-                                    className="btn-close btn-close-white"
-                                    onClick={() => {
-                                        setShowAddModal(false);
-                                        setShowEditModal(false);
-                                    }}
-                                ></button>
+                    {/* Edit/Add Modal */}
+                    {(showAddModal || showEditModal) && (
+                        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                            <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-content bg-dark text-white">
+                                    <div className="modal-header border-secondary">
+                                        <h5 className="modal-title">{showEditModal ? 'Edit User Status' : 'Add New Admin'}</h5>
+                                        <button
+                                            type="button"
+                                            className="btn-close btn-close-white"
+                                            onClick={() => {
+                                                setShowAddModal(false);
+                                                setShowEditModal(false);
+                                            }}
+                                        ></button>
+                                    </div>
+                                    <form onSubmit={handleSubmitAddEdit}>
+                                        <div className="modal-body">
+                                            {showEditModal ? (
+                                                <>
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Name</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control form-control-dark"
+                                                            value={formData.name}
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Email</label>
+                                                        <input
+                                                            type="email"
+                                                            className="form-control form-control-dark"
+                                                            value={formData.email}
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Status</label>
+                                                        <select
+                                                            className="form-select form-select-dark"
+                                                            value={formData.status}
+                                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                                        >
+                                                            <option value="active">Active</option>
+                                                            <option value="inactive">Inactive</option>
+                                                            <option value="suspended">Suspended</option>
+                                                            <option value="pending">Pending</option>
+                                                        </select>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Admin Username</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control form-control-dark"
+                                                            value={formData.name}
+                                                            onChange={(e) => setFormData({ ...formData, name: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                                                            placeholder="lowercase, numbers, underscores only"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label className="form-label">Admin Email Address</label>
+                                                        <input
+                                                            type="email"
+                                                            className="form-control form-control-dark"
+                                                            value={formData.email}
+                                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="mb-3" style={{ display: 'none' }}>
+                                                        <label className="form-label">Role</label>
+                                                        <select
+                                                            className="form-select form-select-dark"
+                                                            value={formData.role}
+                                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                                        >
+                                                            <option value="Admin">Admin</option>
+                                                        </select>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="modal-footer border-secondary">
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
+                                                onClick={() => {
+                                                    setShowAddModal(false);
+                                                    setShowEditModal(false);
+                                                }}
+                                            >
+                                                Close
+                                            </button>
+                                            <button type="submit" className="btn btn-primary">
+                                                {showEditModal ? 'Save Changes' : 'Add Admin'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
-                            <form onSubmit={(e) => {
-                                e.preventDefault();
-                                // Handle form submission here
-                                console.log('Form submitted:', formData);
-                                setShowAddModal(false);
-                                setShowEditModal(false);
-                            }}>
-                                <div className="modal-body">
-                                    <div className="mb-3">
-                                        <label className="form-label">Full Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-dark"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Email Address</label>
-                                        <input
-                                            type="email"
-                                            className="form-control form-control-dark"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Role</label>
-                                        <select
-                                            className="form-select form-select-dark"
-                                            value={formData.role}
-                                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                        >
-                                            <option value="Candidate">Candidate</option>
-                                            <option value="HR Manager">HR Manager</option>
-                                            <option value="Recruiter">Recruiter</option>
-                                            <option value="Company Admin">Company Admin</option>
-                                        </select>
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Company</label>
-                                        <input
-                                            type="text"
-                                            className="form-control form-control-dark"
-                                            value={formData.company}
-                                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Status</label>
-                                        <select
-                                            className="form-select form-select-dark"
-                                            value={formData.status}
-                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        >
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                            <option value="Suspended">Suspended</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="modal-footer border-secondary">
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary"
-                                        onClick={() => {
-                                            setShowAddModal(false);
-                                            setShowEditModal(false);
-                                        }}
-                                    >
-                                        Close
-                                    </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        {showEditModal ? 'Save Changes' : 'Add User'}
-                                    </button>
-                                </div>
-                            </form>
                         </div>
-                    </div>
-                </div>
-            )}
+                    )}
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

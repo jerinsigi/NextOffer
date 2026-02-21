@@ -8,23 +8,23 @@ const Company = require('../models/Company');
 exports.getAllUsers = async (req, res) => {
     try {
         // Fetch only candidates and admin users (exclude company and recruiter)
-        const logins = await Login.find({ 
-            usertype: { $in: ['candidate', 'admin'] } 
+        const logins = await Login.find({
+            usertype: { $in: ['candidate', 'admin'] }
         }).select('-password -otp -otpExpires');
-        
+
         // Fetch all candidates
         const candidates = await Candidate.find();
-        
+
         // Create a map for quick lookup
         const candidateMap = {};
         candidates.forEach(candidate => {
             candidateMap[candidate.email] = candidate;
         });
-        
+
         // Process each user
         const usersData = await Promise.all(logins.map(async (login) => {
             const candidate = candidateMap[login.email];
-            
+
             // Initialize user data object
             let userData = {
                 id: login._id,
@@ -34,42 +34,49 @@ exports.getAllUsers = async (req, res) => {
                 interviews: 0,
                 violationCount: 0
             };
-            
+
             // Determine role display
             let roleDisplay = login.usertype === 'admin' ? 'Admin' : 'Candidate';
-            
+
             // Determine status display
             let statusDisplay = 'Active';
             if (login.status === 'inactive') statusDisplay = 'Inactive';
             else if (login.status === 'pending') statusDisplay = 'Pending';
             else if (login.status === 'suspended') statusDisplay = 'Suspended';
-            
+
             userData.role = roleDisplay;
             userData.status = statusDisplay;
-            
+
             // Populate data based on user type
             if (login.usertype === 'candidate' && candidate) {
                 // For candidates, show candidate details
                 userData.name = candidate.full_name || login.username;
+                userData.username = login.username;
                 userData.company = candidate.current_role || 'N/A';
                 userData.phone = candidate.phone || null;
                 userData.location = candidate.location || null;
-                
+                userData.education = candidate.education || null;
+                userData.experience_years = candidate.experience_years || null;
+                userData.bio = candidate.bio || null;
+                userData.skills = candidate.skills || [];
+                userData.social_links = candidate.social_links || {};
+                userData.image_url = candidate.image_url || null;
+
                 // Get interview count for candidates
-                userData.interviews = await Interview_Session.countDocuments({ 
-                    fk_candidate_id: candidate._id 
+                userData.interviews = await Interview_Session.countDocuments({
+                    fk_candidate_id: candidate._id
                 });
-                
+
                 // Get violation count for candidates
-                const sessions = await Interview_Session.find({ 
-                    fk_candidate_id: candidate._id 
+                const sessions = await Interview_Session.find({
+                    fk_candidate_id: candidate._id
                 });
-                
+
                 for (const session of sessions) {
-                    const integrityLog = await Integrity_Log.findOne({ 
-                        Fk_session_id: session._id 
+                    const integrityLog = await Integrity_Log.findOne({
+                        Fk_session_id: session._id
                     });
-                    
+
                     if (integrityLog) {
                         userData.violationCount += (
                             (integrityLog.tab_switch_count || 0) +
@@ -87,25 +94,26 @@ exports.getAllUsers = async (req, res) => {
             } else {
                 // For users without associated candidate/company record (like admin)
                 userData.name = login.username;
+                userData.username = login.username;
                 userData.company = 'N/A';
                 userData.phone = null;
                 userData.location = null;
             }
-            
+
             return userData;
         }));
-        
+
         // Calculate statistics
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        
+
         const statistics = {
             total: logins.length,
             active: logins.filter(l => l.status === 'active').length,
             suspended: logins.filter(l => l.status === 'suspended' || l.status === 'inactive').length,
             newThisMonth: logins.filter(l => new Date(l.createdAt) >= startOfMonth).length
         };
-        
+
         res.json({
             users: usersData,
             statistics: statistics
@@ -120,17 +128,17 @@ exports.getAllUsers = async (req, res) => {
 exports.suspendUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const login = await Login.findByIdAndUpdate(
             userId,
             { status: 'suspended' },
             { new: true }
         );
-        
+
         if (!login) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         res.json({ message: 'User suspended successfully', user: login });
     } catch (err) {
         console.error('Suspend user error:', err);
@@ -142,17 +150,17 @@ exports.suspendUser = async (req, res) => {
 exports.activateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const login = await Login.findByIdAndUpdate(
             userId,
             { status: 'active' },
             { new: true }
         );
-        
+
         if (!login) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         res.json({ message: 'User activated successfully', user: login });
     } catch (err) {
         console.error('Activate user error:', err);
@@ -164,19 +172,19 @@ exports.activateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const login = await Login.findById(userId);
-        
+
         if (!login) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         // Delete related candidate data if exists
         await Candidate.findOneAndDelete({ email: login.email });
-        
+
         // Delete the login
         await Login.findByIdAndDelete(userId);
-        
+
         res.json({ message: 'User deleted successfully' });
     } catch (err) {
         console.error('Delete user error:', err);
@@ -184,20 +192,61 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
+// Add new admin user
+exports.addAdmin = async (req, res) => {
+    try {
+        let { email, username } = req.body;
+
+        if (!email || !username) {
+            return res.status(400).json({ message: 'Email and username are required' });
+        }
+
+        username = username.toLowerCase();
+
+        // Validate username format: only lowercase letters, numbers, and underscores
+        if (!/^[a-z0-9_]+$/.test(username)) {
+            return res.status(400).json({ message: 'Username must contain only lowercase letters, numbers, and underscores' });
+        }
+
+        // Check if user already exists
+        const existingLogin = await Login.findOne({ email });
+        if (existingLogin) {
+            return res.status(400).json({ message: 'User with this email already exists' });
+        }
+
+        // Create new login for admin
+        // Note: setting default password 'Admin@123' and status 'active'
+        const newAdmin = new Login({
+            email,
+            username,
+            password: 'Admin@123', // In a real app, this should be hashed, but NextOffer has a specific signup flow. We'll use a placeholder.
+            usertype: 'admin',
+            status: 'active'
+        });
+
+        await newAdmin.save();
+
+        res.status(201).json({ message: 'Admin user created successfully', user: { id: newAdmin._id, email: newAdmin.email, username: newAdmin.username, role: 'Admin' } });
+    } catch (err) {
+        console.error('Add admin error:', err);
+        res.status(500).json({ message: 'Server error creating admin user', error: err.message });
+    }
+};
+
 // Reset password (send reset email)
 exports.resetUserPassword = async (req, res) => {
     try {
         const { userId } = req.params;
-        
+
         const login = await Login.findById(userId);
-        
+
         if (!login) {
             return res.status(404).json({ message: 'User not found' });
         }
-        
+
         // TODO: Implement email sending logic here
         // For now, just return success
-        
+
         res.json({ message: 'Password reset email sent successfully' });
     } catch (err) {
         console.error('Reset password error:', err);
