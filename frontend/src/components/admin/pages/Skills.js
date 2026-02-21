@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const Skills = () => {
+import './Users.css'; const Skills = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -99,142 +98,139 @@ const Skills = () => {
     );
 
     return (
-        <div className="container-fluid">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 className="text-light">Skills Management</h2>
-                    <p className="text-muted">Manage skills database for job postings and user profiles</p>
+        <div className="dashboard-container">
+            {loading ? (
+                <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                    <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
                 </div>
-                <button className="btn btn-primary" onClick={handleAddClick}>
-                    <i className="bi bi-plus-lg me-2"></i>Add New Skill
-                </button>
-            </div>
+            ) : (
+                <>
+                    <div className="page-header mb-4">
+                        <div className="d-flex justify-content-between align-items-center w-100 flex-wrap">
+                            <div>
+                                <h1 className="page-title">Skills Management</h1>
+                                <p className="text-muted">Manage skills database for job postings and user profiles</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={handleAddClick}>
+                                <i className="bi bi-plus-circle me-2"></i>Add New Skill
+                            </button>
+                        </div>
+                    </div>
 
-            {/* Search and Filter */}
-            <div className="card bg-dark border-secondary mb-4">
-                <div className="card-body">
-                    <div className="row g-3">
-                        <div className="col-md-4">
-                            <div className="input-group">
-                                <span className="input-group-text bg-dark border-secondary text-muted">
-                                    <i className="bi bi-search"></i>
-                                </span>
+                    <div className="dashboard-card">
+                        <div className="card-header-custom">
+                            <div className="d-flex justify-content-between align-items-center gap-3 flex-wrap w-100">
                                 <input
                                     type="text"
-                                    className="form-control bg-dark border-secondary text-light"
+                                    className="form-control form-control-dark"
                                     placeholder="Search skills..."
+                                    style={{ maxWidth: '400px' }}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Skills Table */}
-            <div className="card bg-dark border-secondary">
-                <div className="card-body p-0">
-                    <div className="table-responsive">
-                        <table className="table table-dark table-hover mb-0">
-                            <thead className="bg-darker">
-                                <tr>
-                                    <th className="py-3 ps-4">Skill Name</th>
-                                    <th className="py-3">Status</th>
-                                    <th className="py-3">Last Updated</th>
-                                    <th className="py-3 text-end pe-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
+                        <div className="table-responsive">
+                            <table className="table table-dark table-hover mb-0">
+                                <thead>
                                     <tr>
-                                        <td colSpan="5" className="text-center py-5">
-                                            <div className="spinner-border text-primary" role="status">
-                                                <span className="visually-hidden">Loading...</span>
-                                            </div>
-                                        </td>
+                                        <th>Skill Name</th>
+                                        <th>Status</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
                                     </tr>
-                                ) : filteredSkills.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className="text-center py-5 text-muted">No skills found</td>
-                                    </tr>
-                                ) : (
-                                    filteredSkills.map(skill => (
-                                        <tr key={skill._id}>
-                                            <td className="ps-4">
-                                                <div className="d-flex align-items-center">
-                                                    <div className="avatar-initial rounded bg-primary bg-opacity-10 text-primary me-3" style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <i className={skill.icon || 'bi bi-stars'}></i>
-                                                    </div>
-                                                    <span className="fw-medium">{skill.name}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${skill.status === 'Active' ? 'bg-success' : 'bg-danger'} bg-opacity-10 text-${skill.status === 'Active' ? 'success' : 'danger'} border border-${skill.status === 'Active' ? 'success' : 'danger'}`}>
-                                                    {skill.status}
-                                                </span>
-                                            </td>
-                                            <td className="text-muted small">
-                                                {new Date(skill.updatedAt).toLocaleDateString()}
-                                            </td>
-                                            <td className="text-end pe-4">
-                                                <button className="btn btn-sm btn-outline-info me-2" onClick={() => handleEditClick(skill)}>
-                                                    <i className="bi bi-pencil"></i>
-                                                </button>
-                                                <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteClick(skill._id)}>
-                                                    <i className="bi bi-trash"></i>
-                                                </button>
+                                </thead>
+                                <tbody>
+                                    {filteredSkills.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" className="text-center p-5">
+                                                <i className="bi bi-inbox fs-1 text-muted"></i>
+                                                <p className="mt-3 text-muted">No skills found</p>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            {/* Modal */}
-            {showModal && (
-                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content bg-dark border-secondary">
-                            <div className="modal-header border-secondary">
-                                <h5 className="modal-title text-light">{modalMode === 'add' ? 'Add New Skill' : 'Edit Skill'}</h5>
-                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
-                            </div>
-                            <div className="modal-body">
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label className="form-label text-muted">Skill Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control bg-dark border-secondary text-light"
-                                            value={formData.name}
-                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label text-muted">Status</label>
-                                        <select
-                                            className="form-select bg-dark border-secondary text-light"
-                                            value={formData.status}
-                                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        >
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                        </select>
-                                    </div>
-                                    <div className="modal-footer border-secondary px-0 pb-0">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                                        <button type="submit" className="btn btn-primary">{modalMode === 'add' ? 'Create Skill' : 'Save Changes'}</button>
-                                    </div>
-                                </form>
-                            </div>
+                                    ) : (
+                                        filteredSkills.map(skill => (
+                                            <tr key={skill._id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div className="company-avatar rounded-circle d-flex align-items-center justify-content-center me-2" style={{ overflow: 'hidden' }}>
+                                                            <i className={skill.icon || 'bi bi-stars'}></i>
+                                                        </div>
+                                                        <span className="fw-bold">{skill.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className={`badge ${skill.status === 'Active' ? 'bg-success' : 'bg-danger'}`}>
+                                                        {skill.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {new Date(skill.updatedAt).toLocaleDateString()}
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex gap-2">
+                                                        <button className="btn btn-sm btn-outline-warning" onClick={() => handleEditClick(skill)} title="Edit Skill">
+                                                            <i className="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteClick(skill._id)} title="Delete Skill">
+                                                            <i className="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
+
+                    {/* Modal */}
+                    {showModal && (
+                        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                            <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-content bg-dark text-white">
+                                    <div className="modal-header border-secondary">
+                                        <h5 className="modal-title">{modalMode === 'add' ? 'Add New Skill' : 'Edit Skill'}</h5>
+                                        <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
+                                    </div>
+                                    <form onSubmit={handleSubmit}>
+                                        <div className="modal-body">
+                                            <div className="mb-3">
+                                                <label className="form-label">Skill Name</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-dark"
+                                                    value={formData.name}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="mb-3">
+                                                <label className="form-label">Status</label>
+                                                <select
+                                                    className="form-select form-select-dark"
+                                                    value={formData.status}
+                                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                                >
+                                                    <option value="Active">Active</option>
+                                                    <option value="Inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="modal-footer border-secondary">
+                                            <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
+                                            <button type="submit" className="btn btn-primary">{modalMode === 'add' ? 'Create Skill' : 'Save Changes'}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );
