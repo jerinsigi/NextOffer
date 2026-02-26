@@ -89,60 +89,68 @@ const Dashboard = () => {
             {/* Stats Cards */}
             <div className="row g-4 mb-4">
                 <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-briefcase fs-3"></i>
+                    <div className="stat-card stat-card-primary">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-briefcase fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Jobs</div>
                             <div className="stat-value">{stats.totalJobs}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-check-circle"></i> Active Posted Jobs
+                                <i className="bi bi-check-circle me-1"></i> Active Posted Jobs
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-people fs-3"></i>
+                    <div className="stat-card stat-card-success">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-people fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Active Candidates</div>
                             <div className="stat-value">{stats.activeCandidates}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-person-check"></i> Total Applications
+                                <i className="bi bi-person-check me-1"></i> Total Applications
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-camera-video fs-3"></i>
+                    <div className="stat-card stat-card-info">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-camera-video fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Interviews Today</div>
                             <div className="stat-value">{stats.interviewsToday}</div>
                             <div className="stat-change positive">
-                                <i className="bi bi-calendar-event"></i> Scheduled Today
+                                <i className="bi bi-calendar-event me-1"></i> Scheduled Today
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-danger bg-opacity-20 text-danger">
-                            <i className="bi bi-shield-exclamation fs-3"></i>
+                    <div className="stat-card stat-card-danger">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-shield-exclamation fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Integrity Violations</div>
                             <div className="stat-value">{stats.integrityViolations}</div>
                             <div className="stat-change negative">
-                                <i className="bi bi-exclamation-triangle"></i> Flagged Sessions
+                                <i className="bi bi-exclamation-triangle me-1"></i> Flagged Sessions
                             </div>
                         </div>
                     </div>
@@ -184,7 +192,7 @@ const Dashboard = () => {
                                                 <td>{session.position}</td>
                                                 <td>
                                                     <span className={`badge ${session.status === 'completed' ? 'bg-success' :
-                                                            session.status === 'ongoing' ? 'bg-warning' : 'bg-secondary'
+                                                        session.status === 'ongoing' ? 'bg-warning' : 'bg-secondary'
                                                         }`}>
                                                         {session.status}
                                                     </span>

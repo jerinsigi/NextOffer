@@ -1,290 +1,217 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './InterviewMonitoring.css';
 
 const InterviewMonitoring = () => {
+    const [jobs, setJobs] = useState([]);
+    const [applications, setApplications] = useState([]);
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [viewMode, setViewMode] = useState('jobs'); // 'jobs' or 'applications'
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [companyFilter, setCompanyFilter] = useState('all');
-    const [selectedInterview, setSelectedInterview] = useState(null);
-    const [activeTab, setActiveTab] = useState('live');
+    const [selectedReport, setSelectedReport] = useState(null);
+    const [reportLoading, setReportLoading] = useState(false);
+    const [showFinalizeModal, setShowFinalizeModal] = useState(false);
+    const [hireCount, setHireCount] = useState(1);
+    const [finalizeLoading, setFinalizeLoading] = useState(false);
 
-    // Sample interview data
-    const interviewsData = [
-        {
-            id: 1,
-            candidateName: 'John Doe',
-            candidateEmail: 'john.doe@email.com',
-            position: 'Senior Full Stack Developer',
-            company: 'TechCorp Inc.',
-            interviewer: 'Sarah Johnson',
-            status: 'Live',
-            startTime: '2024-12-06 10:00 AM',
-            duration: '00:23:45',
-            progress: 65,
-            integrityScore: 98,
-            violations: [],
-            questionsAnswered: 8,
-            totalQuestions: 12,
-            currentQuestion: 'Explain the concept of closures in JavaScript',
-            videoQuality: 'HD',
-            audioQuality: 'Good',
-            connectionStatus: 'Stable',
-            flags: []
-        },
-        {
-            id: 2,
-            candidateName: 'Emily Chen',
-            candidateEmail: 'emily.chen@email.com',
-            position: 'Product Manager',
-            company: 'Innovate Solutions',
-            interviewer: 'Michael Rodriguez',
-            status: 'Live',
-            startTime: '2024-12-06 09:30 AM',
-            duration: '00:45:12',
-            progress: 80,
-            integrityScore: 95,
-            violations: ['Gaze Aversion - 2 times'],
-            questionsAnswered: 10,
-            totalQuestions: 12,
-            currentQuestion: 'Describe your approach to stakeholder management',
-            videoQuality: 'HD',
-            audioQuality: 'Excellent',
-            connectionStatus: 'Stable',
-            flags: ['Minor integrity alert']
-        },
-        {
-            id: 3,
-            candidateName: 'Alex Martinez',
-            candidateEmail: 'alex.m@email.com',
-            position: 'DevOps Engineer',
-            company: 'StartupX',
-            interviewer: 'Jennifer Lee',
-            status: 'Completed',
-            startTime: '2024-12-06 08:00 AM',
-            endTime: '2024-12-06 08:45 AM',
-            duration: '00:45:00',
-            progress: 100,
-            integrityScore: 100,
-            violations: [],
-            questionsAnswered: 15,
-            totalQuestions: 15,
-            overallRating: 4.5,
-            videoQuality: 'HD',
-            audioQuality: 'Excellent',
-            connectionStatus: 'Completed',
-            flags: [],
-            recordingUrl: '/recordings/interview_003.mp4'
-        },
-        {
-            id: 4,
-            candidateName: 'Sarah Williams',
-            candidateEmail: 'swilliams@email.com',
-            position: 'UX/UI Designer',
-            company: 'MegaCorp Ltd.',
-            interviewer: 'David Kim',
-            status: 'Completed',
-            startTime: '2024-12-05 03:00 PM',
-            endTime: '2024-12-05 03:42 PM',
-            duration: '00:42:00',
-            progress: 100,
-            integrityScore: 92,
-            violations: ['Tab Switch - 1 time'],
-            questionsAnswered: 12,
-            totalQuestions: 12,
-            overallRating: 4.0,
-            videoQuality: 'HD',
-            audioQuality: 'Good',
-            connectionStatus: 'Completed',
-            flags: ['Minor violation recorded'],
-            recordingUrl: '/recordings/interview_004.mp4'
-        },
-        {
-            id: 5,
-            candidateName: 'Robert Taylor',
-            candidateEmail: 'rtaylor@email.com',
-            position: 'Data Scientist',
-            company: 'TechVision',
-            interviewer: 'Lisa Anderson',
-            status: 'Scheduled',
-            startTime: '2024-12-06 02:00 PM',
-            duration: '00:00:00',
-            progress: 0,
-            integrityScore: null,
-            violations: [],
-            questionsAnswered: 0,
-            totalQuestions: 15,
-            videoQuality: 'N/A',
-            audioQuality: 'N/A',
-            connectionStatus: 'Not Started',
-            flags: []
-        },
-        {
-            id: 6,
-            candidateName: 'Maria Garcia',
-            candidateEmail: 'mgarcia@email.com',
-            position: 'Backend Engineer',
-            company: 'Future Tech',
-            interviewer: 'John Smith',
-            status: 'Paused',
-            startTime: '2024-12-06 11:00 AM',
-            duration: '00:15:30',
-            progress: 30,
-            integrityScore: 97,
-            violations: [],
-            questionsAnswered: 4,
-            totalQuestions: 14,
-            currentQuestion: 'Explain database normalization',
-            videoQuality: 'SD',
-            audioQuality: 'Fair',
-            connectionStatus: 'Reconnecting',
-            flags: ['Connection issue']
-        },
-        {
-            id: 7,
-            candidateName: 'James Wilson',
-            candidateEmail: 'jwilson@email.com',
-            position: 'Mobile App Developer',
-            company: 'Global Industries',
-            interviewer: 'Emma Johnson',
-            status: 'Failed',
-            startTime: '2024-12-05 10:00 AM',
-            endTime: '2024-12-05 10:05 AM',
-            duration: '00:05:00',
-            progress: 10,
-            integrityScore: 45,
-            violations: ['Multiple Tab Switches', 'Presence Anomaly', 'Gaze Aversion'],
-            questionsAnswered: 1,
-            totalQuestions: 12,
-            overallRating: 1.0,
-            videoQuality: 'SD',
-            audioQuality: 'Poor',
-            connectionStatus: 'Terminated',
-            flags: ['Critical integrity violation', 'Auto-terminated'],
-            recordingUrl: '/recordings/interview_007.mp4'
-        },
-        {
-            id: 8,
-            candidateName: 'Linda Brown',
-            candidateEmail: 'lbrown@email.com',
-            position: 'Marketing Manager',
-            company: 'Enterprise Corp',
-            interviewer: 'Richard Davis',
-            status: 'Completed',
-            startTime: '2024-12-04 01:00 PM',
-            endTime: '2024-12-04 01:38 PM',
-            duration: '00:38:00',
-            progress: 100,
-            integrityScore: 100,
-            violations: [],
-            questionsAnswered: 10,
-            totalQuestions: 10,
-            overallRating: 4.8,
-            videoQuality: 'HD',
-            audioQuality: 'Excellent',
-            connectionStatus: 'Completed',
-            flags: [],
-            recordingUrl: '/recordings/interview_008.mp4'
+    useEffect(() => {
+        fetchJobs();
+    }, []);
+
+    const fetchJobs = async () => {
+        setLoading(true);
+        try {
+            const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const response = await fetch(`http://localhost:5000/api/job-descriptions/company/${user.email}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setJobs(data);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching jobs:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
-
-    const companies = ['All Companies', ...new Set(interviewsData.map(i => i.company))];
-
-    const getFilteredInterviews = () => {
-        let filtered = interviewsData.filter(interview => {
-            const matchesSearch = interview.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                interview.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                interview.company.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = statusFilter === 'all' || interview.status === statusFilter;
-            const matchesCompany = companyFilter === 'all' || interview.company === companyFilter;
-            return matchesSearch && matchesStatus && matchesCompany;
-        });
-
-        // Filter by tab
-        if (activeTab === 'live') {
-            filtered = filtered.filter(i => i.status === 'Live');
-        } else if (activeTab === 'scheduled') {
-            filtered = filtered.filter(i => i.status === 'Scheduled');
-        } else if (activeTab === 'completed') {
-            filtered = filtered.filter(i => i.status === 'Completed');
-        } else if (activeTab === 'flagged') {
-            filtered = filtered.filter(i => i.flags.length > 0 || i.violations.length > 0);
-        }
-
-        return filtered;
     };
 
-    const filteredInterviews = getFilteredInterviews();
+    const fetchApplications = async (jobId) => {
+        try {
+            const response = await fetch(`http://localhost:5000/api/applications/job/${jobId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setApplications(data);
+            }
+        } catch (error) {
+            console.error('Error fetching applications:', error);
+        }
+    };
+
+    const handleJobClick = (job) => {
+        setSelectedJob(job);
+        fetchApplications(job._id);
+        setViewMode('applications');
+        setSelectedApplication(null);
+        setSearchTerm('');
+    };
+
+    const handleBackToJobs = () => {
+        setViewMode('jobs');
+        setSelectedJob(null);
+        setApplications([]);
+        setSelectedApplication(null);
+        setSearchTerm('');
+        setSelectedReport(null);
+        fetchJobs();
+    };
+
+    const handleApplicationClick = (app) => {
+        setSelectedApplication(app);
+        setSelectedReport(null);
+    };
+
+    const fetchReport = async (sessionId) => {
+        setReportLoading(true);
+        try {
+            const response = await fetch(`http://localhost:5000/api/interviews/report/${sessionId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setSelectedReport(data);
+            } else {
+                console.error("Failed to fetch report");
+                alert("Failed to fetch AI Report. Please try again.");
+            }
+        } catch (error) {
+            console.error('Error fetching report:', error);
+            alert("Error fetching AI Report.");
+        } finally {
+            setReportLoading(false);
+        }
+    };
+
+    const handleFinalizeHiring = async () => {
+        if (!selectedJob || hireCount < 1) return;
+
+        setFinalizeLoading(true);
+        try {
+            const response = await fetch(`http://localhost:5000/api/applications/job/${selectedJob._id}/finalize`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ topNHires: parseInt(hireCount) })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(`Success! ${data.hiredCount} candidates hired and ${data.rejectedCount} candidates rejected.`);
+                setShowFinalizeModal(false);
+                // Refresh the list to show new statuses
+                fetchApplications(selectedJob._id);
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to finalize hiring: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error("Error finalizing hiring:", error);
+            alert("An error occurred while finalizing hiring.");
+        } finally {
+            setFinalizeLoading(false);
+        }
+    };
+
+    const handleRejectCandidate = async (applicationId) => {
+        if (!window.confirm("Are you sure you want to reject this candidate? They will be notified via email.")) return;
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/applications/job/${applicationId}/reject`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                alert("Candidate has been rejected.");
+                if (selectedJob) {
+                    fetchApplications(selectedJob._id);
+                }
+
+                if (selectedApplication && selectedApplication._id === applicationId) {
+                    setSelectedApplication(prev => ({ ...prev, status: 'Rejected' }));
+                }
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to reject candidate: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error("Error rejecting candidate:", error);
+            alert("An error occurred while rejecting the candidate.");
+        }
+    };
+
+    const getScoreColor = (score) => {
+        if (score >= 85) return 'excellent';
+        if (score >= 70) return 'good';
+        return 'average';
+    };
+
+    const getRecommendationVariant = (rec = '') => {
+        if (rec.includes('Strongly') || rec.includes('Highly')) return 'success';
+        if (rec.includes('Recommended')) return 'info';
+        if (rec.includes('Reservations')) return 'warning';
+        return 'average';
+    };
+
+    const getFilteredItems = () => {
+        if (viewMode === 'jobs') {
+            return jobs.filter(job =>
+                job.job_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (job.department && job.department.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        } else {
+            return applications.filter(app => {
+                const name = app.Fk_candidate_id?.full_name || '';
+                return name.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+        }
+    };
+
+    const filteredItems = getFilteredItems();
+
+    const stats = {
+        totalJobs: jobs.length,
+        activeJobs: jobs.filter(j => j.job_status === 'Active').length,
+        totalApplications: jobs.reduce((sum, j) => sum + (j.applications_count || 0), 0),
+        shortlisted: jobs.reduce((sum, j) => sum + (j.shortlisted_count || 0), 0)
+    };
 
     const getStatusBadge = (status) => {
         const badges = {
-            'Live': 'status-badge-live',
-            'Completed': 'status-badge-completed',
-            'Scheduled': 'status-badge-scheduled',
-            'Paused': 'status-badge-paused',
-            'Failed': 'status-badge-failed'
+            'Active': 'status-badge-live',
+            'Draft': 'status-badge-paused',
+            'Closed': 'status-badge-failed',
+            'Applied': 'status-badge-scheduled',
+            'Shortlisted': 'status-badge-completed',
+            'Scheduled': 'status-badge-live',
+            'Interviewing': 'status-badge-live',
+            'Interviewed': 'status-badge-completed',
+            'Rejected': 'status-badge-failed',
+            'Hired': 'status-badge-completed'
         };
         return badges[status] || 'status-badge-scheduled';
-    };
-
-    const getIntegrityBadge = (score) => {
-        if (score === null) return 'integrity-badge-na';
-        if (score >= 95) return 'integrity-badge-excellent';
-        if (score >= 80) return 'integrity-badge-good';
-        if (score >= 60) return 'integrity-badge-fair';
-        return 'integrity-badge-poor';
-    };
-
-    const getIntegrityLabel = (score) => {
-        if (score === null) return 'N/A';
-        if (score >= 95) return 'Excellent';
-        if (score >= 80) return 'Good';
-        if (score >= 60) return 'Fair';
-        return 'Poor';
-    };
-
-    const handleInterviewClick = (interview) => {
-        setSelectedInterview(interview);
-    };
-
-    const handleTerminateInterview = (id) => {
-        if (window.confirm('Are you sure you want to terminate this interview?')) {
-            console.log('Terminating interview:', id);
-        }
-    };
-
-    const handleViewRecording = (url) => {
-        console.log('Playing recording:', url);
-    };
-
-    const handleDownloadRecording = (url) => {
-        console.log('Downloading recording:', url);
-    };
-
-    const handleSendMessage = (id) => {
-        console.log('Sending message to interview:', id);
-    };
-
-    // Stats
-    const stats = {
-        live: interviewsData.filter(i => i.status === 'Live').length,
-        scheduled: interviewsData.filter(i => i.status === 'Scheduled').length,
-        completed: interviewsData.filter(i => i.status === 'Completed').length,
-        flagged: interviewsData.filter(i => i.flags.length > 0 || i.violations.length > 0).length
     };
 
     return (
         <div className="dashboard-container">
             <div className="page-header mb-4">
                 <div>
-                    <h1 className="page-title">Interview Monitoring</h1>
-                    <p className="text-muted">Monitor live interviews and review completed sessions</p>
+                    <h1 className="page-title">Jobs & Applicants</h1>
+                    <p className="text-muted">Monitor your job postings and applicant pipeline</p>
                 </div>
                 <div className="header-actions">
-                    <button className="btn btn-outline-primary me-2">
+                    <button className="btn btn-outline-primary me-2" onClick={viewMode === 'jobs' ? fetchJobs : () => fetchApplications(selectedJob._id)}>
                         <i className="bi bi-arrow-clockwise me-2"></i>Refresh
-                    </button>
-                    <button className="btn btn-primary">
-                        <i className="bi bi-calendar-plus me-2"></i>Schedule Interview
                     </button>
                 </div>
             </div>
@@ -292,271 +219,224 @@ const InterviewMonitoring = () => {
             {/* Stats Cards */}
             <div className="row g-4 mb-4">
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-danger bg-opacity-20 text-danger">
-                            <i className="bi bi-record-circle fs-3"></i>
+                    <div className="stat-card stat-card-info">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-briefcase fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Live Interviews</div>
-                            <div className="stat-value">{stats.live}</div>
-                            <div className="stat-trend text-danger">
-                                <i className="bi bi-broadcast"></i> In Progress
-                            </div>
+                            <div className="stat-label">Total Jobs</div>
+                            <div className="stat-value">{stats.totalJobs}</div>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-calendar-check fs-3"></i>
+                    <div className="stat-card stat-card-success">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-check-circle fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Scheduled Today</div>
-                            <div className="stat-value">{stats.scheduled}</div>
-                            <div className="stat-trend text-muted">
-                                Upcoming sessions
-                            </div>
+                            <div className="stat-label">Active Jobs</div>
+                            <div className="stat-value">{stats.activeJobs}</div>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-check-circle fs-3"></i>
+                    <div className="stat-card stat-card-primary">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-people fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Completed</div>
-                            <div className="stat-value">{stats.completed}</div>
-                            <div className="stat-trend text-muted">
-                                Last 24 hours
-                            </div>
+                            <div className="stat-label">Total Applicants</div>
+                            <div className="stat-value">{stats.totalApplications}</div>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-flag fs-3"></i>
+                    <div className="stat-card stat-card-warning">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-star fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Flagged</div>
-                            <div className="stat-value">{stats.flagged}</div>
-                            <div className="stat-trend text-warning">
-                                <i className="bi bi-exclamation-triangle"></i> Needs review
-                            </div>
+                            <div className="stat-label">Shortlisted</div>
+                            <div className="stat-value">{stats.shortlisted}</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Interview Tabs */}
             <div className="dashboard-card">
                 <div className="card-header-custom">
-                    <div className="interview-tabs">
-                        <button 
-                            className={`tab-btn ${activeTab === 'live' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('live')}
-                        >
-                            <i className="bi bi-broadcast"></i>
-                            Live ({stats.live})
-                        </button>
-                        <button 
-                            className={`tab-btn ${activeTab === 'scheduled' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('scheduled')}
-                        >
-                            <i className="bi bi-calendar"></i>
-                            Scheduled ({stats.scheduled})
-                        </button>
-                        <button 
-                            className={`tab-btn ${activeTab === 'completed' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('completed')}
-                        >
-                            <i className="bi bi-check-circle"></i>
-                            Completed ({stats.completed})
-                        </button>
-                        <button 
-                            className={`tab-btn ${activeTab === 'flagged' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('flagged')}
-                        >
-                            <i className="bi bi-flag"></i>
-                            Flagged ({stats.flagged})
-                        </button>
-                        <button 
-                            className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('all')}
-                        >
-                            <i className="bi bi-list"></i>
-                            All
-                        </button>
+                    <div className="interview-tabs d-flex align-items-center">
+                        {viewMode === 'applications' && (
+                            <button className="btn btn-sm btn-outline-secondary me-3" onClick={handleBackToJobs}>
+                                <i className="bi bi-arrow-left me-2"></i>Back to Jobs
+                            </button>
+                        )}
+                        <h5 className="mb-0 text-light">
+                            {viewMode === 'jobs' ? 'Job Listings' : `Applicants for: ${selectedJob?.job_title}`}
+                        </h5>
                     </div>
-                    <div className="interviews-filters">
+                    <div className="interviews-filters d-flex align-items-center gap-3">
+                        {viewMode === 'applications' && filteredItems.length > 0 && (
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => setShowFinalizeModal(true)}
+                            >
+                                <i className="bi bi-person-check-fill me-2"></i> Finalize Hiring
+                            </button>
+                        )}
                         <div className="search-box">
                             <i className="bi bi-search"></i>
                             <input
                                 type="text"
                                 className="form-control-dark"
-                                placeholder="Search interviews..."
+                                placeholder={viewMode === 'jobs' ? "Search jobs..." : "Search applicants..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <select 
-                            className="form-select-dark"
-                            value={companyFilter}
-                            onChange={(e) => setCompanyFilter(e.target.value)}
-                        >
-                            <option value="all">All Companies</option>
-                            {companies.slice(1).map(company => (
-                                <option key={company} value={company}>{company}</option>
-                            ))}
-                        </select>
                     </div>
                 </div>
 
                 <div className="interviews-content">
                     <div className="interviews-list">
-                        {filteredInterviews.length === 0 ? (
+                        {loading && viewMode === 'jobs' ? (
+                            <div className="text-center p-5 text-muted">Loading...</div>
+                        ) : filteredItems.length === 0 ? (
                             <div className="empty-state">
                                 <i className="bi bi-inbox fs-1 text-muted"></i>
-                                <p className="text-muted">No interviews found</p>
+                                <p className="text-muted">
+                                    {viewMode === 'jobs' ? 'No jobs found' : 'No applications found'}
+                                </p>
                             </div>
                         ) : (
-                            filteredInterviews.map(interview => (
-                                <div 
-                                    key={interview.id}
-                                    className={`interview-card ${selectedInterview?.id === interview.id ? 'selected' : ''}`}
-                                    onClick={() => handleInterviewClick(interview)}
-                                >
-                                    <div className="interview-card-header">
-                                        <div className="candidate-info">
-                                            <div className="candidate-avatar">
-                                                {interview.candidateName.split(' ').map(n => n[0]).join('')}
+                            filteredItems.map(item => {
+                                if (viewMode === 'jobs') {
+                                    // Job Card
+                                    const job = item;
+                                    return (
+                                        <div
+                                            key={job._id}
+                                            className={`interview-card`}
+                                            onClick={() => handleJobClick(job)}
+                                        >
+                                            <div className="interview-card-header">
+                                                <div className="candidate-info">
+                                                    <div className="candidate-avatar">
+                                                        <i className="bi bi-briefcase"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="candidate-name">{job.job_title}</h5>
+                                                        <p className="position-title">{job.department || 'General'}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="interview-badges">
+                                                    <span className={`status-badge ${getStatusBadge(job.job_status)}`}>
+                                                        {job.job_status === 'Active' && <i className="bi bi-circle-fill pulse-dot"></i>}
+                                                        {job.job_status}
+                                                    </span>
+                                                    <span className="status-badge status-badge-scheduled">
+                                                        {job.type}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h5 className="candidate-name">{interview.candidateName}</h5>
-                                                <p className="position-title">{interview.position}</p>
+                                            <div className="interview-details">
+                                                <div className="detail-row">
+                                                    <span className="detail-icon"><i className="bi bi-geo-alt"></i></span>
+                                                    <span className="detail-text">{job.location || 'Remote'}</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="detail-icon"><i className="bi bi-people"></i></span>
+                                                    <span className="detail-text">{job.applications_count || 0} Total Applicants</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="detail-icon"><i className="bi bi-calendar"></i></span>
+                                                    <span className="detail-text">Posted: {new Date(job.createdAt).toLocaleDateString()}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="interview-badges">
-                                            <span className={`status-badge ${getStatusBadge(interview.status)}`}>
-                                                {interview.status === 'Live' && <i className="bi bi-circle-fill pulse-dot"></i>}
-                                                {interview.status}
-                                            </span>
-                                            {interview.integrityScore !== null && (
-                                                <span className={`integrity-badge ${getIntegrityBadge(interview.integrityScore)}`}>
-                                                    {getIntegrityLabel(interview.integrityScore)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="interview-details">
-                                        <div className="detail-row">
-                                            <span className="detail-icon"><i className="bi bi-building"></i></span>
-                                            <span className="detail-text">{interview.company}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-icon"><i className="bi bi-person"></i></span>
-                                            <span className="detail-text">Interviewer: {interview.interviewer}</span>
-                                        </div>
-                                        <div className="detail-row">
-                                            <span className="detail-icon"><i className="bi bi-clock"></i></span>
-                                            <span className="detail-text">{interview.startTime} • {interview.duration}</span>
-                                        </div>
-                                    </div>
-
-                                    {interview.status === 'Live' && (
-                                        <div className="progress-section">
-                                            <div className="progress-header">
-                                                <span>Progress: {interview.questionsAnswered}/{interview.totalQuestions} questions</span>
-                                                <span>{interview.progress}%</span>
-                                            </div>
-                                            <div className="progress-bar-custom">
-                                                <div 
-                                                    className="progress-fill"
-                                                    style={{ width: `${interview.progress}%` }}
-                                                ></div>
+                                            <div className="interview-actions">
+                                                <button className="btn-sm btn-primary">
+                                                    <i className="bi bi-people"></i> View Applicants
+                                                </button>
                                             </div>
                                         </div>
-                                    )}
+                                    );
+                                } else {
+                                    // Application Card
+                                    const app = item;
+                                    const candidate = app.Fk_candidate_id || {};
+                                    const hasScore = app.final_trust_score !== undefined && app.final_trust_score !== -1;
+                                    const rank = filteredItems.findIndex(a => a._id === app._id) + 1;
 
-                                    {interview.violations.length > 0 && (
-                                        <div className="violations-section">
-                                            <i className="bi bi-exclamation-triangle text-warning"></i>
-                                            <span>{interview.violations.join(', ')}</span>
+                                    return (
+                                        <div
+                                            key={app._id}
+                                            className={`interview-card ${selectedApplication?._id === app._id ? 'selected' : ''}`}
+                                            onClick={() => handleApplicationClick(app)}
+                                        >
+                                            <div className="interview-card-header">
+                                                <div className="candidate-info">
+                                                    <div className="candidate-avatar">
+                                                        {candidate.full_name ? candidate.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'C'}
+                                                    </div>
+                                                    <div>
+                                                        <h5 className="candidate-name d-flex align-items-center">
+                                                            <span className="badge bg-primary rounded-pill me-2 fs-6 px-3 py-2">#{rank}</span>
+                                                            {candidate.full_name || 'Unknown Candidate'}
+                                                            {hasScore && app.final_trust_score >= 85 && (
+                                                                <i className="bi bi-star-fill text-warning ms-2" title="Top Candidate"></i>
+                                                            )}
+                                                        </h5>
+                                                        <p className="position-title">{candidate.email}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="interview-badges">
+                                                    <span className={`status-badge ${getStatusBadge(app.status)}`}>
+                                                        {['Interviewing', 'Scheduled'].includes(app.status) && <i className="bi bi-circle-fill pulse-dot"></i>}
+                                                        {app.status}
+                                                    </span>
+                                                    {hasScore && (
+                                                        <span className={`status-badge ${app.final_trust_score >= 85 ? 'bg-success bg-opacity-25 text-success' : app.final_trust_score >= 70 ? 'bg-primary bg-opacity-25 text-primary' : 'bg-secondary bg-opacity-25 text-light'}`}>
+                                                            AI Score: {app.final_trust_score}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="interview-details">
+                                                <div className="detail-row">
+                                                    <span className="detail-icon"><i className="bi bi-calendar2-check"></i></span>
+                                                    <span className="detail-text">Applied: {new Date(app.appliedAt || app.createdAt).toLocaleDateString()}</span>
+                                                </div>
+                                                {app.interviewDetails && (
+                                                    <div className="detail-row text-primary">
+                                                        <span className="detail-icon"><i className="bi bi-camera-video"></i></span>
+                                                        <span className="detail-text">Interview {app.interviewDetails.session_status === 'completed' ? 'Completed' : 'Scheduled'}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-
-                                    {interview.flags.length > 0 && (
-                                        <div className="flags-section">
-                                            {interview.flags.map((flag, idx) => (
-                                                <span key={idx} className="flag-tag">
-                                                    <i className="bi bi-flag-fill"></i>
-                                                    {flag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <div className="interview-actions">
-                                        {interview.status === 'Live' && (
-                                            <>
-                                                <button 
-                                                    className="btn-sm btn-primary"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        console.log('Viewing live:', interview.id);
-                                                    }}
-                                                >
-                                                    <i className="bi bi-eye"></i> Watch Live
-                                                </button>
-                                                <button 
-                                                    className="btn-sm btn-danger"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleTerminateInterview(interview.id);
-                                                    }}
-                                                >
-                                                    <i className="bi bi-stop-circle"></i> Terminate
-                                                </button>
-                                            </>
-                                        )}
-                                        {interview.status === 'Completed' && (
-                                            <>
-                                                <button 
-                                                    className="btn-sm btn-primary"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleViewRecording(interview.recordingUrl);
-                                                    }}
-                                                >
-                                                    <i className="bi bi-play-circle"></i> View Recording
-                                                </button>
-                                                <button 
-                                                    className="btn-sm btn-secondary"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDownloadRecording(interview.recordingUrl);
-                                                    }}
-                                                >
-                                                    <i className="bi bi-download"></i>
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
+                                    );
+                                }
+                            })
                         )}
                     </div>
 
-                    {/* Interview Details Panel */}
-                    {selectedInterview && (
+                    {/* Right Panel for Selected Application Details */}
+                    {viewMode === 'applications' && selectedApplication && (
                         <div className="interview-details-panel">
                             <div className="panel-header">
-                                <h5>Interview Details</h5>
-                                <button 
+                                <h5>Applicant Details</h5>
+                                <button
                                     className="btn-close"
-                                    onClick={() => setSelectedInterview(null)}
+                                    onClick={() => setSelectedApplication(null)}
                                 >
                                     <i className="bi bi-x-lg"></i>
                                 </button>
@@ -564,182 +444,303 @@ const InterviewMonitoring = () => {
                             <div className="panel-content">
                                 <div className="candidate-profile">
                                     <div className="candidate-avatar-large">
-                                        {selectedInterview.candidateName.split(' ').map(n => n[0]).join('')}
+                                        {selectedApplication.Fk_candidate_id?.full_name ? selectedApplication.Fk_candidate_id.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'C'}
                                     </div>
-                                    <h4>{selectedInterview.candidateName}</h4>
-                                    <p className="text-muted">{selectedInterview.candidateEmail}</p>
+                                    <h4>{selectedApplication.Fk_candidate_id?.full_name || 'Unknown'}</h4>
+                                    <p className="text-muted">{selectedApplication.Fk_candidate_id?.email}</p>
+                                    <p className="text-muted small">{selectedApplication.Fk_candidate_id?.phone}</p>
                                     <div className="badges-row">
-                                        <span className={`status-badge ${getStatusBadge(selectedInterview.status)}`}>
-                                            {selectedInterview.status === 'Live' && <i className="bi bi-circle-fill pulse-dot"></i>}
-                                            {selectedInterview.status}
+                                        <span className={`status-badge ${getStatusBadge(selectedApplication.status)}`}>
+                                            {selectedApplication.status}
                                         </span>
-                                        {selectedInterview.integrityScore !== null && (
-                                            <span className={`integrity-badge ${getIntegrityBadge(selectedInterview.integrityScore)}`}>
-                                                Score: {selectedInterview.integrityScore}
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
 
                                 <div className="detail-section">
-                                    <h6>Position Information</h6>
+                                    <h6>Application Info</h6>
                                     <div className="detail-item">
-                                        <span className="detail-label">Position:</span>
-                                        <span className="detail-value">{selectedInterview.position}</span>
+                                        <span className="detail-label">Applied For:</span>
+                                        <span className="detail-value">{selectedJob?.job_title}</span>
                                     </div>
                                     <div className="detail-item">
-                                        <span className="detail-label">Company:</span>
-                                        <span className="detail-value">{selectedInterview.company}</span>
+                                        <span className="detail-label">Date Applied:</span>
+                                        <span className="detail-value">{new Date(selectedApplication.appliedAt || selectedApplication.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Interviewer:</span>
-                                        <span className="detail-value">{selectedInterview.interviewer}</span>
-                                    </div>
-                                </div>
-
-                                <div className="detail-section">
-                                    <h6>Session Timeline</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Start Time:</span>
-                                        <span className="detail-value">{selectedInterview.startTime}</span>
-                                    </div>
-                                    {selectedInterview.endTime && (
+                                    {selectedApplication.Fk_resume_id && (
                                         <div className="detail-item">
-                                            <span className="detail-label">End Time:</span>
-                                            <span className="detail-value">{selectedInterview.endTime}</span>
-                                        </div>
-                                    )}
-                                    <div className="detail-item">
-                                        <span className="detail-label">Duration:</span>
-                                        <span className="detail-value">{selectedInterview.duration}</span>
-                                    </div>
-                                </div>
-
-                                <div className="detail-section">
-                                    <h6>Progress</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Questions:</span>
-                                        <span className="detail-value">
-                                            {selectedInterview.questionsAnswered}/{selectedInterview.totalQuestions}
-                                        </span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Completion:</span>
-                                        <span className="detail-value">{selectedInterview.progress}%</span>
-                                    </div>
-                                    {selectedInterview.currentQuestion && (
-                                        <div className="current-question">
-                                            <p className="text-muted mb-1">Current Question:</p>
-                                            <p className="question-text">{selectedInterview.currentQuestion}</p>
+                                            <span className="detail-label">Resume:</span>
+                                            <a href={`http://localhost:5000${selectedApplication.Fk_resume_id.resume_path}`} target="_blank" rel="noopener noreferrer" className="detail-value text-primary text-decoration-none">
+                                                View Resume <i className="bi bi-box-arrow-up-right ms-1"></i>
+                                            </a>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="detail-section">
-                                    <h6>Technical Quality</h6>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Video Quality:</span>
-                                        <span className="detail-value">{selectedInterview.videoQuality}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Audio Quality:</span>
-                                        <span className="detail-value">{selectedInterview.audioQuality}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                        <span className="detail-label">Connection:</span>
-                                        <span className="detail-value">{selectedInterview.connectionStatus}</span>
-                                    </div>
-                                </div>
-
-                                {selectedInterview.violations.length > 0 && (
+                                {selectedApplication.Fk_candidate_id?.skills && selectedApplication.Fk_candidate_id.skills.length > 0 && (
                                     <div className="detail-section">
-                                        <h6>Integrity Violations</h6>
-                                        <div className="violations-list">
-                                            {selectedInterview.violations.map((violation, idx) => (
-                                                <div key={idx} className="violation-item">
-                                                    <i className="bi bi-exclamation-triangle text-warning"></i>
-                                                    <span>{violation}</span>
-                                                </div>
+                                        <h6>Candidate Skills</h6>
+                                        <div className="d-flex flex-wrap gap-2 mt-2">
+                                            {selectedApplication.Fk_candidate_id.skills.map((skill, idx) => (
+                                                <span key={idx} className="badge bg-secondary">
+                                                    {typeof skill === 'string' ? skill : (skill.skill_name || skill.name || 'Skill')}
+                                                </span>
                                             ))}
                                         </div>
                                     </div>
                                 )}
 
-                                {selectedInterview.flags.length > 0 && (
+                                {selectedApplication.coverLetter && (
                                     <div className="detail-section">
-                                        <h6>Flags</h6>
-                                        <div className="flags-list">
-                                            {selectedInterview.flags.map((flag, idx) => (
-                                                <div key={idx} className="flag-item">
-                                                    <i className="bi bi-flag-fill text-danger"></i>
-                                                    <span>{flag}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <h6>Cover Letter</h6>
+                                        <p className="text-muted small mt-2">{selectedApplication.coverLetter}</p>
                                     </div>
                                 )}
 
-                                {selectedInterview.overallRating && (
-                                    <div className="detail-section">
-                                        <h6>Overall Rating</h6>
-                                        <div className="rating-display">
-                                            <span className="rating-value">{selectedInterview.overallRating}</span>
-                                            <span className="rating-stars">
-                                                {[1, 2, 3, 4, 5].map(star => (
-                                                    <i 
-                                                        key={star}
-                                                        className={`bi bi-star${star <= selectedInterview.overallRating ? '-fill' : ''}`}
-                                                    ></i>
-                                                ))}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="detail-section">
+                                <div className="detail-section mt-4">
                                     <h6>Actions</h6>
-                                    {selectedInterview.status === 'Live' && (
-                                        <>
-                                            <button className="btn btn-sm btn-primary w-100 mb-2">
-                                                <i className="bi bi-eye me-2"></i>Watch Live Interview
-                                            </button>
-                                            <button className="btn btn-sm btn-secondary w-100 mb-2" onClick={() => handleSendMessage(selectedInterview.id)}>
-                                                <i className="bi bi-chat me-2"></i>Send Message
-                                            </button>
-                                            <button className="btn btn-sm btn-danger w-100" onClick={() => handleTerminateInterview(selectedInterview.id)}>
-                                                <i className="bi bi-stop-circle me-2"></i>Terminate Interview
-                                            </button>
-                                        </>
+                                    {selectedApplication.interviewDetails && selectedApplication.interviewDetails.session_status === 'completed' && (
+                                        <button
+                                            className="btn btn-sm btn-success w-100 mb-2 text-white"
+                                            onClick={() => fetchReport(selectedApplication.interviewDetails._id || selectedApplication.interviewDetails.sessionId)}
+                                            disabled={reportLoading}
+                                        >
+                                            <i className="bi bi-file-earmark-bar-graph me-2"></i>
+                                            {reportLoading ? 'Loading Report...' : 'View AI Report'}
+                                        </button>
                                     )}
-                                    {selectedInterview.status === 'Completed' && selectedInterview.recordingUrl && (
-                                        <>
-                                            <button className="btn btn-sm btn-primary w-100 mb-2" onClick={() => handleViewRecording(selectedInterview.recordingUrl)}>
-                                                <i className="bi bi-play-circle me-2"></i>View Recording
-                                            </button>
-                                            <button className="btn btn-sm btn-secondary w-100 mb-2" onClick={() => handleDownloadRecording(selectedInterview.recordingUrl)}>
-                                                <i className="bi bi-download me-2"></i>Download Recording
-                                            </button>
-                                            <button className="btn btn-sm btn-outline-primary w-100">
-                                                <i className="bi bi-file-text me-2"></i>View Full Report
-                                            </button>
-                                        </>
+                                    {selectedApplication.status === 'Applied' && (
+                                        <button className="btn btn-sm btn-primary w-100 mb-2">
+                                            <i className="bi bi-check-circle me-2"></i>Shortlist Candidate
+                                        </button>
                                     )}
-                                    {selectedInterview.status === 'Scheduled' && (
-                                        <>
-                                            <button className="btn btn-sm btn-primary w-100 mb-2">
-                                                <i className="bi bi-pencil me-2"></i>Edit Schedule
-                                            </button>
-                                            <button className="btn btn-sm btn-danger w-100">
-                                                <i className="bi bi-x-circle me-2"></i>Cancel Interview
-                                            </button>
-                                        </>
+                                    {['Applied', 'Shortlisted'].includes(selectedApplication.status) && (
+                                        <button className="btn btn-sm btn-info w-100 mb-2 text-white">
+                                            <i className="bi bi-calendar me-2"></i>Schedule Interview
+                                        </button>
                                     )}
+                                    <button
+                                        className="btn btn-sm btn-danger w-100 mb-2"
+                                        onClick={() => handleRejectCandidate(selectedApplication._id)}
+                                        disabled={selectedApplication.status === 'Rejected' || selectedApplication.status === 'Hired'}
+                                    >
+                                        <i className="bi bi-x-circle me-2"></i>
+                                        {selectedApplication.status === 'Rejected' ? 'Already Rejected' : 'Reject'}
+                                    </button>
+                                    <button className="btn btn-sm btn-outline-secondary w-100" onClick={() => window.location.href = `mailto:${selectedApplication.Fk_candidate_id?.email}`}>
+                                        <i className="bi bi-envelope me-2"></i>Send Email
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* ======== Full Report Modal ======== */}
+            {selectedReport && (
+                <div className="rf-modal-overlay" onClick={() => setSelectedReport(null)}>
+                    <div className="rf-modal-box" onClick={e => e.stopPropagation()}>
+                        <div className="rf-modal-header">
+                            <div>
+                                <h2 className="rf-modal-title">
+                                    <i className="bi bi-file-earmark-bar-graph me-2"></i>
+                                    Full Interview Report
+                                </h2>
+                                <p className="rf-modal-subtitle">
+                                    {selectedReport.jobTitle} &nbsp;·&nbsp; {selectedReport.candidateName || selectedApplication?.Fk_candidate_id?.full_name}
+                                    &nbsp;·&nbsp;{selectedReport.date && new Date(selectedReport.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                </p>
+                            </div>
+                            <button className="rf-close-btn" onClick={() => setSelectedReport(null)}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div className="rf-modal-body">
+                            <div className="rf-report-hero">
+                                <div className={`rf-report-score-circle ${getScoreColor(selectedReport.overallScore)}`}>
+                                    <span className="rf-score-num">{selectedReport.overallScore}</span>
+                                    <span className="rf-score-pct">%</span>
+                                </div>
+                                <div className="rf-report-hero-info">
+                                    <div className={`rf-recommendation-pill lg ${getRecommendationVariant(selectedReport.feedback?.recommendation)}`}>
+                                        <i className="bi bi-robot me-2"></i>
+                                        {selectedReport.feedback?.recommendation || 'Pending Assessment'}
+                                    </div>
+                                    <div className="rf-report-meta-grid">
+                                        <div className="rf-report-meta-item">
+                                            <i className="bi bi-clock text-primary me-2"></i>
+                                            <span>Duration: <strong>{selectedReport.duration > 0 ? `${selectedReport.duration} min` : 'N/A'}</strong></span>
+                                        </div>
+                                        <div className="rf-report-meta-item">
+                                            <i className={`bi ${selectedReport.integrityStatus === 'Clean' ? 'bi-shield-check text-success' : 'bi-exclamation-octagon text-warning'} me-2`}></i>
+                                            <span>Integrity: <strong>{selectedReport.integrityStatus || 'N/A'}</strong>
+                                                {selectedReport.violations > 0 && <span className="text-warning ms-1">({selectedReport.violations} flag{selectedReport.violations > 1 ? 's' : ''})</span>}
+                                            </span>
+                                        </div>
+                                        <div className="rf-report-meta-item">
+                                            <i className="bi bi-calendar3 text-primary me-2"></i>
+                                            <span>Date: <strong>{selectedReport.date ? new Date(selectedReport.date).toLocaleDateString() : 'N/A'}</strong></span>
+                                        </div>
+                                        <div className="rf-report-meta-item">
+                                            <i className="bi bi-robot text-primary me-2"></i>
+                                            <span>Type: <strong>{selectedReport.type || 'AI Interview'}</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedReport.feedback?.aiSummary && (
+                                <div className="rf-section">
+                                    <h3 className="rf-section-title">
+                                        <i className="bi bi-robot"></i> AI Analysis Summary
+                                    </h3>
+                                    <div className="rf-ai-summary">
+                                        <p>{selectedReport.feedback.aiSummary}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="rf-section">
+                                <h3 className="rf-section-title">
+                                    <i className="bi bi-graph-up"></i> Score Breakdown
+                                </h3>
+                                <div className="rf-perf-grid">
+                                    {Object.entries(selectedReport.scores || {}).map(([key, val]) => (
+                                        <div key={key} className="rf-perf-row">
+                                            <span className="rf-perf-label">{key}</span>
+                                            <div className="rf-perf-bar-track">
+                                                <div
+                                                    className={`rf-perf-bar-fill ${getScoreColor(val)}`}
+                                                    style={{ width: `${Math.min(val, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <span className={`rf-perf-val ${getScoreColor(val)}`}>{val}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {((selectedReport.feedback?.strengths?.length > 0) || (selectedReport.feedback?.improvements?.length > 0)) && (
+                                <div className="rf-section">
+                                    <h3 className="rf-section-title">
+                                        <i className="bi bi-lightbulb"></i> Key Insights
+                                    </h3>
+                                    <div className="rf-insight-columns">
+                                        <div className="rf-insight-col strengths">
+                                            <div className="rf-insight-col-header">
+                                                <i className="bi bi-check-circle-fill"></i> Key Strengths
+                                            </div>
+                                            <ul>
+                                                {(selectedReport.feedback.strengths || []).map((s, i) => (
+                                                    <li key={i}>{s}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        <div className="rf-insight-col improvements">
+                                            <div className="rf-insight-col-header">
+                                                <i className="bi bi-arrow-up-circle-fill"></i> Areas to Improve
+                                            </div>
+                                            <ul>
+                                                {(selectedReport.feedback.improvements || []).map((s, i) => (
+                                                    <li key={i}>{s}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedReport.questions && selectedReport.questions.length > 0 && (
+                                <div className="rf-section">
+                                    <h3 className="rf-section-title">
+                                        <i className="bi bi-list-check"></i> Question-by-Question Analysis
+                                        <span className="rf-q-count">{selectedReport.questions.length} questions</span>
+                                    </h3>
+                                    <div className="rf-questions-list">
+                                        {selectedReport.questions.map((q, idx) => (
+                                            <div key={idx} className={`rf-question-block ${getScoreColor(q.score)}`}>
+                                                <div className="rf-question-top">
+                                                    <div className="rf-question-meta">
+                                                        <span className="rf-q-num">Q{idx + 1}</span>
+                                                        {q.topic && <span className="rf-q-topic">{q.topic}</span>}
+                                                    </div>
+                                                    <span className={`rf-q-score ${getScoreColor(q.score)}`}>
+                                                        {q.score}%
+                                                    </span>
+                                                </div>
+                                                <div className="rf-question-text">{q.question}</div>
+
+                                                <div className="rf-answer-box">
+                                                    <div className="rf-answer-label">Candidate Answer</div>
+                                                    <div className="rf-answer-text">
+                                                        {q.answer && q.answer !== 'No answer recorded'
+                                                            ? q.answer
+                                                            : <span className="rf-no-answer">No answer was recorded for this question.</span>}
+                                                    </div>
+                                                </div>
+
+                                                {q.aiComment && q.aiComment !== 'No feedback available' && (
+                                                    <div className="rf-ai-comment">
+                                                        <i className="bi bi-chat-left-quote-fill"></i>
+                                                        <span>{q.aiComment}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ======== Finalize Hiring Modal ======== */}
+            {showFinalizeModal && (
+                <div className="rf-modal-overlay" onClick={() => !finalizeLoading && setShowFinalizeModal(false)}>
+                    <div className="rf-modal-box" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+                        <div className="rf-modal-header">
+                            <div>
+                                <h2 className="rf-modal-title">
+                                    <i className="bi bi-person-check-fill me-2"></i>
+                                    Finalize Hiring
+                                </h2>
+                                <p className="rf-modal-subtitle mt-1">
+                                    Select the number of top AI-ranked candidates to hire.
+                                </p>
+                            </div>
+                            <button className="rf-close-btn" disabled={finalizeLoading} onClick={() => setShowFinalizeModal(false)}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div className="rf-modal-body p-4">
+                            <label className="form-label text-light mb-2">Number of Top Candidates to Hire</label>
+                            <input
+                                type="number"
+                                className="form-control-dark w-100 mb-3"
+                                min="1"
+                                max={filteredItems.filter(app => app.status !== 'Hired' && app.status !== 'Rejected').length || 1}
+                                value={hireCount}
+                                onChange={(e) => setHireCount(e.target.value)}
+                                disabled={finalizeLoading}
+                            />
+                            <div className="alert alert-warning bg-warning bg-opacity-10 border-warning text-warning mt-3">
+                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Warning:</strong> The top <strong>{hireCount}</strong> candidate(s) will be marked as <strong>Hired</strong>.
+                                ALL OTHER active candidates for this job will be automatically marked as <strong>Rejected</strong>.
+                                Emails will be sent immediately. This action cannot be undone.
+                            </div>
+                        </div>
+                        <div className="rf-modal-footer d-flex justify-content-end p-3 border-top border-secondary border-opacity-25 mt-3">
+                            <button className="btn btn-outline-secondary me-2" disabled={finalizeLoading} onClick={() => setShowFinalizeModal(false)}>Cancel</button>
+                            <button className="btn btn-primary" disabled={finalizeLoading || hireCount < 1} onClick={handleFinalizeHiring}>
+                                {finalizeLoading ? <><span className="spinner-border spinner-border-sm me-2"></span>Processing...</> : 'Confirm Finalize'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

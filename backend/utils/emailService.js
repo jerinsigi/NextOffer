@@ -213,4 +213,112 @@ const sendInterviewEmail = async (candidateEmail, candidateName, jobTitle, compa
     }
 };
 
-module.exports = { sendOTP, sendShortlistEmail, sendInterviewEmail };
+const sendHireEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
+    try {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.log('=================================================');
+            console.log(`[DEV MODE] Hire Email Service mocked.`);
+            console.log(`To: ${candidateEmail}`);
+            console.log(`Candidate: ${candidateName}`);
+            console.log(`Job: ${jobTitle} at ${companyName}`);
+            console.log('=================================================');
+            return true;
+        }
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: candidateEmail,
+            subject: `Job Offer: You're Hired for ${jobTitle} at ${companyName}!`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                    <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h2 style="color: #28a745; margin-bottom: 20px;">🎉 Congratulations, ${candidateName}!</h2>
+                        
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                            We are absolutely thrilled to inform you that you have been selected for the position of 
+                            <strong>${jobTitle}</strong> at <strong>${companyName}</strong>.
+                        </p>
+                        
+                        <div style="background-color: #e8f5e9; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0; border-radius: 5px;">
+                            <p style="margin: 0; color: #2e7d32; font-weight: bold;">Welcome to the Team!</p>
+                            <p style="margin: 10px 0 0 0; color: #333;">
+                                Your skills and experience stood out to us, and we are excited to have you onboard. Our HR team will reach out to you shortly with your official offer letter and onboarding details.
+                            </p>
+                        </div>
+                        
+                        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+                            Best regards,<br>
+                            <strong>${companyName}</strong><br>
+                            <span style="color: #999;">via NextOffer</span>
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Hire email sent to', candidateEmail, ':', info.response);
+        return true;
+    } catch (error) {
+        console.error('Error sending hire email:', error);
+        return false;
+    }
+};
+
+const sendRejectEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
+    try {
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            console.log('=================================================');
+            console.log(`[DEV MODE] Reject Email Service mocked.`);
+            console.log(`To: ${candidateEmail}`);
+            console.log(`Candidate: ${candidateName}`);
+            console.log(`Job: ${jobTitle} at ${companyName}`);
+            console.log('=================================================');
+            return true;
+        }
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: candidateEmail,
+            subject: `Update on your application for ${jobTitle} at ${companyName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                    <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h2 style="color: #333; margin-bottom: 20px;">Application Update</h2>
+                        
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                            Dear <strong>${candidateName}</strong>,
+                        </p>
+                        
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                            Thank you for taking the time to apply and interview for the <strong>${jobTitle}</strong> position at <strong>${companyName}</strong>.
+                        </p>
+                        
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                            We received many applications from highly qualified individuals, and after careful consideration, we have decided to move forward with other candidates who more closely match our current needs.
+                        </p>
+                        
+                        <p style="font-size: 16px; color: #333; line-height: 1.6;">
+                            We genuinely appreciate your interest in joining our team and wish you the very best of luck in your job search and future career endeavors.
+                        </p>
+                        
+                        <p style="font-size: 14px; color: #666; margin-top: 30px;">
+                            Best regards,<br>
+                            <strong>${companyName}</strong><br>
+                            <span style="color: #999;">via NextOffer</span>
+                        </p>
+                    </div>
+                </div>
+            `
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Reject email sent to', candidateEmail, ':', info.response);
+        return true;
+    } catch (error) {
+        console.error('Error sending reject email:', error);
+        return false;
+    }
+};
+
+module.exports = { sendOTP, sendShortlistEmail, sendInterviewEmail, sendHireEmail, sendRejectEmail };

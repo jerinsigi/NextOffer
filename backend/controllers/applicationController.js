@@ -147,8 +147,10 @@ exports.getJobApplications = async (req, res) => {
             .sort({ createdAt: -1 });
 
         // Populate interview details for scheduled/interviewing applications
+        const FinalReport = require('../models/Final_Report');
+
         for (let app of applications) {
-            if (['Scheduled', 'Interviewing'].includes(app.status)) {
+            if (['Scheduled', 'Interviewing', 'Interviewed'].includes(app.status)) {
                 // Find latest active session
                 const session = await InterviewSession.findOne({
                     fk_candidate_id: app.Fk_candidate_id._id,
@@ -158,13 +160,38 @@ exports.getJobApplications = async (req, res) => {
 
                 if (session) {
                     app.interviewDetails = {
+                        _id: session._id,
                         started_at: session.started_at,
                         ended_at: session.ended_at,
                         session_status: session.session_status
                     };
                 }
             }
+
+            // Fetch Final Report score if available
+            const finalReport = await FinalReport.findOne({
+                Fk_candidate_id: app.Fk_candidate_id._id,
+                Fk_job_id: jobId
+            });
+
+            if (finalReport) {
+                app.final_trust_score = finalReport.final_trust_score;
+            } else {
+                app.final_trust_score = -1; // -1 indicates no score yet
+            }
         }
+
+        // Sort applications: Those with a score first (descending), then those without a score (by newest applied)
+        applications.sort((a, b) => {
+            if (a.final_trust_score !== -1 && b.final_trust_score !== -1) {
+                return b.final_trust_score - a.final_trust_score; // Higher score first
+            }
+            if (a.final_trust_score !== -1) return -1; // 'a' has score, 'b' doesn't, so 'a' comes first
+            if (b.final_trust_score !== -1) return 1;  // 'b' has score, 'a' doesn't, so 'b' comes first
+
+            // Neither has a score, fallback to standard date sorting (newest first)
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
 
         res.json(applications);
     } catch (err) {
@@ -261,6 +288,191 @@ exports.shortlistCandidates = async (req, res) => {
         });
     } catch (err) {
         console.error('Shortlist candidates error:', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Individually Reject a candidate
+exports.rejectCandidate = async (req, res) => {
+    try {
+        const { applicationId } = req.params;
+
+        if (!applicationId) {
+            return res.status(400).json({ message: 'Application ID is required' });
+        }
+
+        const application = await Application.findById(applicationId)
+            .populate('Fk_candidate_id', 'full_name email')
+            .populate('Fk_job_id', 'job_title Fk_company_id');
+
+        if (!application) {
+            return res.status(404).json({ message: 'Application not found' });
+        }
+
+        if (application.status === 'Rejected') {
+            return res.status(400).json({ message: 'Application is already rejected' });
+        }
+
+        application.status = 'Rejected';
+        await application.save();
+
+        const { sendRejectEmail } = require('../utils/emailService');
+        const Company = require('../models/Company');
+
+        const company = await Company.findById(application.Fk_job_id.Fk_company_id);
+        const companyName = company ? company.company_name : 'Our Company';
+
+        const emailSent = await sendRejectEmail(
+            application.Fk_candidate_id.email,
+            application.Fk_candidate_id.full_name,
+            application.Fk_job_id.job_title,
+            companyName
+        );
+
+        try {
+            await createNotification(
+                application.Fk_candidate_id.email,
+                'application',
+                'Application Update',
+                `Your application for ${application.Fk_job_id.job_title} at ${companyName} has been declined.`,
+                '/user/applications'
+            );
+        } catch (e) { }
+
+        res.status(200).json({
+            message: 'Candidate rejected successfully',
+            emailSent
+        });
+    } catch (err) {
+        console.error('Reject candidate error:', err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Finalize Hiring (Bulk Hire top N, Reject rest by Final Score)
+exports.finalizeHiring = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const { topNHires } = req.body;
+
+        if (!topNHires || isNaN(topNHires) || topNHires < 1) {
+            return res.status(400).json({ message: 'Please provide a valid number of top candidates to hire.' });
+        }
+
+        // 1. Fetch all applications for the job
+        const applications = await Application.find({ Fk_job_id: jobId })
+            .populate('Fk_candidate_id', 'full_name email')
+            .populate('Fk_job_id', 'job_title Fk_company_id');
+
+        if (!applications || applications.length === 0) {
+            return res.status(404).json({ message: 'No applications found for this job.' });
+        }
+
+        // 2. Fetch Final Reports and attach scores to sort them (identical to frontend sorting logic)
+        const FinalReport = require('../models/Final_Report');
+
+        for (let app of applications) {
+            const finalReport = await FinalReport.findOne({
+                Fk_candidate_id: app.Fk_candidate_id._id,
+                Fk_job_id: jobId
+            });
+
+            if (finalReport) {
+                app.temp_final_score = finalReport.final_trust_score;
+            } else {
+                app.temp_final_score = -1;
+            }
+        }
+
+        // Sort applications: Those with a score first (descending), then fallback to creation date
+        applications.sort((a, b) => {
+            if (a.temp_final_score !== -1 && b.temp_final_score !== -1) {
+                return b.temp_final_score - a.temp_final_score; // Higher score first
+            }
+            if (a.temp_final_score !== -1) return -1;
+            if (b.temp_final_score !== -1) return 1;
+
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        const { sendHireEmail, sendRejectEmail } = require('../utils/emailService');
+        const Company = require('../models/Company');
+
+        let hiredCount = 0;
+        let rejectedCount = 0;
+        const emailResults = [];
+
+        // 3. Process each application (Hire top N, Reject the rest)
+        for (let i = 0; i < applications.length; i++) {
+            const application = applications[i];
+
+            // Skip already finalized applications so we don't double email them
+            if (application.status === 'Hired' || application.status === 'Rejected') {
+                continue;
+            }
+
+            const company = await Company.findById(application.Fk_job_id.Fk_company_id);
+            const companyName = company ? company.company_name : 'Our Company';
+
+            if (i < topNHires) {
+                // HIRE this candidate (Rank 1 to topNHires)
+                application.status = 'Hired';
+                await application.save();
+                hiredCount++;
+
+                const emailSent = await sendHireEmail(
+                    application.Fk_candidate_id.email,
+                    application.Fk_candidate_id.full_name,
+                    application.Fk_job_id.job_title,
+                    companyName
+                );
+                emailResults.push({ email: application.Fk_candidate_id.email, status: 'Hired Email', success: emailSent });
+
+                try {
+                    await createNotification(
+                        application.Fk_candidate_id.email,
+                        'application',
+                        'Job Offer Received! 🌟',
+                        `You have been offered the position for ${application.Fk_job_id.job_title} at ${companyName}!`,
+                        '/user/applications'
+                    );
+                } catch (e) { }
+
+            } else {
+                // REJECT this candidate (Rank > topNHires)
+                application.status = 'Rejected';
+                await application.save();
+                rejectedCount++;
+
+                const emailSent = await sendRejectEmail(
+                    application.Fk_candidate_id.email,
+                    application.Fk_candidate_id.full_name,
+                    application.Fk_job_id.job_title,
+                    companyName
+                );
+                emailResults.push({ email: application.Fk_candidate_id.email, status: 'Reject Email', success: emailSent });
+
+                try {
+                    await createNotification(
+                        application.Fk_candidate_id.email,
+                        'application',
+                        'Application Update',
+                        `Your application for ${application.Fk_job_id.job_title} at ${companyName} has been declined.`,
+                        '/user/applications'
+                    );
+                } catch (e) { }
+            }
+        }
+
+        res.status(200).json({
+            message: `Successfully finalized hiring. Hired: ${hiredCount}, Rejected: ${rejectedCount}.`,
+            hiredCount,
+            rejectedCount,
+            emailResults
+        });
+
+    } catch (err) {
+        console.error('Finalize hiring error:', err);
         res.status(500).json({ message: err.message });
     }
 };

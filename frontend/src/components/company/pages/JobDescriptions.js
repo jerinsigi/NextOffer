@@ -495,9 +495,11 @@ const JobDescriptions = () => {
             {/* Stats Cards */}
             <div className="row g-4 mb-4">
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-briefcase fs-3"></i>
+                    <div className="stat-card stat-card-primary">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-briefcase fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Jobs</div>
@@ -506,9 +508,11 @@ const JobDescriptions = () => {
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-check-circle fs-3"></i>
+                    <div className="stat-card stat-card-success">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-check-circle fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Active Postings</div>
@@ -517,9 +521,11 @@ const JobDescriptions = () => {
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-person-lines-fill fs-3"></i>
+                    <div className="stat-card stat-card-info">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-person-lines-fill fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Applications</div>
@@ -528,9 +534,11 @@ const JobDescriptions = () => {
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-archive fs-3"></i>
+                    <div className="stat-card stat-card-warning">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-archive fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Closed Jobs</div>

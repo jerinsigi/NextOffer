@@ -695,3 +695,133 @@ exports.completeInterview = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+
+// Get a single interview report by session ID
+exports.getInterviewReport = async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+
+        if (!sessionId) {
+            return res.status(400).json({ message: 'Session ID is required' });
+        }
+
+        // 1. Find the session
+        const session = await InterviewSession.findById(sessionId)
+            .populate({
+                path: 'fk_job_id',
+                populate: { path: 'Fk_company_id' }
+            });
+
+        if (!session) {
+            return res.status(404).json({ message: 'Interview session not found' });
+        }
+
+        const job = session.fk_job_id;
+        if (!job) {
+            return res.status(404).json({ message: 'Associated job not found' });
+        }
+        const company = job.Fk_company_id;
+
+        // Fetch Questions and Responses for this session
+        const InterviewQuestion = require('../models/Interview_Question');
+        const InterviewResponse = require('../models/Interview_Response');
+
+        const questions = await InterviewQuestion.find({ Fk_session_id: session._id });
+        const questionIds = questions.map(q => q._id);
+
+        const responses = await InterviewResponse.find({
+            Fk_question_id: { $in: questionIds }
+        });
+
+        // Calculate Scores and Build Response
+        // Try to fetch Final Report first
+        const FinalReport = require('../models/Final_Report');
+        const finalReport = await FinalReport.findOne({
+            Fk_candidate_id: session.fk_candidate_id,
+            Fk_job_id: job._id
+        });
+
+        let totalScore = 0;
+        let scoredCount = 0;
+        let feedbackAccumulator = [];
+
+        const questionsWithResponses = questions.map(q => {
+            const response = responses.find(r => r.Fk_question_id.toString() === q._id.toString());
+            const score = response ? (response.ai_score || 0) : 0;
+
+            if (response && response.ai_score !== undefined) {
+                totalScore += response.ai_score;
+                scoredCount++;
+            }
+
+            if (response && response.feedback) {
+                feedbackAccumulator.push(response.feedback);
+            }
+
+            return {
+                question: q.question_text,
+                answer: response && response.candidate_answer ? response.candidate_answer : 'No answer recorded',
+                score: score,
+                aiComment: response && response.feedback ? response.feedback : 'No feedback available',
+                topic: q.topic || 'General'
+            };
+        });
+
+        // Determine scores - prioritize Final Report if exists, else calculate/mock
+        const interviewScore = finalReport ? finalReport.interview_score : (scoredCount > 0 ? Math.round(totalScore / scoredCount) : 0);
+        const resumeScore = finalReport ? finalReport.resume_score : 85; // Fallback mock
+        const integrityScore = finalReport ? finalReport.integrity_score : 100; // Fallback mock
+        const finalTrustScore = finalReport ? finalReport.final_trust_score : Math.round((interviewScore * 0.6) + (resumeScore * 0.3) + (integrityScore * 0.1));
+
+        const overallScore = finalTrustScore;
+        const recommendation = finalReport ? finalReport.recommendation : (overallScore >= 85 ? 'Highly Recommended' : (overallScore >= 70 ? 'Recommended' : 'Needs Improvement'));
+
+        const strengths = [];
+        const improvements = [];
+
+        questionsWithResponses.forEach(q => {
+            if (q.score >= 80) strengths.push(`Strong: ${q.topic} - ${q.aiComment.substring(0, 60)}...`);
+            else if (q.score < 70) improvements.push(`Needs Work: ${q.topic} - ${q.aiComment.substring(0, 60)}...`);
+        });
+
+        // Ensure we have at least some dummy feedback if empty (for UI consistency)
+        if (strengths.length === 0) strengths.push("Completed interview sections successfully.");
+        if (improvements.length === 0) improvements.push("Review technical concepts discussed.");
+
+        const report = {
+            id: session._id,
+            jobTitle: job.job_title || 'Unknown Role',
+            company: company ? company.company_name : (job.company_name || 'Unknown Company'),
+            companyLogo: company ? company.logo : null,
+            date: session.actual_completed_at || session.actual_started_at || session.ended_at,
+            type: 'AI Technical Interview',
+            status: session.session_status,
+            overallScore: overallScore,
+            scores: {
+                Interview: interviewScore,
+                Resume: resumeScore,
+                Integrity: integrityScore,
+                'Trust Score': finalTrustScore
+            },
+            feedback: {
+                strengths: strengths.slice(0, 4),
+                improvements: improvements.slice(0, 4),
+                aiSummary: feedbackAccumulator.length > 0 ? feedbackAccumulator.join(' ').substring(0, 200) + "..." : "AI analysis pending...",
+                recommendation: recommendation
+            },
+            questions: questionsWithResponses,
+            integrityStatus: integrityScore === 100 ? 'Clean' : 'Flagged',
+            violations: integrityScore < 100 ? 1 : 0, // Simple mapping since we don't track raw violations count in FinalReport yet
+            duration: (session.actual_started_at && session.actual_completed_at)
+                ? Math.round((new Date(session.actual_completed_at) - new Date(session.actual_started_at)) / 60000)
+                : 0,
+            recordingAvailable: false,
+            transcriptAvailable: true
+        };
+
+        res.json(report);
+    } catch (error) {
+        console.error('Error fetching interview report:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
