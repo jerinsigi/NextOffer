@@ -104,14 +104,27 @@ exports.deleteJob = async (req, res) => {
 exports.getAllActiveJobs = async (req, res) => {
     try {
         const { search, category, type } = req.query;
-        let query = { job_status: 'Active' };
+        let query = {
+            job_status: 'Active',
+            $and: [
+                {
+                    $or: [
+                        { end_date: { $gte: new Date() } },
+                        { end_date: { $exists: false } },
+                        { end_date: null }
+                    ]
+                }
+            ]
+        };
 
         if (search) {
-            query.$or = [
-                { job_title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
-                { companyName: { $regex: search, $options: 'i' } } // Assuming company name might be populated or redundant
-            ];
+            query.$and.push({
+                $or: [
+                    { job_title: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } },
+                    { companyName: { $regex: search, $options: 'i' } } // Assuming company name might be populated or redundant
+                ]
+            });
         }
 
         if (category) {
