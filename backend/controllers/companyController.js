@@ -6,6 +6,7 @@ const Interview_Session = require('../models/Interview_Session');
 const Integrity_Log = require('../models/Integrity_Log');
 const bcrypt = require('bcrypt');
 const { sendOTP } = require('../utils/emailService');
+const { createNotification } = require('./notificationController');
 
 // Register a new company (public endpoint)
 exports.registerCompany = async (req, res) => {
@@ -72,6 +73,22 @@ exports.registerCompany = async (req, res) => {
 
         // Send OTP via email
         await sendOTP(email, login.otp);
+
+        // Notify Admins
+        try {
+            const admins = await Login.find({ usertype: 'admin' });
+            for (const admin of admins) {
+                await createNotification(
+                    admin.email,
+                    'company',
+                    'New Company Registration',
+                    `${companyName} has registered and is pending your approval.`,
+                    '/admin/companies'
+                );
+            }
+        } catch (notifErr) {
+            console.error('Admin notification error (registerCompany):', notifErr.message);
+        }
 
         res.status(201).json({
             message: 'Company registration successful! Your account is pending admin approval.',

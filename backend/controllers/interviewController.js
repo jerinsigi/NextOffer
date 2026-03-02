@@ -679,6 +679,30 @@ exports.completeInterview = async (req, res) => {
             await finalReport.save();
             console.log('✅ Final Report created/updated');
 
+            // Notify Admins if there are integrity violations
+            if (integrityScore < 100) {
+                try {
+                    const Login = require('../models/Login');
+                    const candidateInfo = await Candidate.findById(session.fk_candidate_id);
+                    const jobInfo = await JobDescription.findById(session.fk_job_id);
+
+                    if (candidateInfo && jobInfo) {
+                        const admins = await Login.find({ usertype: 'admin' });
+                        for (const admin of admins) {
+                            await createNotification(
+                                admin.email,
+                                'system',
+                                'Integrity Violation Detected ⚠️',
+                                `An interview for ${candidateInfo.full_name} (${jobInfo.job_title}) was flagged with an integrity score of ${integrityScore}%.`,
+                                '/admin/reports'
+                            );
+                        }
+                    }
+                } catch (notifErr) {
+                    console.error('Admin notification error (integrity violations):', notifErr.message);
+                }
+            }
+
         } catch (reportError) {
             console.error('⚠️ Error creating final report:', reportError);
             // Don't fail the whole request, just log it
