@@ -189,47 +189,70 @@ const JobDescriptions = () => {
 
             {/* Stats Cards */}
             <div className="row g-4 mb-4">
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-briefcase fs-3"></i>
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-primary">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-briefcase fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Jobs</div>
                             <div className="stat-value">{stats.total}</div>
+                            <div className="stat-change positive">
+                                <i className="bi bi-graph-up me-1"></i> All Time
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-check-circle fs-3"></i>
+
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-success">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-check-circle fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Active Postings</div>
                             <div className="stat-value">{stats.active}</div>
+                            <div className="stat-change positive">
+                                <i className="bi bi-broadcast me-1"></i> Live Now
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-person-lines-fill fs-3"></i>
+
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-info">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-person-lines-fill fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Applications</div>
                             <div className="stat-value">{stats.totalApplications}</div>
+                            <div className="stat-change positive">
+                                <i className="bi bi-people me-1"></i> Received
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-archive fs-3"></i>
+
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-warning">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-archive fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Closed Jobs</div>
                             <div className="stat-value">{stats.closed}</div>
+                            <div className="stat-change negative">
+                                <i className="bi bi-stop-circle me-1"></i> Ended
+                            </div>
                         </div>
                     </div>
                 </div>
