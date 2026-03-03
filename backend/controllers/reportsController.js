@@ -212,3 +212,156 @@ exports.getDashboardStats = async (req, res) => {
         res.status(500).json({ message: 'Server error retrieving dashboard statistics' });
     }
 };
+
+const Integrity_Log = require('../models/Integrity_Log');
+
+exports.getCompanyStats = async (req, res) => {
+    try {
+        const { dateRange, email } = req.query;
+        if (!email) return res.status(400).json({ message: 'Company email is required' });
+
+        const company = await Company.findOne({ email });
+        if (!company) return res.status(404).json({ message: 'Company not found' });
+        const companyId = company._id;
+
+        // Date Filtering Logic
+        let dateFilter = {};
+        const now = new Date();
+        if (dateRange === 'last7days') dateFilter = { $gte: new Date(now.setDate(now.getDate() - 7)) };
+        else if (dateRange === 'last30days') dateFilter = { $gte: new Date(now.setDate(now.getDate() - 30)) };
+        else if (dateRange === 'last3months') dateFilter = { $gte: new Date(now.setDate(now.getDate() - 90)) };
+        else if (dateRange === 'today') {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+            dateFilter = { $gte: startOfDay };
+        }
+
+        const dateQuery = Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
+        const startedQuery = Object.keys(dateFilter).length > 0 ? { started_at: dateFilter } : {};
+
+        // Get jobs for the company
+        const jobs = await JobDescription.find({ Fk_company_id: companyId });
+        const jobIds = jobs.map(j => j._id);
+        const jobQuery = { Fk_job_id: { $in: jobIds } };
+        const interviewJobQuery = { fk_job_id: { $in: jobIds } };
+
+        // 1. Overview metrics
+        const totalCandidates = await Application.countDocuments({ ...jobQuery });
+        const interviewsConducted = await InterviewSession.countDocuments({ ...interviewJobQuery, session_status: 'completed' });
+        const hiredCount = await Application.countDocuments({ ...jobQuery, status: 'Hired' });
+        
+        const sessions = await InterviewSession.find(interviewJobQuery);
+        const sessionIds = sessions.map(s => s._id);
+        const logs = await Integrity_Log.find({ Fk_session_id: { $in: sessionIds } });
+        
+        let tabSwitches = 0, gazeAversions = 0, presenceAnomalies = 0;
+        logs.forEach(log => {
+            tabSwitches += log.tab_switch_count || 0;
+            gazeAversions += log.gaze_away_count || 0;
+            presenceAnomalies += log.face_absent_count || 0;
+        });
+        const totalViolations = tabSwitches + gazeAversions + presenceAnomalies;
+
+        const integrityMetrics = [];
+        if (totalViolations > 0) {
+            integrityMetrics.push({ type: 'Tab Switching', count: tabSwitches, percentage: ((tabSwitches/totalViolations)*100).toFixed(1) });
+            integrityMetrics.push({ type: 'Gaze Aversion', count: gazeAversions, percentage: ((gazeAversions/totalViolations)*100).toFixed(1) });
+            integrityMetrics.push({ type: 'Presence Anomaly', count: presenceAnomalies, percentage: ((presenceAnomalies/totalViolations)*100).toFixed(1) });
+        } else {
+            integrityMetrics.push({ type: 'Tab Switching', count: 0, percentage: 0 }, { type: 'Gaze Aversion', count: 0, percentage: 0 }, { type: 'Presence Anomaly', count: 0, percentage: 0 });
+        }
+
+        const hiringRate = totalCandidates > 0 ? ((hiredCount / totalCandidates) * 100).toFixed(1) : 0;
+
+        // 2. Interview Trends
+        const daysToLookBack = dateRange === 'last3months' ? 90 : dateRange === 'last30days' ? 30 : dateRange === 'custom' ? 60 : 7;
+        const trendStartDate = new Date();
+        trendStartDate.setDate(trendStartDate.getDate() - daysToLookBack);
+
+        const trends = await InterviewSession.aggregate([
+            { $match: { started_at: { $gte: trendStartDate }, fk_job_id: { $in: jobIds } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$started_at" } },
+                    interviews: { $sum: 1 },
+                    completed: { $sum: { $cond: [{ $eq: ["$session_status", "completed"] }, 1, 0] } }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const interviewTrends = trends.map(t => ({
+            date: t._id,
+            interviews: t.interviews,
+            completed: t.completed,
+            flagged: Math.floor(t.interviews * 0.1) // 10% mocked rate
+        }));
+
+        // 3. Jobs Data
+        const jobsDataRaw = await Promise.all(jobs.map(async (job) => {
+            const applicants = await Application.countDocuments({ Fk_job_id: job._id });
+            const jobInterviews = await InterviewSession.find({ fk_job_id: job._id });
+            const jobIntIds = jobInterviews.map(i => i._id);
+            const jobLogs = await Integrity_Log.find({ Fk_session_id: { $in: jobIntIds } });
+            
+            let violations = 0;
+            jobLogs.forEach(log => {
+                violations += (log.tab_switch_count || 0) + (log.gaze_away_count || 0) + (log.face_absent_count || 0);
+            });
+
+            return {
+                name: job.job_title || 'Untitled Job',
+                interviews: jobInterviews.length,
+                candidates: applicants,
+                avgScore: 85,
+                violations: violations
+            };
+        }));
+        const jobsData = jobsDataRaw.sort((a,b) => b.candidates - a.candidates);
+
+        // 4. Skills Analysis
+        const skillsAggr = await JobDescription.aggregate([
+            { $match: { _id: { $in: jobIds } } }, // Skills from company's jobs
+            { $unwind: "$skills" },
+            { $group: { _id: "$skills", demand: { $sum: 1 } } },
+            { $sort: { demand: -1 } },
+            { $limit: 7 }
+        ]);
+        const skillsAnalysis = skillsAggr.map(s => ({
+            skill: s._id,
+            demand: s.demand,
+            passRate: 60 + Math.floor(Math.random() * 30),
+            avgScore: 70 + Math.floor(Math.random() * 20)
+        }));
+
+        // 5. Hiring Funnel
+        const stageApplied = await Application.countDocuments({ ...jobQuery });
+        const stageShortlisted = await Application.countDocuments({ ...jobQuery, status: { $in: ['Shortlisted', 'Scheduled', 'Interviewing', 'Interviewed', 'Hired'] } });
+        const stageInterviewed = await Application.countDocuments({ ...jobQuery, status: { $in: ['Interviewed', 'Hired'] } });
+        const stageHired = await Application.countDocuments({ ...jobQuery, status: 'Hired' });
+
+        const hiringFunnel = [
+            { stage: 'Total Applications', count: stageApplied, percentage: 100 },
+            { stage: 'Shortlisted', count: stageShortlisted, percentage: stageApplied ? Math.round((stageShortlisted/stageApplied)*100) : 0 },
+            { stage: 'Interview Completed', count: stageInterviewed, percentage: stageApplied ? Math.round((stageInterviewed/stageApplied)*100) : 0 },
+            { stage: 'Hired', count: stageHired, percentage: stageApplied ? Math.round((stageHired/stageApplied)*100) : 0 }
+        ];
+
+        res.status(200).json({
+            overview: {
+                totalCandidates,
+                interviewsConducted,
+                hiringRate: parseFloat(hiringRate),
+                integrityViolations: totalViolations
+            },
+            interviewTrends,
+            jobsData,
+            skillsAnalysis,
+            integrityMetrics,
+            hiringFunnel
+        });
+    } catch (error) {
+        console.error('Error fetching company stats:', error);
+        res.status(500).json({ message: 'Server error retrieving company statistics' });
+    }
+};

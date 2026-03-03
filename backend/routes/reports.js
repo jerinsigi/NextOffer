@@ -7,4 +7,9 @@ const reportsController = require('../controllers/reportsController');
 // @access  Public (or Protected if auth middleware added)
 router.get('/dashboard-stats', reportsController.getDashboardStats);
 
+// @route   GET /api/reports/company-stats
+// @desc    Get dashboard statistics for a specific company
+// @access  Public (or Protected)
+router.get('/company-stats', reportsController.getCompanyStats);
+
 module.exports = router;

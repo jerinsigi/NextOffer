@@ -7,52 +7,49 @@ const Reports = () => {
     const [selectedMetric, setSelectedMetric] = useState('overview');
     const [loading, setLoading] = useState(true);
 
+    const [stats, setStats] = useState({
+        overview: { totalCandidates: 0, interviewsConducted: 0, hiringRate: 0, integrityViolations: 0 },
+        interviewTrends: [],
+        jobsData: [],
+        skillsAnalysis: [],
+        integrityMetrics: [],
+        hiringFunnel: []
+    });
+
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 500);
-        return () => clearTimeout(timer);
-    }, []);
-    const interviewTrends = [
-        { date: 'Dec 1', interviews: 45, completed: 38, flagged: 3 },
-        { date: 'Dec 2', interviews: 52, completed: 47, flagged: 2 },
-        { date: 'Dec 3', interviews: 48, completed: 42, flagged: 4 },
-        { date: 'Dec 4', interviews: 61, completed: 55, flagged: 5 },
-        { date: 'Dec 5', interviews: 58, completed: 51, flagged: 3 },
-        { date: 'Dec 6', interviews: 67, completed: 59, flagged: 6 }
-    ];
+        const fetchReports = async () => {
+            setLoading(true);
+            try {
+                const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+                if (!userStr) {
+                    setLoading(false);
+                    return;
+                }
+                const user = JSON.parse(userStr);
 
-    const companiesData = [
-        { name: 'TechCorp Inc.', interviews: 156, candidates: 423, avgScore: 87, violations: 12 },
-        { name: 'StartupXYZ', interviews: 98, candidates: 287, avgScore: 82, violations: 8 },
-        { name: 'DataCo', interviews: 134, candidates: 356, avgScore: 79, violations: 15 },
-        { name: 'CloudTech', interviews: 87, candidates: 198, avgScore: 91, violations: 4 },
-        { name: 'InnovateLabs', interviews: 112, candidates: 289, avgScore: 85, violations: 9 }
-    ];
+                const response = await fetch(`http://localhost:5000/api/reports/company-stats?email=${user.email}&dateRange=${dateRange}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error('Error fetching reports:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const skillsAnalysis = [
-        { skill: 'JavaScript', demand: 245, avgScore: 78, passRate: 65 },
-        { skill: 'Python', demand: 198, avgScore: 82, passRate: 71 },
-        { skill: 'React', demand: 167, avgScore: 75, passRate: 62 },
-        { skill: 'Node.js', demand: 145, avgScore: 80, passRate: 68 },
-        { skill: 'SQL', demand: 132, avgScore: 84, passRate: 74 },
-        { skill: 'AWS', demand: 123, avgScore: 77, passRate: 64 },
-        { skill: 'Docker', demand: 98, avgScore: 81, passRate: 69 }
-    ];
+        fetchReports();
+    }, [dateRange]);
 
-    const integrityMetrics = [
-        { type: 'Tab Switching', count: 68, percentage: 53.5 },
-        { type: 'Gaze Aversion', count: 45, percentage: 35.4 },
-        { type: 'Presence Anomaly', count: 14, percentage: 11.1 }
-    ];
-
-    const hiringFunnel = [
-        { stage: 'Total Applications', count: 12543, percentage: 100 },
-        { stage: 'Resume Screened', count: 8945, percentage: 71.3 },
-        { stage: 'Interview Completed', count: 5234, percentage: 41.7 },
-        { stage: 'Passed Integrity', count: 4876, percentage: 38.9 },
-        { stage: 'Shortlisted', count: 2156, percentage: 17.2 }
-    ];
+    const {
+        overview,
+        interviewTrends,
+        jobsData,
+        skillsAnalysis,
+        integrityMetrics,
+        hiringFunnel
+    } = stats;
 
     const exportReport = (format) => {
         alert(`Exporting report in ${format.toUpperCase()} format...`);
@@ -108,7 +105,7 @@ const Reports = () => {
                             <i className="bi bi-people-fill text-primary"></i>
                             <span className="metric-change positive">+12.5%</span>
                         </div>
-                        <div className="metric-value">12,543</div>
+                        <div className="metric-value">{overview.totalCandidates.toLocaleString()}</div>
                         <div className="metric-label">Total Candidates</div>
                         <div className="metric-bar">
                             <div className="metric-bar-fill bg-primary" style={{ width: '75%' }}></div>
@@ -121,7 +118,7 @@ const Reports = () => {
                             <i className="bi bi-camera-video-fill text-success"></i>
                             <span className="metric-change positive">+8.3%</span>
                         </div>
-                        <div className="metric-value">5,234</div>
+                        <div className="metric-value">{overview.interviewsConducted.toLocaleString()}</div>
                         <div className="metric-label">Interviews Conducted</div>
                         <div className="metric-bar">
                             <div className="metric-bar-fill bg-success" style={{ width: '82%' }}></div>
@@ -134,8 +131,8 @@ const Reports = () => {
                             <i className="bi bi-graph-up-arrow text-info"></i>
                             <span className="metric-change positive">+5.1%</span>
                         </div>
-                        <div className="metric-value">84.2%</div>
-                        <div className="metric-label">Avg Success Rate</div>
+                        <div className="metric-value">{overview.hiringRate}%</div>
+                        <div className="metric-label">Avg Hiring Rate</div>
                         <div className="metric-bar">
                             <div className="metric-bar-fill bg-info" style={{ width: '84%' }}></div>
                         </div>
@@ -147,7 +144,7 @@ const Reports = () => {
                             <i className="bi bi-shield-fill-exclamation text-danger"></i>
                             <span className="metric-change negative">-3.2%</span>
                         </div>
-                        <div className="metric-value">127</div>
+                        <div className="metric-value">{overview.integrityViolations}</div>
                         <div className="metric-label">Integrity Violations</div>
                         <div className="metric-bar">
                             <div className="metric-bar-fill bg-danger" style={{ width: '15%' }}></div>
@@ -177,56 +174,44 @@ const Reports = () => {
                         </div>
                         <div className="p-4">
                             <div className="chart-container">
-                                <svg className="line-chart" viewBox="0 0 600 250">
-                                    {/* Grid lines */}
-                                    {[0, 1, 2, 3, 4].map((i) => (
-                                        <line
-                                            key={i}
-                                            x1="40"
-                                            y1={50 + i * 40}
-                                            x2="580"
-                                            y2={50 + i * 40}
-                                            stroke="rgba(255,255,255,0.1)"
-                                            strokeWidth="1"
-                                        />
-                                    ))}
+                                {interviewTrends && interviewTrends.length > 0 ? (
+                                    (() => {
+                                        const width = 500;
+                                        const startX = 80;
+                                        const dx = interviewTrends.length > 1 ? width / (interviewTrends.length - 1) : 0;
+                                        const maxY = Math.max(1, ...interviewTrends.map(t => Math.max(t.interviews || 0, t.completed || 0, t.flagged || 0)));
+                                        const getY = (val) => 230 - ((val || 0) / maxY) * 180;
+                                        
+                                        const totalPoints = interviewTrends.map((t, i) => `${startX + i * dx},${getY(t.interviews)}`).join(' ');
+                                        const completedPoints = interviewTrends.map((t, i) => `${startX + i * dx},${getY(t.completed)}`).join(' ');
+                                        const flaggedPoints = interviewTrends.map((t, i) => `${startX + i * dx},${getY(t.flagged)}`).join(' ');
 
-                                    {/* Total interviews line */}
-                                    <polyline
-                                        points="80,150 170,120 260,135 350,90 440,105 530,75"
-                                        fill="none"
-                                        stroke="#6366f1"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* Completed interviews line */}
-                                    <polyline
-                                        points="80,165 170,130 260,150 350,105 440,120 530,95"
-                                        fill="none"
-                                        stroke="#10b981"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* Flagged interviews line */}
-                                    <polyline
-                                        points="80,215 170,220 260,210 350,205 440,215 530,200"
-                                        fill="none"
-                                        stroke="#ef4444"
-                                        strokeWidth="3"
-                                    />
-
-                                    {/* Data points */}
-                                    {interviewTrends.map((item, i) => (
-                                        <g key={i}>
-                                            <circle cx={80 + i * 90} cy={250 - item.interviews * 3} r="4" fill="#6366f1" />
-                                            <circle cx={80 + i * 90} cy={250 - item.completed * 3} r="4" fill="#10b981" />
-                                            <circle cx={80 + i * 90} cy={250 - item.flagged * 10} r="4" fill="#ef4444" />
-                                            <text x={80 + i * 90} y="240" textAnchor="middle" fill="#94a3b8" fontSize="12">
-                                                {item.date}
-                                            </text>
-                                        </g>
-                                    ))}
-                                </svg>
+                                        return (
+                                            <svg className="line-chart" viewBox="0 0 600 250">
+                                                {[0, 1, 2, 3, 4].map((i) => (
+                                                    <line key={i} x1="40" y1={50 + i * 40} x2="580" y2={50 + i * 40} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                                                ))}
+                                                <polyline points={totalPoints} fill="none" stroke="#6366f1" strokeWidth="3" />
+                                                <polyline points={completedPoints} fill="none" stroke="#10b981" strokeWidth="3" />
+                                                <polyline points={flaggedPoints} fill="none" stroke="#ef4444" strokeWidth="3" />
+                                                {interviewTrends.map((item, i) => (
+                                                    <g key={i}>
+                                                        <circle cx={startX + i * dx} cy={getY(item.interviews)} r="4" fill="#6366f1" />
+                                                        <circle cx={startX + i * dx} cy={getY(item.completed)} r="4" fill="#10b981" />
+                                                        <circle cx={startX + i * dx} cy={getY(item.flagged)} r="4" fill="#ef4444" />
+                                                        {(interviewTrends.length <= 7 || i % Math.ceil(interviewTrends.length/7) === 0) && (
+                                                            <text x={startX + i * dx} y="245" textAnchor="middle" fill="#94a3b8" fontSize="10">
+                                                                {item.date ? item.date.split('-').slice(1).join('/') : ''}
+                                                            </text>
+                                                        )}
+                                                    </g>
+                                                ))}
+                                            </svg>
+                                        );
+                                    })()
+                                ) : (
+                                    <div className="text-center text-muted mt-5">No interview data available for this range.</div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -244,7 +229,7 @@ const Reports = () => {
                                     <circle cx="100" cy="100" r="80" fill="none" stroke="#ef4444" strokeWidth="30" strokeDasharray="267 535" transform="rotate(-90 100 100)" />
                                     <circle cx="100" cy="100" r="80" fill="none" stroke="#f59e0b" strokeWidth="30" strokeDasharray="188 535" strokeDashoffset="-267" transform="rotate(-90 100 100)" />
                                     <circle cx="100" cy="100" r="80" fill="none" stroke="#8b5cf6" strokeWidth="30" strokeDasharray="80 535" strokeDashoffset="-455" transform="rotate(-90 100 100)" />
-                                    <text x="100" y="95" textAnchor="middle" fill="#f8fafc" fontSize="24" fontWeight="bold">127</text>
+                                    <text x="100" y="95" textAnchor="middle" fill="#f8fafc" fontSize="24" fontWeight="bold">{overview?.integrityViolations || 0}</text>
                                     <text x="100" y="115" textAnchor="middle" fill="#94a3b8" fontSize="12">Total</text>
                                 </svg>
                             </div>
@@ -271,19 +256,19 @@ const Reports = () => {
                 </div>
             </div>
 
-            {/* Company Performance */}
+            {/* Jobs Performance */}
             <div className="row g-4 mb-4">
                 <div className="col-lg-12">
                     <div className="dashboard-card">
                         <div className="card-header-custom">
-                            <h5 className="card-title mb-0">Company Performance Analysis</h5>
-                            <button className="btn btn-sm btn-outline-primary">View All Companies</button>
+                            <h5 className="card-title mb-0">Job Performance Breakdown</h5>
+                            <button className="btn btn-sm btn-outline-primary">View All Jobs</button>
                         </div>
                         <div className="table-responsive">
                             <table className="table table-dark table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Company Name</th>
+                                        <th>Job Title</th>
                                         <th>Interviews</th>
                                         <th>Total Candidates</th>
                                         <th>Avg Score</th>
@@ -292,37 +277,37 @@ const Reports = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {companiesData.map((company, index) => (
+                                    {jobsData.map((job, index) => (
                                         <tr key={index}>
                                             <td>
                                                 <div className="d-flex align-items-center">
                                                     <div className="avatar-sm bg-primary bg-opacity-20 text-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                        {company.name.substring(0, 2).toUpperCase()}
+                                                        {job.name ? job.name.substring(0, 2).toUpperCase() : 'J'}
                                                     </div>
-                                                    <span className="fw-bold">{company.name}</span>
+                                                    <span className="fw-bold">{job.name}</span>
                                                 </div>
                                             </td>
-                                            <td>{company.interviews}</td>
-                                            <td>{company.candidates}</td>
+                                            <td>{job.interviews}</td>
+                                            <td>{job.candidates}</td>
                                             <td>
-                                                <span className={`fw-bold ${company.avgScore >= 85 ? 'text-success' :
-                                                        company.avgScore >= 75 ? 'text-warning' : 'text-danger'
+                                                <span className={`fw-bold ${job.avgScore >= 85 ? 'text-success' :
+                                                        job.avgScore >= 75 ? 'text-warning' : 'text-danger'
                                                     }`}>
-                                                    {company.avgScore}%
+                                                    {job.avgScore}%
                                                 </span>
                                             </td>
                                             <td>
                                                 <span className="badge bg-danger bg-opacity-20 text-danger">
-                                                    {company.violations}
+                                                    {job.violations}
                                                 </span>
                                             </td>
                                             <td>
                                                 <div className="progress" style={{ height: '8px', width: '150px' }}>
                                                     <div
-                                                        className={`progress-bar ${company.avgScore >= 85 ? 'bg-success' :
-                                                                company.avgScore >= 75 ? 'bg-warning' : 'bg-danger'
+                                                        className={`progress-bar ${job.avgScore >= 85 ? 'bg-success' :
+                                                                job.avgScore >= 75 ? 'bg-warning' : 'bg-danger'
                                                             }`}
-                                                        style={{ width: `${company.avgScore}%` }}
+                                                        style={{ width: `${job.avgScore}%` }}
                                                     ></div>
                                                 </div>
                                             </td>
@@ -395,14 +380,14 @@ const Reports = () => {
                                 <div className="row g-3">
                                     <div className="col-6">
                                         <div className="text-center p-3 bg-primary bg-opacity-10 rounded">
-                                            <div className="text-primary fw-bold fs-4">38.9%</div>
-                                            <small className="text-muted">Integrity Pass Rate</small>
+                                            <div className="text-primary fw-bold fs-4">{hiringFunnel.find(s => s.stage === 'Interview Completed')?.percentage || 0}%</div>
+                                            <small className="text-muted">Interview Completion Rate</small>
                                         </div>
                                     </div>
                                     <div className="col-6">
                                         <div className="text-center p-3 bg-success bg-opacity-10 rounded">
-                                            <div className="text-success fw-bold fs-4">17.2%</div>
-                                            <small className="text-muted">Final Shortlist Rate</small>
+                                            <div className="text-success fw-bold fs-4">{hiringFunnel.find(s => s.stage === 'Shortlisted')?.percentage || 0}%</div>
+                                            <small className="text-muted">Shortlist Rate</small>
                                         </div>
                                     </div>
                                 </div>
