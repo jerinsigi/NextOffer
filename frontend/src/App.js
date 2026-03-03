@@ -50,7 +50,6 @@ import CompanyProfile from './components/company/pages/CompanyProfile';
 
 import CompanyIntegrity from './components/company/pages/Integrity';
 import CompanySupport from './components/company/pages/Support';
-import CompanyLogs from './components/company/pages/Logs';
 import CompanySettings from './components/company/pages/Settings';
 import CompanyReports from './components/company/pages/Reports';
 import CompanyJobDescriptions from './components/company/pages/JobDescriptions';
@@ -130,7 +129,6 @@ function App() {
               <Route path="interviews" element={<CompanyInterviewMonitoring />} />
               <Route path="integrity" element={<CompanyIntegrity />} />
               <Route path="reports" element={<CompanyReports />} />
-              <Route path="logs" element={<CompanyLogs />} />
               <Route path="support" element={<CompanySupport />} />
               <Route path="documentation" element={<CompanyDocumentation />} />
               <Route path="settings" element={<CompanySettings />} />

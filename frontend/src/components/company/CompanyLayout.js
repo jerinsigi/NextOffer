@@ -87,12 +87,7 @@ const CompanyLayout = () => {
             path: '/company/settings',
             badge: null
         },
-        {
-            title: 'Logs & Audit',
-            icon: 'bi-file-earmark-text',
-            path: '/company/logs',
-            badge: null
-        },
+        
         {
             title: 'Support & Feedback',
             icon: 'bi-headset',
