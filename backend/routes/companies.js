@@ -32,6 +32,9 @@ router.post('/profile/update', upload.single('logo'), companyController.updateCo
 // Get company dashboard stats
 router.post('/dashboard-stats', companyController.getCompanyDashboardStats);
 
+// Get company integrity dashboard stats
+router.post('/integrity-stats', companyController.getCompanyIntegrityStats);
+
 // Delete a company
 router.delete('/:id', companyController.deleteCompany);
 

@@ -556,7 +556,7 @@ exports.getUserInterviewResults = async (req, res) => {
 // Complete interview and update application status
 exports.completeInterview = async (req, res) => {
     try {
-        const { sessionId, violationsCount } = req.body;
+        const { sessionId, violationsCount, tab_switch_count, gaze_away_count, face_absent_count } = req.body;
         console.log('🔄 Complete Interview - Received sessionId:', sessionId);
 
         if (!sessionId) {
@@ -640,7 +640,24 @@ exports.completeInterview = async (req, res) => {
 
             // 3. Integrity Score (based on actual violations count from frontend)
             const numViolations = typeof violationsCount === 'number' ? violationsCount : 0;
-            const integrityScore = Math.max(0, 100 - numViolations * 10);
+            const tabCount = typeof tab_switch_count === 'number' ? tab_switch_count : 0;
+            const gazeCount = typeof gaze_away_count === 'number' ? gaze_away_count : 0;
+            const faceCount = typeof face_absent_count === 'number' ? face_absent_count : 0;
+            
+            // Re-calculate based on detailed counts if passed
+            const totalViolations = (tab_switch_count !== undefined) ? (tabCount + gazeCount + faceCount) : numViolations;
+            const integrityScore = Math.max(0, 100 - totalViolations * 10);
+
+            // Log Integrity explicitly
+            const IntegrityLog = require('../models/Integrity_Log');
+            await IntegrityLog.create({
+                Fk_session_id: session._id,
+                tab_switch_count: tabCount,
+                gaze_away_count: gazeCount,
+                face_absent_count: faceCount,
+                integrity_score: integrityScore
+            });
+            console.log('✅ Integrity Log created');
 
             // 4. Final Trust Score (Weighted Average)
             // e.g. 60% Interview, 30% Resume, 10% Integrity

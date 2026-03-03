@@ -10,222 +10,51 @@ const Integrity = () => {
     const [selectedViolation, setSelectedViolation] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [violationsData, setViolationsData] = useState([]);
+    const [complianceRules, setComplianceRules] = useState([]);
+    const [stats, setStats] = useState({
+        total: 0,
+        critical: 0,
+        moderate: 0,
+        minor: 0,
+        tabSwitching: 0,
+        gazeAversion: 0,
+        presenceAnomaly: 0,
+        underReview: 0
+    });
+
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 500);
-        return () => clearTimeout(timer);
+        const fetchIntegrityData = async () => {
+             const userStr = localStorage.getItem('user');
+             if (!userStr) {
+                 setLoading(false);
+                 return;
+             }
+             const user = JSON.parse(userStr);
+             try {
+                  const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/companies/integrity-stats`, {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({ email: user.email })
+                  });
+                  
+                  if (response.ok) {
+                      const data = await response.json();
+                      setStats(data.stats);
+                      setViolationsData(data.violationsData);
+                      setComplianceRules(data.complianceRules || []);
+                  }
+             } catch (error) {
+                 console.error('Failed to fetch integrity stats:', error);
+             } finally {
+                 setLoading(false);
+             }
+        };
+
+        fetchIntegrityData();
     }, []);
-
-    // Sample violations data
-    const violationsData = [
-        {
-            id: 1,
-            candidateName: 'Michael Chen',
-            candidateEmail: 'mchen@startupx.io',
-            position: 'DevOps Engineer',
-            company: 'StartupX',
-            interviewId: 'INT-2024-003',
-            violationType: 'Tab Switching',
-            severity: 'Critical',
-            timestamp: '2024-12-05 03:25:18 PM',
-            duration: '8 seconds',
-            occurrences: 3,
-            description: 'Candidate switched browser tabs multiple times during technical questions',
-            evidence: 'Screen recording captured tab switches to Google and Stack Overflow',
-            action: 'Interview Terminated',
-            reviewedBy: 'System Auto',
-            status: 'Confirmed',
-            integrityScore: 45
-        },
-        {
-            id: 2,
-            candidateName: 'Sarah Williams',
-            candidateEmail: 'swilliams@email.com',
-            position: 'UX/UI Designer',
-            company: 'MegaCorp Ltd.',
-            interviewId: 'INT-2024-004',
-            violationType: 'Tab Switching',
-            severity: 'Minor',
-            timestamp: '2024-12-05 03:15:42 PM',
-            duration: '3 seconds',
-            occurrences: 1,
-            description: 'Single tab switch detected during portfolio presentation',
-            evidence: 'Brief tab switch to design file',
-            action: 'Warning Issued',
-            reviewedBy: 'Company - Sarah Johnson',
-            status: 'Reviewed',
-            integrityScore: 92
-        },
-        {
-            id: 3,
-            candidateName: 'Emily Chen',
-            candidateEmail: 'emily.chen@email.com',
-            position: 'Product Manager',
-            company: 'Innovate Solutions',
-            interviewId: 'INT-2024-002',
-            violationType: 'Gaze Aversion',
-            severity: 'Minor',
-            timestamp: '2024-12-06 09:45:30 AM',
-            duration: '12 seconds',
-            occurrences: 2,
-            description: 'Candidate looked away from screen multiple times',
-            evidence: 'Eye tracking data shows prolonged off-screen gaze',
-            action: 'Flagged for Review',
-            reviewedBy: 'Pending',
-            status: 'Under Review',
-            integrityScore: 95
-        },
-        {
-            id: 4,
-            candidateName: 'James Wilson',
-            candidateEmail: 'jwilson@email.com',
-            position: 'Mobile App Developer',
-            company: 'Global Industries',
-            interviewId: 'INT-2024-007',
-            violationType: 'Presence Anomaly',
-            severity: 'Critical',
-            timestamp: '2024-12-05 10:02:15 AM',
-            duration: '45 seconds',
-            occurrences: 1,
-            description: 'Multiple persons detected in camera frame',
-            evidence: 'AI detected 2 faces in frame during technical assessment',
-            action: 'Interview Terminated',
-            reviewedBy: 'System Auto',
-            status: 'Confirmed',
-            integrityScore: 45
-        },
-        {
-            id: 5,
-            candidateName: 'Alex Martinez',
-            candidateEmail: 'alex.m@email.com',
-            position: 'Data Scientist',
-            company: 'NexGen Systems',
-            interviewId: 'INT-2024-009',
-            violationType: 'Gaze Aversion',
-            severity: 'Moderate',
-            timestamp: '2024-12-06 09:30:22 AM',
-            duration: '25 seconds',
-            occurrences: 2,
-            description: 'Extended periods of looking away from screen',
-            evidence: 'Gaze tracking shows candidate reading off-screen notes',
-            action: 'Warning Issued',
-            reviewedBy: 'Company - David Kim',
-            status: 'Reviewed',
-            integrityScore: 78
-        },
-        {
-            id: 6,
-            candidateName: 'Robert Taylor',
-            candidateEmail: 'rtaylor@future.io',
-            position: 'Backend Engineer',
-            company: 'Future Tech',
-            interviewId: 'INT-2024-012',
-            violationType: 'Tab Switching',
-            severity: 'Moderate',
-            timestamp: '2024-12-04 02:18:45 PM',
-            duration: '15 seconds',
-            occurrences: 2,
-            description: 'Multiple tab switches during coding challenge',
-            evidence: 'Screen recording shows switches to IDE documentation',
-            action: 'Flagged for Review',
-            reviewedBy: 'Company - Lisa Anderson',
-            status: 'Reviewed',
-            integrityScore: 72
-        },
-        {
-            id: 7,
-            candidateName: 'Jennifer Lee',
-            candidateEmail: 'jlee@enterprise.com',
-            position: 'HR Manager',
-            company: 'Enterprise Corp',
-            interviewId: 'INT-2024-008',
-            violationType: 'Gaze Aversion',
-            severity: 'Minor',
-            timestamp: '2024-12-06 10:05:12 AM',
-            duration: '8 seconds',
-            occurrences: 1,
-            description: 'Brief gaze aversion during behavioral questions',
-            evidence: 'Eye tracking detected momentary look away',
-            action: 'No Action',
-            reviewedBy: 'Company - John Smith',
-            status: 'Dismissed',
-            integrityScore: 98
-        },
-        {
-            id: 8,
-            candidateName: 'David Kim',
-            candidateEmail: 'david.kim@techvision.com',
-            position: 'Full Stack Developer',
-            company: 'TechVision',
-            interviewId: 'INT-2024-005',
-            violationType: 'Presence Anomaly',
-            severity: 'Moderate',
-            timestamp: '2024-12-05 08:40:33 PM',
-            duration: '10 seconds',
-            occurrences: 1,
-            description: 'Background movement detected during interview',
-            evidence: 'Motion detected in background, likely family member passing',
-            action: 'Warning Issued',
-            reviewedBy: 'Company - Emma Johnson',
-            status: 'Reviewed',
-            integrityScore: 88
-        }
-    ];
-
-    // Compliance rules data
-    const complianceRules = [
-        {
-            id: 1,
-            name: 'Tab Switching Detection',
-            category: 'Browser Monitoring',
-            enabled: true,
-            sensitivity: 'High',
-            threshold: '2 occurrences',
-            action: 'Auto-terminate after 3 violations',
-            lastUpdated: '2024-11-15'
-        },
-        {
-            id: 2,
-            name: 'Gaze Tracking',
-            category: 'Eye Monitoring',
-            enabled: true,
-            sensitivity: 'Medium',
-            threshold: '30 seconds total',
-            action: 'Flag for review after 25 seconds',
-            lastUpdated: '2024-11-20'
-        },
-        {
-            id: 3,
-            name: 'Presence Detection',
-            category: 'Face Recognition',
-            enabled: true,
-            sensitivity: 'High',
-            threshold: 'Multiple faces',
-            action: 'Immediate termination',
-            lastUpdated: '2024-11-10'
-        },
-        {
-            id: 4,
-            name: 'Audio Analysis',
-            category: 'Voice Monitoring',
-            enabled: true,
-            sensitivity: 'Medium',
-            threshold: 'Multiple voices detected',
-            action: 'Flag for review',
-            lastUpdated: '2024-11-25'
-        },
-        {
-            id: 5,
-            name: 'Copy-Paste Detection',
-            category: 'Input Monitoring',
-            enabled: false,
-            sensitivity: 'Low',
-            threshold: '5 paste actions',
-            action: 'Warning notification',
-            lastUpdated: '2024-10-30'
-        }
-    ];
 
     const filteredViolations = violationsData.filter(violation => {
         const matchesSearch = violation.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -279,18 +108,6 @@ const Integrity = () => {
 
     const handleViewEvidence = (evidence) => {
         console.log('Viewing evidence:', evidence);
-    };
-
-    // Stats
-    const stats = {
-        total: violationsData.length,
-        critical: violationsData.filter(v => v.severity === 'Critical').length,
-        moderate: violationsData.filter(v => v.severity === 'Moderate').length,
-        minor: violationsData.filter(v => v.severity === 'Minor').length,
-        tabSwitching: violationsData.filter(v => v.violationType === 'Tab Switching').length,
-        gazeAversion: violationsData.filter(v => v.violationType === 'Gaze Aversion').length,
-        presenceAnomaly: violationsData.filter(v => v.violationType === 'Presence Anomaly').length,
-        underReview: violationsData.filter(v => v.status === 'Under Review').length
     };
 
     if (loading) return <Loader inline />;

@@ -487,3 +487,151 @@ exports.getCompanyDashboardStats = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching dashboard stats', error: err.message });
     }
 };
+
+// Get Company Integrity Dashboard specific Stats
+exports.getCompanyIntegrityStats = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const company = await Company.findOne({ email });
+        if (!company) {
+            return res.status(404).json({ message: 'Company not found' });
+        }
+
+        // 1. Get all jobs for this company
+        const jobs = await Job_Description.find({ Fk_company_id: company._id });
+        const jobIds = jobs.map(job => job._id);
+
+        // 2. Fetch Sessions
+        const sessions = await Interview_Session.find({ fk_job_id: { $in: jobIds } })
+            .populate('fk_candidate_id', 'full_name email')
+            .populate('fk_job_id', 'job_title');
+            
+        const sessionIds = sessions.map(s => s._id);
+
+        // 3. Fetch Integrity Logs
+        const integrityLogs = await Integrity_Log.find({
+            Fk_session_id: { $in: sessionIds }
+        });
+
+        const violationsData = [];
+
+        for (const log of integrityLogs) {
+            const session = sessions.find(s => s._id.toString() === log.Fk_session_id.toString());
+            if (!session || !session.fk_candidate_id) continue;
+
+            const candidateName = session.fk_candidate_id.full_name;
+            const candidateEmail = session.fk_candidate_id.email;
+            const position = session.fk_job_id ? session.fk_job_id.job_title : 'Unknown';
+            
+            // Format time properly (e.g. 2024-12-05 03:25:18 PM)
+            const timestamp = log.logged_at ? new Date(log.logged_at).toLocaleString('en-US') : new Date().toLocaleString('en-US');
+
+            // Map standard log counts to "violationsData" schema
+            if (log.tab_switch_count > 0) {
+                violationsData.push({
+                    id: `${log._id}_tab`,
+                    candidateName,
+                    candidateEmail,
+                    position,
+                    company: company.company_name,
+                    interviewId: session._id,
+                    violationType: 'Tab Switching',
+                    severity: log.tab_switch_count > 2 ? 'Critical' : 'Moderate',
+                    timestamp,
+                    duration: '--',
+                    occurrences: log.tab_switch_count,
+                    description: 'Candidate switched browser tabs multiple times during the session',
+                    evidence: 'Browser tab focus lost repeatedly',
+                    action: 'Flagged for Review',
+                    status: 'Under Review',
+                    reviewedBy: 'Pending',
+                    integrityScore: log.integrity_score
+                });
+            }
+
+            if (log.gaze_away_count > 0) {
+                violationsData.push({
+                    id: `${log._id}_gaze`,
+                    candidateName,
+                    candidateEmail,
+                    position,
+                    company: company.company_name,
+                    interviewId: session._id,
+                    violationType: 'Gaze Aversion',
+                    severity: log.gaze_away_count > 2 ? 'Moderate' : 'Minor',
+                    timestamp,
+                    duration: '--',
+                    occurrences: log.gaze_away_count,
+                    description: 'Extended periods of looking away from screen',
+                    evidence: 'Eye tracking shows candidate looking away',
+                    action: 'Flagged for Review',
+                    status: 'Under Review',
+                    reviewedBy: 'Pending',
+                    integrityScore: log.integrity_score
+                });
+            }
+
+            if (log.face_absent_count > 0) {
+                violationsData.push({
+                    id: `${log._id}_face`,
+                    candidateName,
+                    candidateEmail,
+                    position,
+                    company: company.company_name,
+                    interviewId: session._id,
+                    violationType: 'Presence Anomaly',
+                    severity: log.face_absent_count > 1 ? 'Critical' : 'Moderate',
+                    timestamp,
+                    duration: '--',
+                    occurrences: log.face_absent_count,
+                    description: 'No face or multiple faces detected in frame',
+                    evidence: 'AI detected face tracking anomaly',
+                    action: 'Flagged for Review',
+                    status: 'Under Review',
+                    reviewedBy: 'Pending',
+                    integrityScore: log.integrity_score
+                });
+            }
+        }
+
+        // Generate aggregate stats for frontend component
+        const critical = violationsData.filter(v => v.severity === 'Critical').length;
+        const moderate = violationsData.filter(v => v.severity === 'Moderate').length;
+        const minor = violationsData.filter(v => v.severity === 'Minor').length;
+        const tabSwitching = violationsData.filter(v => v.violationType === 'Tab Switching').length;
+        const gazeAversion = violationsData.filter(v => v.violationType === 'Gaze Aversion').length;
+        const presenceAnomaly = violationsData.filter(v => v.violationType === 'Presence Anomaly').length;
+
+        const stats = {
+            total: violationsData.length,
+            critical,
+            moderate,
+            minor,
+            tabSwitching,
+            gazeAversion,
+            presenceAnomaly,
+            underReview: violationsData.filter(v => v.status === 'Under Review').length
+        };
+
+        // Static compliance rules based on previous dummy data context
+        const complianceRules = [
+            { id: 1, name: 'Tab Switching Detection', category: 'Browser Monitoring', enabled: true, sensitivity: 'High', threshold: '2 occurrences', action: 'Auto-terminate after 3 violations', lastUpdated: '2026-03-03' },
+            { id: 2, name: 'Gaze Tracking', category: 'Eye Monitoring', enabled: true, sensitivity: 'Medium', threshold: '30 seconds total', action: 'Flag for review after 25 seconds', lastUpdated: '2026-03-03' },
+            { id: 3, name: 'Presence Detection', category: 'Face Recognition', enabled: true, sensitivity: 'High', threshold: 'Multiple faces', action: 'Immediate termination', lastUpdated: '2026-03-03' }
+        ];
+
+        res.json({
+            stats,
+            violationsData,
+            complianceRules
+        });
+
+    } catch (err) {
+        console.error('Integrity Stats Error:', err);
+        res.status(500).json({ message: 'Server error fetching integrity stats', error: err.message });
+    }
+};

@@ -860,13 +860,36 @@ const InterviewCenter = () => {
             mediaRecorderRef.current.stop();
         }
 
+        // Calculate categorized violations
+        const tabSwitchViolations = integrityStatus.violations.filter(v => 
+            v.type === 'window_focus_lost' || 
+            v.type === 'tab_hidden' || 
+            v.type === 'tab_switch_attempt' || 
+            v.type === 'fullscreen_exit' ||
+            v.type === 'app_switch_attempt'
+        ).length;
+        
+        const faceViolations = integrityStatus.violations.filter(v => 
+            v.type === 'no_face_detected' || 
+            v.type === 'multiple_faces'
+        ).length;
+
+        // No gaze tracking implicitly in current frontend MediaPipe implementation, default 0
+        const gazeViolations = 0;
+
         // Call backend completion endpoint
         console.log('📞 Calling completion endpoint with sessionId:', interviewId);
         try {
             const response = await fetch('http://localhost:5000/api/interviews/complete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId: interviewId, violationsCount: integrityStatus.violations.length })
+                body: JSON.stringify({ 
+                    sessionId: interviewId, 
+                    violationsCount: integrityStatus.violations.length,
+                    tab_switch_count: tabSwitchViolations,
+                    gaze_away_count: gazeViolations,
+                    face_absent_count: faceViolations
+                })
             });
 
             console.log('📡 Completion endpoint response status:', response.status);

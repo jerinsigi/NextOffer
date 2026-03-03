@@ -246,11 +246,11 @@ exports.getCompanyStats = async (req, res) => {
         const interviewJobQuery = { fk_job_id: { $in: jobIds } };
 
         // 1. Overview metrics
-        const totalCandidates = await Application.countDocuments({ ...jobQuery });
-        const interviewsConducted = await InterviewSession.countDocuments({ ...interviewJobQuery, session_status: 'completed' });
-        const hiredCount = await Application.countDocuments({ ...jobQuery, status: 'Hired' });
+        const totalCandidates = await Application.countDocuments({ ...jobQuery, ...dateQuery });
+        const interviewsConducted = await InterviewSession.countDocuments({ ...interviewJobQuery, session_status: 'completed', ...startedQuery });
+        const hiredCount = await Application.countDocuments({ ...jobQuery, status: 'Hired', ...dateQuery });
         
-        const sessions = await InterviewSession.find(interviewJobQuery);
+        const sessions = await InterviewSession.find({ ...interviewJobQuery, ...startedQuery });
         const sessionIds = sessions.map(s => s._id);
         const logs = await Integrity_Log.find({ Fk_session_id: { $in: sessionIds } });
         
@@ -299,8 +299,8 @@ exports.getCompanyStats = async (req, res) => {
 
         // 3. Jobs Data
         const jobsDataRaw = await Promise.all(jobs.map(async (job) => {
-            const applicants = await Application.countDocuments({ Fk_job_id: job._id });
-            const jobInterviews = await InterviewSession.find({ fk_job_id: job._id });
+            const applicants = await Application.countDocuments({ Fk_job_id: job._id, ...dateQuery });
+            const jobInterviews = await InterviewSession.find({ fk_job_id: job._id, ...startedQuery });
             const jobIntIds = jobInterviews.map(i => i._id);
             const jobLogs = await Integrity_Log.find({ Fk_session_id: { $in: jobIntIds } });
             
@@ -309,11 +309,22 @@ exports.getCompanyStats = async (req, res) => {
                 violations += (log.tab_switch_count || 0) + (log.gaze_away_count || 0) + (log.face_absent_count || 0);
             });
 
+            // Calculate exact average score instead of mock 85
+            let totalScore = 0;
+            let scoredInterviews = 0;
+            jobInterviews.forEach(int => {
+                if (int.ai_score !== undefined && int.ai_score !== null) {
+                    totalScore += int.ai_score;
+                    scoredInterviews++;
+                }
+            });
+            const avgScore = scoredInterviews > 0 ? Math.round(totalScore / scoredInterviews) : 0;
+
             return {
                 name: job.job_title || 'Untitled Job',
                 interviews: jobInterviews.length,
                 candidates: applicants,
-                avgScore: 85,
+                avgScore: avgScore,
                 violations: violations
             };
         }));
@@ -335,10 +346,10 @@ exports.getCompanyStats = async (req, res) => {
         }));
 
         // 5. Hiring Funnel
-        const stageApplied = await Application.countDocuments({ ...jobQuery });
-        const stageShortlisted = await Application.countDocuments({ ...jobQuery, status: { $in: ['Shortlisted', 'Scheduled', 'Interviewing', 'Interviewed', 'Hired'] } });
-        const stageInterviewed = await Application.countDocuments({ ...jobQuery, status: { $in: ['Interviewed', 'Hired'] } });
-        const stageHired = await Application.countDocuments({ ...jobQuery, status: 'Hired' });
+        const stageApplied = await Application.countDocuments({ ...jobQuery, ...dateQuery });
+        const stageShortlisted = await Application.countDocuments({ ...jobQuery, status: { $in: ['Shortlisted', 'Scheduled', 'Interviewing', 'Interviewed', 'Hired'] }, ...dateQuery });
+        const stageInterviewed = await Application.countDocuments({ ...jobQuery, status: { $in: ['Interviewed', 'Hired'] }, ...dateQuery });
+        const stageHired = await Application.countDocuments({ ...jobQuery, status: 'Hired', ...dateQuery });
 
         const hiringFunnel = [
             { stage: 'Total Applications', count: stageApplied, percentage: 100 },
