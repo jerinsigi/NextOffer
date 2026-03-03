@@ -3,8 +3,15 @@ import './Support.css';
 import Loader from '../../common/Loader';
 
 const Support = () => {
-    const [activeTab, setActiveTab] = useState('tickets');
-    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [activeCategory, setActiveCategory] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [expandedFaq, setExpandedFaq] = useState(null);
+    const [ticketForm, setTicketForm] = useState({
+        subject: '',
+        category: 'technical',
+        priority: 'medium',
+        description: ''
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -13,575 +20,466 @@ const Support = () => {
         }, 500);
         return () => clearTimeout(timer);
     }, []);
-    const tickets = [
+
+    // FAQ Categories
+    const categories = [
+        { key: 'all', label: 'All Topics', icon: 'bi-grid-fill' },
+        { key: 'account', label: 'Company Profile', icon: 'bi-building' },
+        { key: 'interview', label: 'Interviews', icon: 'bi-camera-video' },
+        { key: 'candidates', label: 'Candidates', icon: 'bi-people' },
+        { key: 'technical', label: 'Technical', icon: 'bi-gear' },
+        { key: 'billing', label: 'Billing', icon: 'bi-credit-card' }
+    ];
+
+    // FAQ Data
+    const faqs = [
         {
-            id: 'TKT-1245',
-            user: 'John Doe',
-            userEmail: 'john.doe@example.com',
-            company: 'TechCorp Inc.',
-            subject: 'Unable to start interview session',
-            category: 'Technical',
-            priority: 'High',
-            status: 'Open',
-            created: '2025-12-06 10:30 AM',
-            lastUpdated: '2025-12-06 11:45 AM',
-            messages: 3,
-            description: 'Candidates are reporting that the interview session is not starting. Getting a "Session initialization failed" error.',
-            assignee: 'Unassigned'
+            id: 1,
+            category: 'account',
+            question: 'How do I update my company profile?',
+            answer: 'You can update your company profile by navigating to Settings > Company Profile. Update your logo, description, and website to make your company more attractive to candidates.'
         },
         {
-            id: 'TKT-1244',
-            user: 'Sarah Johnson',
-            userEmail: 'sarah.j@cloudtech.com',
-            company: 'CloudTech',
-            subject: 'Question about integrity scoring',
-            category: 'General Inquiry',
-            priority: 'Medium',
-            status: 'In Progress',
-            created: '2025-12-06 09:15 AM',
-            lastUpdated: '2025-12-06 10:20 AM',
-            messages: 5,
-            description: 'How is the integrity score calculated? Need clarification for our hiring team.',
-            assignee: 'Company Team'
+            id: 2,
+            category: 'account',
+            question: 'How do I invite team members?',
+            answer: 'Go to the Users section in your dashboard. Click "Invite User", enter their email address, and select their role (Admin or Reviewer). They will receive an email invitation to join your workspace.'
         },
         {
-            id: 'TKT-1243',
-            user: 'Mike Brown',
-            userEmail: 'mike.b@dataco.com',
-            company: 'DataCo',
-            subject: 'Resume upload failing',
-            category: 'Technical',
-            priority: 'High',
-            status: 'Open',
-            created: '2025-12-06 08:00 AM',
-            lastUpdated: '2025-12-06 08:30 AM',
-            messages: 2,
-            description: 'PDF resume uploads are failing with error code 500. JPG images work fine.',
-            assignee: 'Unassigned'
+            id: 3,
+            category: 'interview',
+            question: 'How do I create a new interview?',
+            answer: 'Navigate to "Interviews" or "Jobs" and click "Create New". You can select predefined skills or create custom ones, set the duration, and the AI will automatically generate relevant questions.'
         },
         {
-            id: 'TKT-1242',
-            user: 'Alice Smith',
-            userEmail: 'alice@startupxyz.com',
-            company: 'StartupXYZ',
-            subject: 'Feature request: Bulk candidate import',
-            category: 'Feature Request',
-            priority: 'Low',
-            status: 'Under Review',
-            created: '2025-12-05 04:30 PM',
-            lastUpdated: '2025-12-06 09:00 AM',
-            messages: 4,
-            description: 'Would like to import multiple candidates via CSV instead of one by one.',
-            assignee: 'Company Team'
+            id: 4,
+            category: 'interview',
+            question: 'Can I view the candidate\'s actual recording?',
+            answer: 'Yes, once a candidate completes their interview, you can view the full recording, AI transcription, and behavior analysis in the Results section.'
         },
         {
-            id: 'TKT-1241',
-            user: 'Robert Lee',
-            userEmail: 'robert@innovate.io',
-            company: 'InnovateLabs',
-            subject: 'Account access issue',
-            category: 'Account',
-            priority: 'Medium',
-            status: 'Resolved',
-            created: '2025-12-05 02:00 PM',
-            lastUpdated: '2025-12-05 03:45 PM',
-            messages: 6,
-            description: 'Unable to login after password reset. Issue has been resolved.',
-            assignee: 'Company Team'
+            id: 5,
+            category: 'interview',
+            question: 'How is the integrity score calculated?',
+            answer: 'Our AI monitors several factors including tab switching, face tracking, multiple persons in frame, and background noise. These are combined to generate a comprehensive integrity score.'
+        },
+        {
+            id: 6,
+            category: 'candidates',
+            question: 'How do I invite candidates to take an interview?',
+            answer: 'You can either share a public link for the job posting, or directly invite candidates by entering their email addresses or uploading a CSV file in the Candidates section.'
+        },
+        {
+            id: 7,
+            category: 'candidates',
+            question: 'How do I filter candidates based on AI score?',
+            answer: 'In the Candidates or Leaderboard view, you can use the filter options to sort candidates by their overall AI score, technical score, or communication skills.'
+        },
+        {
+            id: 8,
+            category: 'technical',
+            question: 'Why are candidate recordings not playing?',
+            answer: 'Ensure you are using a modern browser (Chrome, Firefox, Safari, or Edge) and have a stable internet connection. If the issue persists, clear your browser cache or contact support.'
+        },
+        {
+            id: 9,
+            category: 'technical',
+            question: 'Can I integrate NextOffer with my ATS?',
+            answer: 'Yes, NextOffer provides API access and integrations with major ATS platforms like Workable, Greenhouse, and Lever on our Enterprise plan. Check our developer docs for more info.'
+        },
+        {
+            id: 10,
+            category: 'billing',
+            question: 'How does pricing work?',
+            answer: 'We offer flexible pricing plans based on the number of interviews or active jobs per month. You can start with our Pay-As-You-Go plan or switch to an Annual subscription for volume discounts.'
+        },
+        {
+            id: 11,
+            category: 'billing',
+            question: 'How do I upgrade my plan?',
+            answer: 'Navigate to Settings > Billing and click "Upgrade Plan". Select the plan that fits your hiring needs. Upgrades take effect immediately.'
         }
     ];
 
-    const feedback = [
+    // Quick Actions
+    const quickActions = [
         {
-            id: 'FB-0089',
-            user: 'Emma Wilson',
-            userEmail: 'emma.w@techstart.com',
-            company: 'TechStart',
-            rating: 5,
-            category: 'Platform',
-            subject: 'Excellent AI interview quality',
-            message: 'The AI interviewer asks really relevant questions based on the resume. Our hiring quality has improved significantly!',
-            created: '2025-12-06 11:00 AM',
-            status: 'New'
+            title: 'Schedule a Demo',
+            description: 'Learn how to use NextOffer effectively',
+            icon: 'bi-camera-video',
+            action: 'Schedule',
+            color: 'primary'
         },
         {
-            id: 'FB-0088',
-            user: 'David Chen',
-            userEmail: 'david@futuretech.com',
-            company: 'FutureTech',
-            rating: 4,
-            category: 'Feature',
-            subject: 'Love the integrity monitoring',
-            message: 'The integrity detection is great, but would love to see more detailed reports on candidate behavior patterns.',
-            created: '2025-12-06 09:30 AM',
-            status: 'Reviewed'
+            title: 'Report a Bug',
+            description: 'Help us improve by reporting issues',
+            icon: 'bi-bug',
+            action: 'Report',
+            color: 'danger'
         },
         {
-            id: 'FB-0087',
-            user: 'Lisa Martinez',
-            userEmail: 'lisa.m@datawise.com',
-            company: 'DataWise',
-            rating: 3,
-            category: 'UI/UX',
-            subject: 'Dashboard could be more intuitive',
-            message: 'Some features are hard to find. A guided tour for new users would be helpful.',
-            created: '2025-12-05 03:20 PM',
-            status: 'Reviewed'
+            title: 'Feature Request',
+            description: 'Suggest new features you\'d like to see',
+            icon: 'bi-lightbulb',
+            action: 'Request',
+            color: 'warning'
         },
         {
-            id: 'FB-0086',
-            user: 'James Taylor',
-            userEmail: 'james@cloudnine.io',
-            company: 'CloudNine',
-            rating: 5,
-            category: 'Platform',
-            subject: 'Game changer for remote hiring',
-            message: 'This platform has completely transformed our remote hiring process. Highly recommend!',
-            created: '2025-12-05 01:15 PM',
-            status: 'Archived'
+            title: 'Video Tutorials',
+            description: 'Watch step-by-step guides',
+            icon: 'bi-play-circle',
+            action: 'Watch',
+            color: 'success'
         }
     ];
 
-    const bugReports = [
+    // Support Stats
+    const supportStats = [
+        { label: 'Avg Response Time', value: '< 2 hours', icon: 'bi-clock-history' },
+        { label: 'Articles', value: '150+', icon: 'bi-journal-text' },
+        { label: 'Video Guides', value: '50+', icon: 'bi-camera-video' },
+        { label: 'Satisfaction Rate', value: '98%', icon: 'bi-emoji-smile' }
+    ];
+
+    // Contact Methods
+    const contactMethods = [
         {
-            id: 'BUG-0234',
-            user: 'Tech Company',
-            userEmail: 'company@techcorp.com',
-            severity: 'Critical',
-            status: 'Open',
-            subject: 'Interview recording not saving',
-            description: 'Interview sessions complete but video recordings are not being saved to the database.',
-            created: '2025-12-06 10:00 AM',
-            browser: 'Chrome 120',
-            os: 'Windows 11'
+            title: 'Live Chat',
+            description: 'Chat with our support team',
+            icon: 'bi-chat-dots',
+            availability: 'Available 24/7',
+            color: 'primary'
         },
         {
-            id: 'BUG-0233',
-            user: 'Sarah K.',
-            userEmail: 'sarah@startup.com',
-            severity: 'Medium',
-            status: 'In Progress',
-            subject: 'Export button not working on Safari',
-            description: 'The export to CSV button on the leaderboard page does not work on Safari browser.',
-            created: '2025-12-06 08:45 AM',
-            browser: 'Safari 17',
-            os: 'macOS Sonoma'
+            title: 'Email Support',
+            description: 'support@nextoffer.com',
+            icon: 'bi-envelope',
+            availability: 'Response within 2 hours',
+            color: 'info'
         },
         {
-            id: 'BUG-0232',
-            user: 'Mike R.',
-            userEmail: 'mike@dataco.com',
-            severity: 'Low',
-            status: 'Resolved',
-            subject: 'Typo in email notification',
-            description: 'There is a spelling error in the interview completion email template.',
-            created: '2025-12-05 02:30 PM',
-            browser: 'N/A',
-            os: 'N/A'
+            title: 'Phone Support',
+            description: '+1 (555) 123-4567',
+            icon: 'bi-telephone',
+            availability: 'Mon-Fri, 9AM-6PM EST',
+            color: 'success'
+        },
+        {
+            title: 'Community Forum',
+            description: 'Ask the community',
+            icon: 'bi-people',
+            availability: 'Active community',
+            color: 'warning'
         }
     ];
 
-    const getPriorityBadgeClass = (priority) => {
-        switch (priority) {
-            case 'High': return 'bg-danger';
-            case 'Medium': return 'bg-warning';
-            case 'Low': return 'bg-info';
-            default: return 'bg-secondary';
+    const getFilteredFaqs = () => {
+        let filtered = faqs;
+
+        if (activeCategory !== 'all') {
+            filtered = filtered.filter(faq => faq.category === activeCategory);
         }
+
+        if (searchQuery) {
+            filtered = filtered.filter(faq =>
+                faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        return filtered;
     };
 
-    const getStatusBadgeClass = (status) => {
-        switch (status) {
-            case 'Open': return 'bg-danger';
-            case 'In Progress': return 'bg-warning';
-            case 'Under Review': return 'bg-info';
-            case 'Resolved': return 'bg-success';
-            default: return 'bg-secondary';
-        }
+    const toggleFaq = (id) => {
+        setExpandedFaq(expandedFaq === id ? null : id);
     };
 
-    const renderStars = (rating) => {
-        return [...Array(5)].map((_, index) => (
-            <i
-                key={index}
-                className={`bi bi-star${index < rating ? '-fill' : ''} text-warning`}
-            ></i>
-        ));
+    const handleTicketSubmit = (e) => {
+        e.preventDefault();
+        console.log('Support ticket submitted:', ticketForm);
+        // Reset form
+        setTicketForm({
+            subject: '',
+            category: 'technical',
+            priority: 'medium',
+            description: ''
+        });
+        alert('Support ticket submitted successfully! We\'ll get back to you soon.');
     };
+
+    const filteredFaqs = getFilteredFaqs();
 
     if (loading) return <Loader inline />;
 
     return (
-        <div className="dashboard-container">
+        <div className="help-support-container dashboard-container">
             {/* Page Header */}
-            <div className="page-header mb-4">
+            <div className="page-header mb-4 border-0 pb-0">
                 <div>
                     <h1 className="page-title">Support & Feedback</h1>
-                    <p className="text-muted">Manage support tickets, user feedback, and bug reports</p>
-                </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary">
-                        <i className="bi bi-download me-2"></i>Export Report
-                    </button>
+                    <p className="text-muted">Search our knowledge base or contact support</p>
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="row g-4 mb-4">
-                <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-danger bg-opacity-20 text-danger">
-                            <i className="bi bi-ticket-detailed fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Open Tickets</div>
-                            <div className="stat-value">3</div>
-                            <div className="stat-change negative">
-                                <i className="bi bi-arrow-up"></i> 2 new today
-                            </div>
-                        </div>
+            {/* Hero Section */}
+            <div className="help-hero">
+                <h1>How can we help your team?</h1>
+                <p>Find answers to common questions or get in touch</p>
+                <div className="search-bar">
+                    <i className="bi bi-search"></i>
+                    <input
+                        type="text"
+                        placeholder="Search for help articles, FAQs, or topics..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Support Stats */}
+            <div className="support-stats">
+                {supportStats.map((stat, index) => (
+                    <div key={index} className="stat-card">
+                        <i className={`bi ${stat.icon}`}></i>
+                        <div className="stat-value">{stat.value}</div>
+                        <div className="stat-label">{stat.label}</div>
                     </div>
+                ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="section">
+                <h2>Quick Actions</h2>
+                <div className="quick-actions-grid">
+                    {quickActions.map((action, index) => (
+                        <div key={index} className={`action-card ${action.color}`}>
+                            <div className="action-icon">
+                                <i className={`bi ${action.icon}`}></i>
+                            </div>
+                            <h4>{action.title}</h4>
+                            <p>{action.description}</p>
+                            <button className={`btn btn-${action.color}`}>
+                                {action.action}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="section">
+                <h2>
+                    <i className="bi bi-question-circle me-2 text-primary"></i>
+                    Frequently Asked Questions
+                </h2>
+
+                {/* Category Filters */}
+                <div className="category-filters">
+                    {categories.map(cat => (
+                        <button
+                            key={cat.key}
+                            className={`category-btn ${activeCategory === cat.key ? 'active' : ''}`}
+                            onClick={() => setActiveCategory(cat.key)}
+                        >
+                            <i className={`bi ${cat.icon}`}></i>
+                            {cat.label}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-clock-history fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Avg Response Time</div>
-                            <div className="stat-value">2.5h</div>
-                            <div className="stat-change positive">
-                                <i className="bi bi-arrow-down"></i> 15% faster
+                {/* FAQ List */}
+                <div className="faq-list">
+                    {filteredFaqs.length > 0 ? (
+                        filteredFaqs.map(faq => (
+                            <div
+                                key={faq.id}
+                                className={`faq-item ${expandedFaq === faq.id ? 'expanded' : ''}`}
+                            >
+                                <div
+                                    className="faq-question"
+                                    onClick={() => toggleFaq(faq.id)}
+                                >
+                                    <h4>{faq.question}</h4>
+                                    <i className={`bi bi-chevron-${expandedFaq === faq.id ? 'up' : 'down'}`}></i>
+                                </div>
+                                {expandedFaq === faq.id && (
+                                    <div className="faq-answer">
+                                        <p>{faq.answer}</p>
+                                    </div>
+                                )}
                             </div>
+                        ))
+                    ) : (
+                        <div className="empty-state">
+                            <i className="bi bi-search display-4"></i>
+                            <h5 className="mt-3">No results found</h5>
+                            <p className="text-muted">Try adjusting your search or filters</p>
                         </div>
-                    </div>
+                    )}
                 </div>
+            </div>
 
-                <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-success bg-opacity-20 text-success">
-                            <i className="bi bi-chat-heart fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">New Feedback</div>
-                            <div className="stat-value">12</div>
-                            <div className="stat-change positive">
-                                <i className="bi bi-arrow-up"></i> 4.5 avg rating
+            {/* Contact Methods */}
+            <div className="section">
+                <h2>
+                    <i className="bi bi-headset me-2 text-primary"></i>
+                    Contact Support
+                </h2>
+                <div className="contact-methods-grid">
+                    {contactMethods.map((method, index) => (
+                        <div key={index} className="contact-card">
+                            <div className={`contact-icon ${method.color}`}>
+                                <i className={`bi ${method.icon}`}></i>
                             </div>
+                            <h4>{method.title}</h4>
+                            <p className="contact-description">{method.description}</p>
+                            <span className="availability">{method.availability}</span>
+                            <button className={`btn btn-outline-${method.color}`}>
+                                Contact
+                            </button>
                         </div>
-                    </div>
+                    ))}
                 </div>
+            </div>
 
-                <div className="col-xl-3 col-md-6">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-bug fs-3"></i>
-                        </div>
-                        <div className="stat-content">
-                            <div className="stat-label">Active Bugs</div>
-                            <div className="stat-value">8</div>
-                            <div className="stat-change negative">
-                                <i className="bi bi-arrow-up"></i> 2 critical
+            {/* Submit Ticket */}
+            <div className="section">
+                <h2>
+                    <i className="bi bi-ticket-detailed me-2 text-primary"></i>
+                    Submit a Support Ticket
+                </h2>
+                <div className="ticket-form-container">
+                    <form className="ticket-form" onSubmit={handleTicketSubmit}>
+                        <div className="form-row">
+                            <div className="form-group flex-grow-1">
+                                <label>Subject *</label>
+                                <input
+                                    type="text"
+                                    placeholder="Brief description of your issue"
+                                    value={ticketForm.subject}
+                                    onChange={(e) => setTicketForm({...ticketForm, subject: e.target.value})}
+                                    required
+                                />
                             </div>
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group flex-grow-1">
+                                <label>Category *</label>
+                                <select
+                                    value={ticketForm.category}
+                                    onChange={(e) => setTicketForm({...ticketForm, category: e.target.value})}
+                                    required
+                                >
+                                    <option value="technical">Technical Issue</option>
+                                    <option value="account">Account & Billing</option>
+                                    <option value="interview">Interview Related</option>
+                                    <option value="candidates">Candidate Management</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group flex-grow-1">
+                                <label>Priority *</label>
+                                <select
+                                    value={ticketForm.priority}
+                                    onChange={(e) => setTicketForm({...ticketForm, priority: e.target.value})}
+                                    required
+                                >
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="form-group w-100">
+                            <label>Description *</label>
+                            <textarea
+                                placeholder="Please describe your issue in detail..."
+                                rows="6"
+                                value={ticketForm.description}
+                                onChange={(e) => setTicketForm({...ticketForm, description: e.target.value})}
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div className="form-actions mt-3">
+                            <button type="submit" className="btn btn-primary">
+                                <i className="bi bi-send me-2"></i>
+                                Submit Ticket
+                            </button>
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary ms-2"
+                                onClick={() => setTicketForm({
+                                    subject: '',
+                                    category: 'technical',
+                                    priority: 'medium',
+                                    description: ''
+                                })}
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="ticket-info">
+                        <div className="info-card mb-4">
+                            <i className="bi bi-info-circle mb-2 d-block fs-3 text-primary"></i>
+                            <h4>What to expect</h4>
+                            <ul className="mb-0">
+                                <li>We'll respond within 2 hours</li>
+                                <li>You'll receive email updates</li>
+                                <li>Track ticket status with our team</li>
+                                <li>Average resolution time: 24 hours</li>
+                            </ul>
+                        </div>
+
+                        <div className="info-card">
+                            <i className="bi bi-lightbulb mb-2 d-block fs-3 text-warning"></i>
+                            <h4>Tips for faster resolution</h4>
+                            <ul className="mb-0">
+                                <li>Be specific and detailed</li>
+                                <li>Include screenshots if applicable</li>
+                                <li>Mention browser and OS version</li>
+                                <li>List steps to reproduce the issue</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Tabs Navigation */}
-            <div className="support-tabs mb-4">
-                <ul className="nav nav-pills">
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link ${activeTab === 'tickets' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('tickets')}
-                        >
-                            <i className="bi bi-ticket-detailed me-2"></i>
-                            Support Tickets
-                            <span className="badge bg-danger ms-2">3</span>
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link ${activeTab === 'feedback' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('feedback')}
-                        >
-                            <i className="bi bi-chat-heart me-2"></i>
-                            User Feedback
-                        </button>
-                    </li>
-                    <li className="nav-item">
-                        <button
-                            className={`nav-link ${activeTab === 'bugs' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('bugs')}
-                        >
-                            <i className="bi bi-bug me-2"></i>
-                            Bug Reports
-                            <span className="badge bg-warning ms-2">2</span>
-                        </button>
-                    </li>
-                </ul>
+            {/* Resources */}
+            <div className="section mb-5">
+                <h2>
+                    <i className="bi bi-book me-2 text-primary"></i>
+                    Additional Resources
+                </h2>
+                <div className="resources-grid">
+                    <a href="#" className="resource-card mb-2 d-block text-decoration-none">
+                        <i className="bi bi-file-earmark-pdf mb-3 d-block text-danger fs-1"></i>
+                        <h4>User Guide</h4>
+                        <p className="text-muted">Complete platform documentation</p>
+                    </a>
+                    <a href="#" className="resource-card mb-2 d-block text-decoration-none">
+                        <i className="bi bi-play-btn mb-3 d-block text-success fs-1"></i>
+                        <h4>Video Tutorials</h4>
+                        <p className="text-muted">Step-by-step video guides</p>
+                    </a>
+                    <a href="#" className="resource-card mb-2 d-block text-decoration-none">
+                        <i className="bi bi-chat-square-text mb-3 d-block text-info fs-1"></i>
+                        <h4>Community Forum</h4>
+                        <p className="text-muted">Connect with other companies</p>
+                    </a>
+                    <a href="#" className="resource-card mb-2 d-block text-decoration-none">
+                        <i className="bi bi-newspaper mb-3 d-block text-warning fs-1"></i>
+                        <h4>What's New</h4>
+                        <p className="text-muted">Latest updates and features</p>
+                    </a>
+                </div>
             </div>
-
-            {/* Support Tickets Tab */}
-            {activeTab === 'tickets' && (
-                <div className="row g-4">
-                    <div className="col-lg-7">
-                        <div className="dashboard-card">
-                            <div className="card-header-custom">
-                                <h5 className="card-title mb-0">All Support Tickets</h5>
-                                <div className="d-flex gap-2">
-                                    <select className="form-select form-select-sm form-select-dark" style={{ width: 'auto' }}>
-                                        <option>All Status</option>
-                                        <option>Open</option>
-                                        <option>In Progress</option>
-                                        <option>Resolved</option>
-                                    </select>
-                                    <select className="form-select form-select-sm form-select-dark" style={{ width: 'auto' }}>
-                                        <option>All Priority</option>
-                                        <option>High</option>
-                                        <option>Medium</option>
-                                        <option>Low</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="ticket-list">
-                                {tickets.map(ticket => (
-                                    <div
-                                        key={ticket.id}
-                                        className={`ticket-item ${selectedTicket?.id === ticket.id ? 'selected' : ''}`}
-                                        onClick={() => setSelectedTicket(ticket)}
-                                    >
-                                        <div className="d-flex justify-content-between align-items-start mb-2">
-                                            <div className="flex-grow-1">
-                                                <div className="d-flex align-items-center gap-2 mb-1">
-                                                    <span className="ticket-id text-muted">{ticket.id}</span>
-                                                    <span className={`badge ${getPriorityBadgeClass(ticket.priority)}`}>
-                                                        {ticket.priority}
-                                                    </span>
-                                                    <span className={`badge ${getStatusBadgeClass(ticket.status)}`}>
-                                                        {ticket.status}
-                                                    </span>
-                                                </div>
-                                                <h6 className="ticket-subject mb-1">{ticket.subject}</h6>
-                                                <div className="ticket-meta">
-                                                    <span><i className="bi bi-person me-1"></i>{ticket.user}</span>
-                                                    <span><i className="bi bi-building me-1"></i>{ticket.company}</span>
-                                                    <span><i className="bi bi-tag me-1"></i>{ticket.category}</span>
-                                                </div>
-                                            </div>
-                                            <div className="text-end">
-                                                <small className="text-muted d-block">{ticket.created}</small>
-                                                <span className="badge bg-primary bg-opacity-20 text-primary">
-                                                    <i className="bi bi-chat-dots me-1"></i>{ticket.messages}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Ticket Details Panel */}
-                    <div className="col-lg-5">
-                        <div className="dashboard-card sticky-top" style={{ top: '90px' }}>
-                            {selectedTicket ? (
-                                <>
-                                    <div className="card-header-custom">
-                                        <h5 className="card-title mb-0">Ticket Details</h5>
-                                        <button className="btn btn-sm btn-outline-danger">
-                                            <i className="bi bi-x-lg"></i>
-                                        </button>
-                                    </div>
-                                    <div className="p-4">
-                                        <div className="mb-3">
-                                            <div className="d-flex gap-2 mb-3">
-                                                <span className={`badge ${getPriorityBadgeClass(selectedTicket.priority)}`}>
-                                                    {selectedTicket.priority} Priority
-                                                </span>
-                                                <span className={`badge ${getStatusBadgeClass(selectedTicket.status)}`}>
-                                                    {selectedTicket.status}
-                                                </span>
-                                            </div>
-                                            <h5 className="text-light mb-3">{selectedTicket.subject}</h5>
-
-                                            <div className="ticket-info-grid mb-4">
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Ticket ID</label>
-                                                    <div className="text-light">{selectedTicket.id}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Category</label>
-                                                    <div className="text-light">{selectedTicket.category}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">User</label>
-                                                    <div className="text-light">{selectedTicket.user}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Company</label>
-                                                    <div className="text-light">{selectedTicket.company}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Created</label>
-                                                    <div className="text-light">{selectedTicket.created}</div>
-                                                </div>
-                                                <div className="info-item">
-                                                    <label className="text-muted small">Assignee</label>
-                                                    <div className="text-light">{selectedTicket.assignee}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="mb-4">
-                                                <label className="text-muted small mb-2 d-block">Description</label>
-                                                <p className="text-light">{selectedTicket.description}</p>
-                                            </div>
-
-                                            <div className="d-grid gap-2">
-                                                <button className="btn btn-primary">
-                                                    <i className="bi bi-reply me-2"></i>Reply to Ticket
-                                                </button>
-                                                <button className="btn btn-outline-success">
-                                                    <i className="bi bi-check-circle me-2"></i>Mark as Resolved
-                                                </button>
-                                                <button className="btn btn-outline-warning">
-                                                    <i className="bi bi-person-plus me-2"></i>Assign to Team
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="p-5 text-center">
-                                    <i className="bi bi-ticket-detailed fs-1 text-muted mb-3 d-block"></i>
-                                    <p className="text-muted">Select a ticket to view details</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* User Feedback Tab */}
-            {activeTab === 'feedback' && (
-                <div className="dashboard-card">
-                    <div className="card-header-custom">
-                        <h5 className="card-title mb-0">User Feedback</h5>
-                        <select className="form-select form-select-sm form-select-dark" style={{ width: 'auto' }}>
-                            <option>All Ratings</option>
-                            <option>5 Stars</option>
-                            <option>4 Stars</option>
-                            <option>3 Stars</option>
-                            <option>2 Stars</option>
-                            <option>1 Star</option>
-                        </select>
-                    </div>
-                    <div className="p-4">
-                        <div className="row g-4">
-                            {feedback.map(item => (
-                                <div key={item.id} className="col-md-6">
-                                    <div className="feedback-card">
-                                        <div className="d-flex justify-content-between align-items-start mb-3">
-                                            <div>
-                                                <div className="mb-2">
-                                                    {renderStars(item.rating)}
-                                                </div>
-                                                <h6 className="text-light mb-1">{item.subject}</h6>
-                                                <small className="text-muted">{item.id}</small>
-                                            </div>
-                                            <span className={`badge ${item.status === 'New' ? 'bg-primary' : item.status === 'Reviewed' ? 'bg-success' : 'bg-secondary'}`}>
-                                                {item.status}
-                                            </span>
-                                        </div>
-                                        <p className="text-light mb-3">{item.message}</p>
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <small className="text-muted d-block">{item.user} - {item.company}</small>
-                                                <small className="text-muted">{item.created}</small>
-                                            </div>
-                                            <span className="badge bg-info bg-opacity-20 text-info">{item.category}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Bug Reports Tab */}
-            {activeTab === 'bugs' && (
-                <div className="dashboard-card">
-                    <div className="card-header-custom">
-                        <h5 className="card-title mb-0">Bug Reports</h5>
-                        <select className="form-select form-select-sm form-select-dark" style={{ width: 'auto' }}>
-                            <option>All Severity</option>
-                            <option>Critical</option>
-                            <option>High</option>
-                            <option>Medium</option>
-                            <option>Low</option>
-                        </select>
-                    </div>
-                    <div className="table-responsive">
-                        <table className="table table-dark table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Bug ID</th>
-                                    <th>Subject</th>
-                                    <th>Severity</th>
-                                    <th>Status</th>
-                                    <th>Reporter</th>
-                                    <th>Environment</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {bugReports.map(bug => (
-                                    <tr key={bug.id}>
-                                        <td><span className="text-primary">{bug.id}</span></td>
-                                        <td>{bug.subject}</td>
-                                        <td>
-                                            <span className={`badge ${bug.severity === 'Critical' ? 'bg-danger' :
-                                                bug.severity === 'High' ? 'bg-warning' :
-                                                    bug.severity === 'Medium' ? 'bg-info' : 'bg-secondary'
-                                                }`}>
-                                                {bug.severity}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span className={`badge ${getStatusBadgeClass(bug.status)}`}>
-                                                {bug.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div>{bug.user}</div>
-                                            <small className="text-muted">{bug.userEmail}</small>
-                                        </td>
-                                        <td>
-                                            <div><small>{bug.browser}</small></div>
-                                            <small className="text-muted">{bug.os}</small>
-                                        </td>
-                                        <td>{bug.created}</td>
-                                        <td>
-                                            <div className="d-flex gap-2">
-                                                <button className="btn btn-sm btn-outline-primary">
-                                                    <i className="bi bi-eye"></i>
-                                                </button>
-                                                <button className="btn btn-sm btn-outline-success">
-                                                    <i className="bi bi-check"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

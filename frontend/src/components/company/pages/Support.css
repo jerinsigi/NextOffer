@@ -1,166 +1,664 @@
-/* Support & Feedback Styles */
-
-/* Tabs Navigation */
-.support-tabs .nav-pills {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 0.5rem;
-    display: inline-flex;
-    gap: 0.5rem;
+.help-support-container {
+    padding: 20px;
+    animation: fadeIn 0.5s ease;
 }
 
-.support-tabs .nav-link {
-    background: transparent;
-    border: none;
+/* Hero Section */
+.help-support-container .help-hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1));
+    border-radius: 24px;
+    margin-bottom: 40px;
+}
+
+.help-support-container .help-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+}
+
+.help-support-container .help-hero p {
     color: var(--muted-text);
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
+    font-size: 1.125rem;
+    margin-bottom: 32px;
+}
+
+.help-support-container .search-bar {
+    max-width: 600px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.help-support-container .search-bar i {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-text);
+    font-size: 1.25rem;
+}
+
+.help-support-container .search-bar input {
+    width: 100%;
+    padding: 18px 20px 18px 56px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    color: var(--light-text);
+    font-size: 1rem;
     transition: all 0.3s ease;
-    font-weight: 500;
+}
+
+.help-support-container .search-bar input::placeholder {
+    color: var(--muted-text);
+}
+
+.help-support-container .search-bar input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Support Stats */
+.help-support-container .support-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 48px;
+}
+
+.help-support-container .stat-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.help-support-container .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-color);
+}
+
+.help-support-container .stat-card i {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+}
+
+.help-support-container .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--light-text);
+    margin-bottom: 8px;
+}
+
+.help-support-container .stat-label {
+    color: var(--muted-text);
+    font-size: 0.875rem;
+}
+
+/* Section */
+.help-support-container .section {
+    margin-bottom: 64px;
+}
+
+.help-support-container .section h2 {
+    color: var(--light-text);
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 28px;
     display: flex;
     align-items: center;
 }
 
-.support-tabs .nav-link:hover {
-    background: rgba(59, 130, 246, 0.1);
+/* Quick Actions */
+.help-support-container .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.help-support-container .action-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.help-support-container .action-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
+}
+
+.help-support-container .action-card.primary:hover {
+    border-color: var(--primary-color);
+}
+
+.help-support-container .action-card.success:hover {
+    border-color: #10b981;
+}
+
+.help-support-container .action-card.warning:hover {
+    border-color: #f59e0b;
+}
+
+.help-support-container .action-card.danger:hover {
+    border-color: #ef4444;
+}
+
+.help-support-container .action-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.help-support-container .action-card h4 {
+    color: var(--light-text);
+    font-size: 1.125rem;
+    margin-bottom: 8px;
+}
+
+.help-support-container .action-card p {
+    color: var(--muted-text);
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+/* Category Filters */
+.help-support-container .category-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.help-support-container .category-btn {
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.help-support-container .category-btn:hover {
+    border-color: var(--primary-color);
     color: var(--light-text);
 }
 
-.support-tabs .nav-link.active {
+.help-support-container .category-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: transparent;
+    color: white;
+}
+
+/* FAQ List */
+.help-support-container .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.help-support-container .faq-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.help-support-container .faq-item:hover {
+    border-color: var(--primary-color);
+}
+
+.help-support-container .faq-item.expanded {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: var(--primary-color);
+}
+
+.help-support-container .faq-question {
+    padding: 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.help-support-container .faq-question h4 {
+    color: var(--light-text);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.help-support-container .faq-question i {
+    color: var(--primary-color);
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.help-support-container .faq-answer {
+    padding: 0 24px 24px;
+    animation: slideDown 0.3s ease;
+}
+
+.help-support-container .faq-answer p {
+    color: var(--muted-text);
+    line-height: 1.8;
+    margin: 0;
+}
+
+/* Contact Methods */
+.help-support-container .contact-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.help-support-container .contact-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.help-support-container .contact-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-color);
+}
+
+.help-support-container .contact-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.help-support-container .contact-icon.primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.help-support-container .contact-icon.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.help-support-container .contact-icon.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.help-support-container .contact-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.help-support-container .contact-card h4 {
+    color: var(--light-text);
+    font-size: 1.25rem;
+    margin-bottom: 8px;
+}
+
+.help-support-container .contact-description {
+    color: var(--light-text);
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.help-support-container .availability {
+    display: block;
+    color: var(--muted-text);
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+}
+
+/* Ticket Form */
+.help-support-container .ticket-form-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 32px;
+}
+
+.help-support-container .ticket-form {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 32px;
+}
+
+.help-support-container .form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.help-support-container .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.help-support-container .form-group label {
+    color: var(--light-text);
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+}
+
+.help-support-container .form-group input,
+.help-support-container .form-group select,
+.help-support-container .form-group textarea {
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    color: var(--light-text);
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.help-support-container .form-group input::placeholder,
+.help-support-container .form-group textarea::placeholder {
+    color: var(--muted-text);
+}
+
+.help-support-container .form-group input:focus,
+.help-support-container .form-group select:focus,
+.help-support-container .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.help-support-container .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.help-support-container .form-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.help-support-container .ticket-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.help-support-container .info-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.help-support-container .info-card i {
+    color: var(--primary-color);
+}
+
+.help-support-container .info-card h4 {
+    color: var(--light-text);
+    font-size: 1.125rem;
+    margin-bottom: 16px;
+}
+
+.help-support-container .info-card ul {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--muted-text);
+}
+
+.help-support-container .info-card li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+/* Resources */
+.help-support-container .resources-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.help-support-container .resource-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: block;
+}
+
+.help-support-container .resource-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-color);
+}
+
+.help-support-container .resource-card i {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.help-support-container .resource-card h4 {
+    color: var(--light-text);
+    font-size: 1.125rem;
+    margin-bottom: 8px;
+}
+
+.help-support-container .resource-card p {
+    color: var(--muted-text);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Buttons */
+.help-support-container .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.help-support-container .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.help-support-container .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.help-support-container .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.help-support-container .btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.help-support-container .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.help-support-container .btn-outline-primary,
+.help-support-container .btn-outline-info,
+.help-support-container .btn-outline-success,
+.help-support-container .btn-outline-warning {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.help-support-container .btn-outline-info {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.help-support-container .btn-outline-success {
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.help-support-container .btn-outline-warning {
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.help-support-container .btn-outline-primary:hover {
     background: var(--primary-color);
     color: white;
 }
 
-.support-tabs .nav-link .badge {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
-}
-
-/* Ticket List */
-.ticket-list {
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.ticket-item {
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.ticket-item:hover {
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.ticket-item.selected {
-    background: rgba(59, 130, 246, 0.1);
-    border-left: 3px solid var(--primary-color);
-}
-
-.ticket-item:last-child {
-    border-bottom: none;
-}
-
-.ticket-id {
-    font-size: 0.875rem;
-    font-family: 'Courier New', monospace;
-}
-
-.ticket-subject {
-    color: var(--light-text);
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.ticket-meta {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.75rem;
+.help-support-container .btn-outline-secondary {
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     color: var(--muted-text);
 }
 
-.ticket-meta span {
-    display: flex;
-    align-items: center;
-}
-
-/* Ticket Details */
-.ticket-info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    padding: 1rem;
-    background: rgba(59, 130, 246, 0.05);
-    border-radius: 0.5rem;
-}
-
-.info-item label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-weight: 600;
-}
-
-/* Feedback Card */
-.feedback-card {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    height: 100%;
-}
-
-.feedback-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.3);
-}
-
-.feedback-card .bi-star-fill,
-.feedback-card .bi-star {
-    font-size: 1rem;
-    margin-right: 0.25rem;
-}
-
-/* Scrollbar Styling */
-.ticket-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.ticket-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.ticket-list::-webkit-scrollbar-thumb {
+.help-support-container .btn-outline-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
+    color: var(--light-text);
 }
 
-.ticket-list::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+/* Empty State */
+.help-support-container .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.help-support-container .empty-state i {
+    color: var(--muted-text);
+    opacity: 0.5;
+    margin-bottom: 20px;
+}
+
+.help-support-container .empty-state h5 {
+    color: var(--light-text);
+    margin-bottom: 8px;
+}
+
+.help-support-container .text-muted {
+    color: var(--muted-text);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Responsive */
-@media (max-width: 992px) {
-    .ticket-info-grid {
+@media (max-width: 1200px) {
+
+    .help-support-container .quick-actions-grid,
+    .help-support-container .contact-methods-grid,
+    .help-support-container .resources-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .help-support-container .ticket-form-container {
         grid-template-columns: 1fr;
-    }
-    
-    .support-tabs .nav-pills {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .support-tabs .nav-link {
-        justify-content: center;
     }
 }
 
 @media (max-width: 768px) {
-    .ticket-meta {
+    .help-support-container {
+        padding: 16px;
+    }
+
+    .help-support-container .help-hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .help-support-container .support-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .help-support-container .quick-actions-grid,
+    .help-support-container .contact-methods-grid,
+    .help-support-container .resources-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .help-support-container .form-row {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0;
+    }
+
+    .help-support-container .category-filters {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+    }
+    
+    .help-support-container .category-filters::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .help-support-container .category-filters::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
     }
 }
