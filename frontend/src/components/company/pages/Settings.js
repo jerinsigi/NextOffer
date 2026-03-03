@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Settings.css';
+import Loader from '../../common/Loader';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');
@@ -11,7 +12,7 @@ const Settings = () => {
         maintenanceMode: false,
         allowRegistrations: true,
         emailVerificationRequired: true,
-        
+
         // AI Settings
         resumeScreeningModel: 'gpt-4',
         interviewDifficulty: 'medium',
@@ -19,7 +20,7 @@ const Settings = () => {
         questionsPerSession: 10,
         aiTemperature: 0.7,
         enableAdaptiveQuestioning: true,
-        
+
         // Integrity Settings
         integrityThreshold: 80,
         enableGazeTracking: true,
@@ -28,7 +29,7 @@ const Settings = () => {
         maxTabSwitches: 3,
         maxGazeAversions: 5,
         autoFlagViolations: true,
-        
+
         // Interview Settings
         enableVideoRecording: true,
         enableAudioRecording: true,
@@ -36,7 +37,7 @@ const Settings = () => {
         autoSaveInterval: 5,
         allowInterviewPause: false,
         showCandidateTimer: true,
-        
+
         // Notification Settings
         emailNotifications: true,
         smsNotifications: false,
@@ -44,7 +45,7 @@ const Settings = () => {
         notifyOnNewRegistration: true,
         notifyOnIntegrityViolation: true,
         notifyOnInterviewCompletion: false,
-        
+
         // Security Settings
         sessionTimeout: 30,
         passwordMinLength: 8,
@@ -52,7 +53,7 @@ const Settings = () => {
         enable2FA: false,
         maxLoginAttempts: 5,
         ipWhitelisting: false,
-        
+
         // Performance Settings
         cacheEnabled: true,
         cacheDuration: 3600,
@@ -61,6 +62,15 @@ const Settings = () => {
         maxConcurrentInterviews: 100,
         apiRateLimit: 1000
     });
+
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const [saved, setSaved] = useState(false);
 
@@ -76,6 +86,8 @@ const Settings = () => {
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">

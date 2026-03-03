@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Documentation.css';
+import Loader from '../../common/Loader';
 
 const Documentation = () => {
     const [activeSection, setActiveSection] = useState('getting-started');
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     const sections = [
         {
@@ -352,6 +361,8 @@ const Documentation = () => {
     );
 
     const activeContent = sections.find(s => s.id === activeSection);
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="documentation-page">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './JobDescriptions.css';
+import Loader from '../../common/Loader';
 
 const JobDescriptions = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -477,6 +478,8 @@ const JobDescriptions = () => {
         totalApplications: jobs.reduce((sum, j) => sum + (j.applications_count || 0), 0),
         avgApplications: jobs.length ? Math.round(jobs.reduce((sum, j) => sum + (j.applications_count || 0), 0) / jobs.length) : 0
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">

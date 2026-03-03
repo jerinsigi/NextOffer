@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../../common/dashboard/Profile.css';
+import Loader from '../../common/Loader';
 
 const CompanyProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -192,7 +193,7 @@ const CompanyProfile = () => {
         }
     };
 
-    if (loading) return <div className="text-center p-5 text-white">Loading profile...</div>;
+    if (loading) return <Loader inline />;
 
     const logoUrl = getLogoUrl(profileData.logo);
 

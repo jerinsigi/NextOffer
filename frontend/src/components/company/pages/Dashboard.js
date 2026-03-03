@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import Loader from '../../common/Loader';
 
 const Dashboard = () => {
     const [company, setCompany] = useState(null);
@@ -69,6 +70,8 @@ const Dashboard = () => {
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} h ago`;
         return date.toLocaleDateString();
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">

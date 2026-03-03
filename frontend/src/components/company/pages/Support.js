@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Support.css';
+import Loader from '../../common/Loader';
 
 const Support = () => {
     const [activeTab, setActiveTab] = useState('tickets');
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
     const tickets = [
         {
             id: 'TKT-1245',
@@ -200,6 +208,8 @@ const Support = () => {
             ></i>
         ));
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">
@@ -535,8 +545,8 @@ const Support = () => {
                                         <td>{bug.subject}</td>
                                         <td>
                                             <span className={`badge ${bug.severity === 'Critical' ? 'bg-danger' :
-                                                    bug.severity === 'High' ? 'bg-warning' :
-                                                        bug.severity === 'Medium' ? 'bg-info' : 'bg-secondary'
+                                                bug.severity === 'High' ? 'bg-warning' :
+                                                    bug.severity === 'Medium' ? 'bg-info' : 'bg-secondary'
                                                 }`}>
                                                 {bug.severity}
                                             </span>

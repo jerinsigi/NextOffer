@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Users.css';
+import Loader from '../../common/Loader';
 
 const Users = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -15,8 +16,14 @@ const Users = () => {
         company: '',
         status: 'Active'
     });
+    const [loading, setLoading] = useState(true);
 
-    // Sample user data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
     const usersData = [
         {
             id: 1,
@@ -228,6 +235,8 @@ const Users = () => {
         setShowAddModal(true);
     };
 
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">

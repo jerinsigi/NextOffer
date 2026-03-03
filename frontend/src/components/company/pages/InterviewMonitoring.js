@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './InterviewMonitoring.css';
+import Loader from '../../common/Loader';
 
 const InterviewMonitoring = () => {
     const [jobs, setJobs] = useState([]);
@@ -202,6 +203,8 @@ const InterviewMonitoring = () => {
         return badges[status] || 'status-badge-scheduled';
     };
 
+    if (loading) return <Loader inline />;
+
     return (
         <div className="dashboard-container">
             <div className="page-header mb-4">
@@ -308,9 +311,7 @@ const InterviewMonitoring = () => {
 
                 <div className="interviews-content">
                     <div className="interviews-list">
-                        {loading && viewMode === 'jobs' ? (
-                            <div className="text-center p-5 text-muted">Loading...</div>
-                        ) : filteredItems.length === 0 ? (
+                        {filteredItems.length === 0 ? (
                             <div className="empty-state">
                                 <i className="bi bi-inbox fs-1 text-muted"></i>
                                 <p className="text-muted">

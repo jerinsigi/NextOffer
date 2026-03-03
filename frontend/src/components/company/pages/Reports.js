@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Reports.css';
+import Loader from '../../common/Loader';
 
 const Reports = () => {
     const [dateRange, setDateRange] = useState('last7days');
     const [selectedMetric, setSelectedMetric] = useState('overview');
+    const [loading, setLoading] = useState(true);
 
-    // Sample data for charts
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
     const interviewTrends = [
         { date: 'Dec 1', interviews: 45, completed: 38, flagged: 3 },
         { date: 'Dec 2', interviews: 52, completed: 47, flagged: 2 },
@@ -50,6 +57,8 @@ const Reports = () => {
     const exportReport = (format) => {
         alert(`Exporting report in ${format.toUpperCase()} format...`);
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">
@@ -181,7 +190,7 @@ const Reports = () => {
                                             strokeWidth="1"
                                         />
                                     ))}
-                                    
+
                                     {/* Total interviews line */}
                                     <polyline
                                         points="80,150 170,120 260,135 350,90 440,105 530,75"
@@ -189,7 +198,7 @@ const Reports = () => {
                                         stroke="#6366f1"
                                         strokeWidth="3"
                                     />
-                                    
+
                                     {/* Completed interviews line */}
                                     <polyline
                                         points="80,165 170,130 260,150 350,105 440,120 530,95"
@@ -197,7 +206,7 @@ const Reports = () => {
                                         stroke="#10b981"
                                         strokeWidth="3"
                                     />
-                                    
+
                                     {/* Flagged interviews line */}
                                     <polyline
                                         points="80,215 170,220 260,210 350,205 440,215 530,200"
@@ -205,7 +214,7 @@ const Reports = () => {
                                         stroke="#ef4444"
                                         strokeWidth="3"
                                     />
-                                    
+
                                     {/* Data points */}
                                     {interviewTrends.map((item, i) => (
                                         <g key={i}>
@@ -248,9 +257,8 @@ const Reports = () => {
                                         </div>
                                         <div className="progress" style={{ height: '6px' }}>
                                             <div
-                                                className={`progress-bar ${
-                                                    index === 0 ? 'bg-danger' : index === 1 ? 'bg-warning' : 'bg-purple'
-                                                }`}
+                                                className={`progress-bar ${index === 0 ? 'bg-danger' : index === 1 ? 'bg-warning' : 'bg-purple'
+                                                    }`}
                                                 style={{ width: `${item.percentage}%` }}
                                             ></div>
                                         </div>
@@ -297,10 +305,9 @@ const Reports = () => {
                                             <td>{company.interviews}</td>
                                             <td>{company.candidates}</td>
                                             <td>
-                                                <span className={`fw-bold ${
-                                                    company.avgScore >= 85 ? 'text-success' :
-                                                    company.avgScore >= 75 ? 'text-warning' : 'text-danger'
-                                                }`}>
+                                                <span className={`fw-bold ${company.avgScore >= 85 ? 'text-success' :
+                                                        company.avgScore >= 75 ? 'text-warning' : 'text-danger'
+                                                    }`}>
                                                     {company.avgScore}%
                                                 </span>
                                             </td>
@@ -312,10 +319,9 @@ const Reports = () => {
                                             <td>
                                                 <div className="progress" style={{ height: '8px', width: '150px' }}>
                                                     <div
-                                                        className={`progress-bar ${
-                                                            company.avgScore >= 85 ? 'bg-success' :
-                                                            company.avgScore >= 75 ? 'bg-warning' : 'bg-danger'
-                                                        }`}
+                                                        className={`progress-bar ${company.avgScore >= 85 ? 'bg-success' :
+                                                                company.avgScore >= 75 ? 'bg-warning' : 'bg-danger'
+                                                            }`}
                                                         style={{ width: `${company.avgScore}%` }}
                                                     ></div>
                                                 </div>

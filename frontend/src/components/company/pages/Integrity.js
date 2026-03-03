@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Integrity.css';
+import Loader from '../../common/Loader';
 
 const Integrity = () => {
     const [activeTab, setActiveTab] = useState('violations');
@@ -7,6 +8,14 @@ const Integrity = () => {
     const [severityFilter, setSeverityFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [selectedViolation, setSelectedViolation] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
 
     // Sample violations data
     const violationsData = [
@@ -283,6 +292,8 @@ const Integrity = () => {
         presenceAnomaly: violationsData.filter(v => v.violationType === 'Presence Anomaly').length,
         underReview: violationsData.filter(v => v.status === 'Under Review').length
     };
+
+    if (loading) return <Loader inline />;
 
     return (
         <div className="dashboard-container">
