@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './CompanyProfile.css';
+import '../../common/dashboard/Profile.css';
 
 const CompanyProfile = () => {
     const [activeTab, setActiveTab] = useState('profile');

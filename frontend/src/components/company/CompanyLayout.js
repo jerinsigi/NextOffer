@@ -87,7 +87,12 @@ const CompanyLayout = () => {
             path: '/company/settings',
             badge: null
         },
-        
+        {
+            title: 'Profile',
+            icon: 'bi-person',
+            path: '/company/profile',
+            badge: null
+        },
         {
             title: 'Support & Feedback',
             icon: 'bi-headset',
