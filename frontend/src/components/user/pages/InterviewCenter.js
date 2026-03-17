@@ -837,15 +837,16 @@ const InterviewCenter = () => {
         resetTranscript();
 
         console.log('Calling SpeechRecognition.startListening...');
-        SpeechRecognitionAPI.startListening({
-            continuous: true,
-            language: 'en-US'
-        }).then(() => {
+        try {
+            SpeechRecognitionAPI.startListening({
+                continuous: true,
+                language: 'en-US'
+            });
             console.log('✅ Speech recognition started successfully');
-        }).catch(err => {
+        } catch (err) {
             console.error('❌ Error starting speech recognition:', err);
             setSpeechError(`Failed to start speech recognition: ${err.message}`);
-        });
+        }
     };
 
     const stopSpeechRecognition = () => {
