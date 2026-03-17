@@ -69,8 +69,8 @@ const Reports = () => {
     const buildLineChart = (data, keys, colors, labelFn, viewW = 560, viewH = 200) => {
         if (!data || data.length === 0) {
             return (
-                <div className="rp-empty-state">
-                    <i className="bi bi-bar-chart-line"></i>
+                <div className="text-center text-muted py-5">
+                    <i className="bi bi-bar-chart-line fs-2 mb-2 d-block opacity-50"></i>
                     <span>No data for this period</span>
                 </div>
             );
@@ -84,7 +84,7 @@ const Reports = () => {
         const gridLines = [0, 0.25, 0.5, 0.75, 1];
 
         return (
-            <svg viewBox={`0 0 ${viewW} ${viewH}`} className="rp-svg-chart">
+            <svg viewBox={`0 0 ${viewW} ${viewH}`} className="line-chart">
                 {/* Grid */}
                 {gridLines.map((g, i) => (
                     <g key={i}>
@@ -145,8 +145,8 @@ const Reports = () => {
         const total = data.reduce((acc, d) => acc + d.count, 0);
         if (total === 0) {
             return (
-                <div className="rp-empty-state">
-                    <i className="bi bi-pie-chart"></i>
+                <div className="text-center text-muted py-5">
+                    <i className="bi bi-pie-chart fs-2 mb-2 d-block opacity-50"></i>
                     <span>No applications yet</span>
                 </div>
             );
@@ -174,19 +174,23 @@ const Reports = () => {
         });
 
         return (
-            <div className="rp-donut-wrap">
-                <svg viewBox="0 0 180 180" className="rp-donut-svg">
+            <div className="donut-chart-container flex-column w-100 mb-0">
+                <svg viewBox="0 0 180 180" className="donut-chart mx-auto">
                     {slices}
                     <text x={cx} y={cy - 8} textAnchor="middle" fill="#fff" fontSize="22" fontWeight="700">{total}</text>
                     <text x={cx} y={cy + 12} textAnchor="middle" fill="#64748b" fontSize="10">Total Apps</text>
                 </svg>
-                <div className="rp-donut-legend">
+                <div className="d-flex flex-column gap-2 mt-4 px-3 w-100">
                     {data.map(item => (
-                        <div key={item.status} className="rp-legend-row">
-                            <span className="rp-legend-dot" style={{ background: colorMap[item.status] || '#64748b' }}></span>
-                            <span className="rp-legend-label">{item.status}</span>
-                            <span className="rp-legend-val">{item.count}</span>
-                            <span className="rp-legend-pct">{total > 0 ? Math.round((item.count / total) * 100) : 0}%</span>
+                        <div key={item.status} className="d-flex align-items-center justify-content-between">
+                            <div className="d-flex align-items-center gap-2">
+                                <span className="legend-dot" style={{ background: colorMap[item.status] || '#64748b' }}></span>
+                                <span className="text-light" style={{ fontSize: '0.85rem' }}>{item.status}</span>
+                            </div>
+                            <div className="text-end">
+                                <span className="text-white fw-bold me-2" style={{ fontSize: '0.9rem' }}>{item.count}</span>
+                                <span className="text-muted" style={{ fontSize: '0.75rem' }}>{total > 0 ? Math.round((item.count / total) * 100) : 0}%</span>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -197,22 +201,24 @@ const Reports = () => {
     // ── Horizontal Bar Chart (Skills / Categories) ─────────────────────────────
     const buildHBar = (data, valueKey, labelKey, color) => {
         if (!data || data.length === 0) {
-            return <div className="rp-empty-state"><i className="bi bi-bar-chart"></i><span>No data</span></div>;
+            return <div className="text-center text-muted py-4"><i className="bi bi-bar-chart d-block mb-2 fs-2 opacity-50"></i><span>No data</span></div>;
         }
         const maxVal = Math.max(...data.map(d => d[valueKey]), 1);
         return (
-            <div className="rp-hbar-list">
+            <div className="violation-list mt-0 pt-0">
                 {data.map((item, i) => {
                     const pct = (item[valueKey] / maxVal) * 100;
                     return (
-                        <div key={i} className="rp-hbar-row">
-                            <span className="rp-hbar-label">{item[labelKey] || item._id || 'Unknown'}</span>
-                            <div className="rp-hbar-track">
-                                <div className="rp-hbar-fill"
+                        <div key={i} className="mb-3">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                <span className="text-light text-truncate pe-2" style={{ fontSize: '0.85rem' }}>{item[labelKey] || item._id || 'Unknown'}</span>
+                                <span className="text-light fw-bold" style={{ fontSize: '0.85rem' }}>{item[valueKey]}</span>
+                            </div>
+                            <div className="progress mx-0" style={{ height: '6px' }}>
+                                <div className="progress-bar"
                                     style={{ width: `${pct}%`, background: color }}
                                 ></div>
                             </div>
-                            <span className="rp-hbar-val">{item[valueKey]}</span>
                         </div>
                     );
                 })}
@@ -286,17 +292,17 @@ const Reports = () => {
     ];
 
     return (
-        <div className="rp-container">
+        <div className="dashboard-container">
 
             {/* ── Page Header ── */}
-            <div className="rp-header">
+            <div className="page-header mb-4">
                 <div>
-                    <h1 className="rp-title">Reports & Analytics</h1>
-                    <p className="rp-subtitle">Platform-wide insights and performance metrics</p>
+                    <h1 className="page-title">Reports & Analytics</h1>
+                    <p className="text-muted">Platform-wide insights and performance metrics</p>
                 </div>
-                <div className="rp-header-controls">
+                <div className="header-actions">
                     <select
-                        className="rp-select"
+                        className="form-select form-select-dark d-inline-block w-auto"
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
                     >
@@ -306,224 +312,198 @@ const Reports = () => {
                         <option value="last90days">Last 90 Days</option>
                         <option value="alltime">All Time</option>
                     </select>
-                    <button className="rp-refresh-btn" onClick={fetchDashboardStats} title="Refresh data">
+                    <button className="btn btn-outline-secondary ms-2" onClick={fetchDashboardStats} title="Refresh data">
                         <i className="bi bi-arrow-clockwise"></i>
                     </button>
                 </div>
             </div>
 
             {/* ── KPI Cards ── */}
-            <div className="rp-kpi-grid">
+            <div className="row g-4 mb-4">
                 {KPI_CARDS.map((card, i) => (
-                    <div className="rp-kpi-card" key={i} style={{ '--accent': card.color, '--accent-bg': card.bg }}>
-                        <div className="rp-kpi-icon-wrap">
-                            <i className={`bi ${card.icon}`}></i>
+                    <div className="col-xl-2 col-lg-4 col-sm-6" key={i}>
+                        <div className="metric-card" style={{ '--accent': card.color, '--accent-bg': card.bg }}>
+                            <div className="metric-header">
+                                <i className={`bi ${card.icon}`} style={{ color: card.color }}></i>
+                            </div>
+                            <div className="metric-value">{card.value}</div>
+                            <div className="metric-label mb-0">{card.label}</div>
+                            <div className="text-muted small mt-1" style={{ fontSize: '0.75rem' }}>{card.sub}</div>
                         </div>
-                        <div className="rp-kpi-body">
-                            <div className="rp-kpi-value">{card.value}</div>
-                            <div className="rp-kpi-label">{card.label}</div>
-                            <div className="rp-kpi-sub">{card.sub}</div>
-                        </div>
-                        <div className="rp-kpi-bar"><div className="rp-kpi-bar-fill"></div></div>
                     </div>
                 ))}
             </div>
 
             {/* ── Trend Chart + App Status Donut ── */}
-            <div className="rp-row">
-                <div className="rp-card rp-col-lg">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Activity Trends</h5>
-                            <p className="rp-card-sub">Performance over selected period</p>
+            <div className="row g-4 mb-4">
+                <div className="col-lg-8">
+                    <div className="dashboard-card h-100">
+                        <div className="card-header-custom align-items-center">
+                            <div>
+                                <h5 className="card-title mb-0">Activity Trends</h5>
+                                <p className="text-muted small mb-0 mt-1">Performance over selected period</p>
+                            </div>
+                            <div className="btn-group">
+                                <button
+                                    className={`btn btn-sm ${activeChart === 'interviews' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setActiveChart('interviews')}
+                                >Interviews</button>
+                                <button
+                                    className={`btn btn-sm ${activeChart === 'applications' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                                    onClick={() => setActiveChart('applications')}
+                                >Applications</button>
+                            </div>
                         </div>
-                        <div className="rp-tab-toggle">
-                            <button
-                                className={`rp-tab-btn ${activeChart === 'interviews' ? 'active' : ''}`}
-                                onClick={() => setActiveChart('interviews')}
-                            >Interviews</button>
-                            <button
-                                className={`rp-tab-btn ${activeChart === 'applications' ? 'active' : ''}`}
-                                onClick={() => setActiveChart('applications')}
-                            >Applications</button>
+                        <div className="p-4 pt-2">
+                            <div className="chart-legend mb-3">
+                                {trendLabels.map(l => (
+                                    <span key={l.label} className="legend-item">
+                                        <span className="legend-dot" style={{ background: l.color }}></span>
+                                        {l.label}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="chart-container" style={{ height: '240px' }}>
+                                {buildLineChart(trendData, trendKeys, trendColors, formatDate)}
+                            </div>
                         </div>
-                    </div>
-                    <div className="rp-chart-legend">
-                        {trendLabels.map(l => (
-                            <span key={l.label} className="rp-legend-pill">
-                                <span className="rp-legend-dot-sm" style={{ background: l.color }}></span>
-                                {l.label}
-                            </span>
-                        ))}
-                    </div>
-                    <div className="rp-chart-area">
-                        {buildLineChart(trendData, trendKeys, trendColors, formatDate)}
                     </div>
                 </div>
 
-                <div className="rp-card rp-col-sm">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Application Status</h5>
-                            <p className="rp-card-sub">Breakdown by stage</p>
+                <div className="col-lg-4">
+                    <div className="dashboard-card h-100">
+                        <div className="card-header-custom">
+                            <div>
+                                <h5 className="card-title mb-0">Application Status</h5>
+                                <p className="text-muted small mb-0 mt-1">Breakdown by stage</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="rp-donut-area">
-                        {buildDonut(applicationStatus, STATUS_COLORS)}
+                        <div className="p-4 d-flex align-items-center justify-content-center flex-column h-100 pb-5">
+                            {buildDonut(applicationStatus, STATUS_COLORS)}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* ── Skills + Job Categories ── */}
-            <div className="rp-row">
-                <div className="rp-card rp-col-half">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Top Skills in Demand</h5>
-                            <p className="rp-card-sub">Based on job postings in period</p>
+            <div className="row g-4 mb-4">
+                <div className="col-lg-6">
+                    <div className="dashboard-card h-100">
+                        <div className="card-header-custom">
+                            <div>
+                                <h5 className="card-title mb-0">Top Skills in Demand</h5>
+                                <p className="text-muted small mb-0 mt-1">Based on job postings</p>
+                            </div>
+                            <span className="badge" style={{ backgroundColor: '#3b82f622', color: '#3b82f6' }}>{skillsAnalysis.length} skills</span>
                         </div>
-                        <span className="rp-badge">{skillsAnalysis.length} skills</span>
-                    </div>
-                    <div className="rp-hbar-area">
-                        {buildHBar(skillsAnalysis, 'demand', 'skill',
-                            'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)')}
+                        <div className="p-4">
+                            {buildHBar(skillsAnalysis, 'demand', 'skill', 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)')}
+                        </div>
                     </div>
                 </div>
 
-                <div className="rp-card rp-col-half">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Jobs by Category</h5>
-                            <p className="rp-card-sub">Distribution of posted positions</p>
+                <div className="col-lg-6">
+                    <div className="dashboard-card h-100">
+                        <div className="card-header-custom">
+                            <div>
+                                <h5 className="card-title mb-0">Jobs by Category</h5>
+                                <p className="text-muted small mb-0 mt-1">Distribution of posted positions</p>
+                            </div>
+                            <span className="badge" style={{ backgroundColor: '#06b6d422', color: '#06b6d4' }}>{jobCategoryDist.length} categories</span>
                         </div>
-                        <span className="rp-badge">{jobCategoryDist.length} categories</span>
-                    </div>
-                    <div className="rp-hbar-area">
-                        {buildHBar(jobCategoryDist, 'count', '_id',
-                            'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)')}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Platform Growth ── */}
-            <div className="rp-row">
-                <div className="rp-card rp-col-full">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Platform Growth</h5>
-                            <p className="rp-card-sub">Monthly new registrations — last 6 months</p>
+                        <div className="p-4">
+                            {buildHBar(jobCategoryDist, 'count', '_id', 'linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%)')}
                         </div>
-                        <div className="rp-chart-legend">
-                            <span className="rp-legend-pill">
-                                <span className="rp-legend-dot-sm" style={{ background: '#10b981' }}></span>Candidates
-                            </span>
-                            <span className="rp-legend-pill">
-                                <span className="rp-legend-dot-sm" style={{ background: '#f59e0b' }}></span>Companies
-                            </span>
-                        </div>
-                    </div>
-                    <div className="rp-chart-area rp-chart-area-lg">
-                        {buildLineChart(
-                            (() => {
-                                const months = new Set([
-                                    ...(platformGrowth?.candidateGrowth || []).map(d => d._id),
-                                    ...(platformGrowth?.companyGrowth || []).map(d => d._id)
-                                ]);
-                                const sorted = [...months].sort();
-                                return sorted.map(m => ({
-                                    _id: m,
-                                    candidates: (platformGrowth?.candidateGrowth || []).find(d => d._id === m)?.count || 0,
-                                    companies: (platformGrowth?.companyGrowth || []).find(d => d._id === m)?.count || 0
-                                }));
-                            })(),
-                            ['candidates', 'companies'],
-                            ['#10b981', '#f59e0b'],
-                            formatMonth,
-                            760, 200
-                        )}
                     </div>
                 </div>
             </div>
 
             {/* ── Top Companies Table ── */}
-            <div className="rp-row">
-                <div className="rp-card rp-col-full">
-                    <div className="rp-card-header">
-                        <div>
-                            <h5 className="rp-card-title">Top Companies by Activity</h5>
-                            <p className="rp-card-sub">Ranked by total jobs + interviews</p>
+            <div className="row g-4 mb-4">
+                <div className="col-lg-12">
+                    <div className="dashboard-card">
+                        <div className="card-header-custom">
+                            <div>
+                                <h5 className="card-title mb-0">Top Companies by Activity</h5>
+                                <p className="text-muted small mb-0 mt-1">Ranked by total jobs + interviews</p>
+                            </div>
+                            <span className="badge" style={{ backgroundColor: '#64748b', color: '#fff' }}>{companiesData.length} companies</span>
                         </div>
-                        <span className="rp-badge">{companiesData.length} companies</span>
+                        {companiesData.length > 0 ? (
+                            <div className="table-responsive">
+                                <table className="table table-dark table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Company</th>
+                                            <th>Jobs Posted</th>
+                                            <th>Applications</th>
+                                            <th>Interviews</th>
+                                            <th>Hired</th>
+                                            <th>Success Rate</th>
+                                            <th>Activity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {companiesData.map((company, index) => {
+                                            const maxActivity = Math.max(...companiesData.map(c => c.totalJobs + c.interviews), 1);
+                                            const activityPct = ((company.totalJobs + company.interviews) / maxActivity) * 100;
+                                            const initials = company.name.substring(0, 2).toUpperCase();
+                                            const avatarColors = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+                                            const avatarColor = avatarColors[index % avatarColors.length];
+                                            return (
+                                                <tr key={index}>
+                                                    <td className="text-center">
+                                                        {index < 3 ? (
+                                                            <span className="badge rounded-circle p-2" style={{ backgroundColor: `${avatarColor}22`, color: avatarColor }}>{index + 1}</span>
+                                                        ) : (
+                                                            <span className="text-muted">{index + 1}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <div className="d-flex align-items-center">
+                                                            <div className="avatar-sm rounded-circle d-flex align-items-center justify-content-center me-2" style={{ background: `${avatarColor}22`, color: avatarColor, width: '32px', height: '32px', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                                                                {initials}
+                                                            </div>
+                                                            <span className="fw-bold">{company.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td><span className="text-muted fw-bold">{company.totalJobs}</span></td>
+                                                    <td><span className="text-muted fw-bold">{company.candidates}</span></td>
+                                                    <td><span className="text-muted fw-bold">{company.interviews}</span></td>
+                                                    <td><span className="text-success fw-bold">{company.hired ?? 0}</span></td>
+                                                    <td>
+                                                        <span 
+                                                            className="badge" 
+                                                            style={{ 
+                                                                color: company.successRate >= 50 ? '#10b981' : company.successRate >= 20 ? '#f59e0b' : '#ef4444',
+                                                                backgroundColor: company.successRate >= 50 ? '#10b98122' : company.successRate >= 20 ? '#f59e0b22' : '#ef444422',
+                                                                padding: '6px 12px'
+                                                            }}
+                                                        >
+                                                            {company.successRate ?? 0}%
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ minWidth: '150px', verticalAlign: 'middle' }}>
+                                                        <div className="progress mx-0" style={{ height: '6px' }}>
+                                                            <div className="progress-bar"
+                                                                style={{ width: `${activityPct}%`, background: avatarColor }}>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="text-center text-muted py-5">
+                                <i className="bi bi-building fs-1 d-block mb-3 opacity-50"></i>
+                                <span>No company data available</span>
+                            </div>
+                        )}
                     </div>
-                    {companiesData.length > 0 ? (
-                        <div className="rp-table-wrap">
-                            <table className="rp-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Company</th>
-                                        <th>Jobs Posted</th>
-                                        <th>Applications</th>
-                                        <th>Interviews</th>
-                                        <th>Hired</th>
-                                        <th>Success Rate</th>
-                                        <th>Activity</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {companiesData.map((company, index) => {
-                                        const maxActivity = Math.max(...companiesData.map(c => c.totalJobs + c.interviews), 1);
-                                        const activityPct = ((company.totalJobs + company.interviews) / maxActivity) * 100;
-                                        const initials = company.name.substring(0, 2).toUpperCase();
-                                        const avatarColors = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
-                                        const avatarColor = avatarColors[index % avatarColors.length];
-                                        return (
-                                            <tr key={index}>
-                                                <td className="rp-rank">
-                                                    {index < 3 ? (
-                                                        <span className={`rp-rank-badge rank-${index + 1}`}>{index + 1}</span>
-                                                    ) : (
-                                                        <span className="rp-rank-num">{index + 1}</span>
-                                                    )}
-                                                </td>
-                                                <td>
-                                                    <div className="rp-company-cell">
-                                                        <div className="rp-avatar" style={{ background: `${avatarColor}22`, color: avatarColor }}>
-                                                            {initials}
-                                                        </div>
-                                                        <span className="rp-company-name">{company.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td><span className="rp-num">{company.totalJobs}</span></td>
-                                                <td><span className="rp-num">{company.candidates}</span></td>
-                                                <td><span className="rp-num">{company.interviews}</span></td>
-                                                <td>
-                                                    <span className="rp-num rp-hired">{company.hired ?? 0}</span>
-                                                </td>
-                                                <td>
-                                                    <span className={`rp-rate-badge ${company.successRate >= 50 ? 'high' : company.successRate >= 20 ? 'mid' : 'low'}`}>
-                                                        {company.successRate ?? 0}%
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div className="rp-progress-track">
-                                                        <div className="rp-progress-fill"
-                                                            style={{ width: `${activityPct}%`, background: avatarColor }}>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="rp-empty-state rp-empty-padded">
-                            <i className="bi bi-building"></i>
-                            <span>No company data available</span>
-                        </div>
-                    )}
                 </div>
             </div>
 
