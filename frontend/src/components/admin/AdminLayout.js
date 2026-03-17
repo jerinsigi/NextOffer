@@ -175,7 +175,7 @@ const AdminLayout = () => {
             title: 'Support & Feedback',
             icon: 'bi-headset',
             path: '/admin/support',
-            badge: 3
+            badge: null
         }
     ];
 

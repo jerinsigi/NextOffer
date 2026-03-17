@@ -97,11 +97,6 @@ const Support = () => {
                     <h1 className="page-title">Support & Feedback</h1>
                     <p className="text-muted">Manage support tickets, user feedback, and bug reports</p>
                 </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary">
-                        <i className="bi bi-download me-2"></i>Export Report
-                    </button>
-                </div>
             </div>
 
             {/* Support Tickets Main Area */}
