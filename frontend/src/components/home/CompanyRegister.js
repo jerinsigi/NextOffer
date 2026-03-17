@@ -27,6 +27,10 @@ const CompanyRegister = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
+    const [usernameStatus, setUsernameStatus] = useState('');
+    const [usernameMessage, setUsernameMessage] = useState('');
+    const usernameTimeoutRef = useRef(null);
+
     // OTP States
     const [step, setStep] = useState('register'); // 'register', 'otp', 'complete'
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -55,6 +59,56 @@ const CompanyRegister = () => {
         });
     };
 
+    const validateUsername = (value) => {
+        if (!value) return { isValid: false, message: '' };
+        if (value.length < 3) return { isValid: false, message: 'Username must be at least 3 characters long.' };
+        if (!/^[a-z0-9_]+$/.test(value)) return { isValid: false, message: 'Username can only contain lowercase letters, numbers, and underscores.' };
+        return { isValid: true, message: '' };
+    };
+
+    const handleUsernameChange = (e) => {
+        const val = e.target.value.toLowerCase();
+        setFormData({ ...formData, username: val });
+        
+        if (usernameTimeoutRef.current) clearTimeout(usernameTimeoutRef.current);
+        
+        const validation = validateUsername(val);
+        if (!val) {
+            setUsernameStatus('');
+            setUsernameMessage('');
+            return;
+        }
+        
+        if (!validation.isValid) {
+            setUsernameStatus('invalid');
+            setUsernameMessage(validation.message);
+            return;
+        }
+
+        setUsernameStatus('checking');
+        setUsernameMessage('Checking availability...');
+        
+        usernameTimeoutRef.current = setTimeout(async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/check-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: val })
+                });
+                const data = await response.json();
+                if (data.available) {
+                    setUsernameStatus('available');
+                } else {
+                    setUsernameStatus('unavailable');
+                    setUsernameMessage(data.message || 'Username is taken.');
+                }
+            } catch (err) {
+                setUsernameStatus('invalid');
+                setUsernameMessage('Error checking username.');
+            }
+        }, 500);
+    };
+
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -78,6 +132,11 @@ const CompanyRegister = () => {
 
         if (formData.password !== formData.confirmPassword) {
             setMessage({ type: 'error', text: 'Passwords do not match' });
+            return;
+        }
+
+        if (usernameStatus === 'invalid' || usernameStatus === 'unavailable') {
+            setMessage({ type: 'error', text: 'Please provide a valid and available username.' });
             return;
         }
 
@@ -260,12 +319,15 @@ const CompanyRegister = () => {
                                                     <input
                                                         type="text"
                                                         name="username"
-                                                        className="form-control form-control-dark p-3 rounded-3"
+                                                        className={`form-control form-control-dark p-3 rounded-3 ${usernameStatus === 'available' ? 'is-valid' : ''} ${usernameStatus === 'unavailable' || usernameStatus === 'invalid' ? 'is-invalid' : ''}`}
                                                         placeholder="Choose a username"
                                                         value={formData.username}
-                                                        onChange={handleChange}
+                                                        onChange={handleUsernameChange}
                                                         required
                                                     />
+                                                    {usernameStatus === 'checking' && <small className="text-info d-block mt-1">Checking availability...</small>}
+                                                    {usernameStatus === 'available' && <small className="text-success d-block mt-1"><i className="bi bi-check-circle me-1"></i>Username is available!</small>}
+                                                    {(usernameStatus === 'unavailable' || usernameStatus === 'invalid') && <small className="text-danger d-block mt-1"><i className="bi bi-exclamation-circle me-1"></i>{usernameMessage}</small>}
                                                 </div>
 
                                                 {/* Email */}
@@ -293,7 +355,7 @@ const CompanyRegister = () => {
                                                         country={'in'}
                                                         value={formData.phone}
                                                         onChange={phone => setFormData({ ...formData, phone })}
-                                                        inputClass="form-control form-control-dark w-100 p-3 rounded-3"
+                                                        inputClass="form-control form-control-dark w-100 rounded-3"
                                                         containerClass="form-control-dark rounded-3"
                                                         buttonClass="bg-dark border-secondary rounded-start-3"
                                                         dropdownClass="bg-dark text-light border-secondary"
@@ -322,21 +384,21 @@ const CompanyRegister = () => {
                                                     </label>
                                                     <select
                                                         name="industry"
-                                                        className="form-select form-control-dark p-3 rounded-3"
+                                                        className="form-select form-control-dark p-3 rounded-3 text-light"
                                                         value={formData.industry}
                                                         onChange={handleChange}
                                                         required
                                                     >
-                                                        <option value="">Select industry</option>
-                                                        <option value="Technology">Technology</option>
-                                                        <option value="Finance">Finance</option>
-                                                        <option value="Healthcare">Healthcare</option>
-                                                        <option value="Education">Education</option>
-                                                        <option value="E-commerce">E-commerce</option>
-                                                        <option value="Manufacturing">Manufacturing</option>
-                                                        <option value="Retail">Retail</option>
-                                                        <option value="Consulting">Consulting</option>
-                                                        <option value="Other">Other</option>
+                                                        <option value="" className="text-dark">Select industry</option>
+                                                        <option value="Technology" className="text-dark">Technology</option>
+                                                        <option value="Finance" className="text-dark">Finance</option>
+                                                        <option value="Healthcare" className="text-dark">Healthcare</option>
+                                                        <option value="Education" className="text-dark">Education</option>
+                                                        <option value="E-commerce" className="text-dark">E-commerce</option>
+                                                        <option value="Manufacturing" className="text-dark">Manufacturing</option>
+                                                        <option value="Retail" className="text-dark">Retail</option>
+                                                        <option value="Consulting" className="text-dark">Consulting</option>
+                                                        <option value="Other" className="text-dark">Other</option>
                                                     </select>
                                                 </div>
 
