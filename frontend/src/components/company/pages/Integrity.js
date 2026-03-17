@@ -119,70 +119,70 @@ const Integrity = () => {
                     <h1 className="page-title">Integrity & Compliance</h1>
                     <p className="text-muted">Monitor and review integrity violations and candidate behavior</p>
                 </div>
-                <div className="header-actions">
-                    <button className="btn btn-outline-primary me-2">
-                        <i className="bi bi-download me-2"></i>Export Report
-                    </button>
-                    <button className="btn btn-primary">
-                        <i className="bi bi-gear me-2"></i>Configure Rules
-                    </button>
-                </div>
             </div>
 
             {/* Stats Cards */}
             <div className="row g-4 mb-4">
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-danger bg-opacity-20 text-danger">
-                            <i className="bi bi-shield-exclamation fs-3"></i>
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-danger">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-shield-exclamation fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Total Violations</div>
                             <div className="stat-value">{stats.total}</div>
-                            <div className="stat-trend text-danger">
-                                <i className="bi bi-arrow-up"></i> {stats.critical} critical
+                            <div className="stat-change negative">
+                                <i className="bi bi-arrow-up me-1"></i> {stats.critical} critical
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-warning bg-opacity-20 text-warning">
-                            <i className="bi bi-eye-slash fs-3"></i>
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-warning">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-eye-slash fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Gaze Aversion</div>
                             <div className="stat-value">{stats.gazeAversion}</div>
-                            <div className="stat-trend text-muted">
-                                Eye tracking violations
+                            <div className="stat-change neutral">
+                                <i className="bi bi-activity me-1"></i> Eye tracking
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-info bg-opacity-20 text-info">
-                            <i className="bi bi-window fs-3"></i>
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-info">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-window fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Tab Switching</div>
                             <div className="stat-value">{stats.tabSwitching}</div>
-                            <div className="stat-trend text-muted">
-                                Browser monitoring
+                            <div className="stat-change neutral">
+                                <i className="bi bi-app-indicator me-1"></i> Browser monitor
                             </div>
                         </div>
                     </div>
                 </div>
-                <div className="col-md-3">
-                    <div className="stat-card">
-                        <div className="stat-icon bg-primary bg-opacity-20 text-primary">
-                            <i className="bi bi-person-x fs-3"></i>
+                <div className="col-xl-3 col-md-6">
+                    <div className="stat-card stat-card-primary">
+                        <div className="stat-icon-wrapper">
+                            <div className="stat-icon">
+                                <i className="bi bi-person-x fs-3"></i>
+                            </div>
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Presence Anomaly</div>
                             <div className="stat-value">{stats.presenceAnomaly}</div>
-                            <div className="stat-trend text-muted">
-                                Face detection alerts
+                            <div className="stat-change neutral">
+                                <i className="bi bi-person-bounding-box me-1"></i> Face detection
                             </div>
                         </div>
                     </div>

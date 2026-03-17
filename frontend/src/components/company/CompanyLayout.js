@@ -121,7 +121,7 @@ const CompanyLayout = () => {
             title: 'Integrity & Compliance',
             icon: 'bi-shield-check',
             path: '/company/integrity',
-            badge: 12
+            badge: null
         },
         {
             title: 'Reports & Analytics',
@@ -145,7 +145,7 @@ const CompanyLayout = () => {
             title: 'Support & Feedback',
             icon: 'bi-headset',
             path: '/company/support',
-            badge: 3
+            badge: null
         }
     ];
 
