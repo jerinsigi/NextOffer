@@ -352,7 +352,7 @@ const CompanyLayout = () => {
                 <footer className="dashboard-footer">
                     <div className="footer-content">
                         <div className="footer-left">
-                            <span>© 2025 NextOffer. All rights reserved.</span>
+                            <span>© 2026 NextOffer. All rights reserved.</span>
                         </div>
                         <div className="footer-right">
                             <Link to="/company/documentation" className="footer-link">Documentation</Link>
