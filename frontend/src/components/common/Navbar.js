@@ -245,14 +245,6 @@ const Navbar = ({ scrolled, activeSection, onScrollToTop }) => {
             >
                 <div className="mobile-nav-header">
                     <span className="mobile-nav-title">Menu</span>
-                    <button
-                        type="button"
-                        className="mobile-nav-close"
-                        aria-label="Close menu"
-                        onClick={() => setMobileMenuOpen(false)}
-                    >
-                        ×
-                    </button>
                 </div>
 
                 <div className="mobile-nav-section">
