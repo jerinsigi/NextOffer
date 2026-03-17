@@ -76,24 +76,7 @@ const Reports = () => {
                         <option value="last7days">Last 7 Days</option>
                         <option value="last30days">Last 30 Days</option>
                         <option value="last3months">Last 3 Months</option>
-                        <option value="custom">Custom Range</option>
                     </select>
-                    <div className="dropdown">
-                        <button className="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i className="bi bi-download me-2"></i>Export Report
-                        </button>
-                        <ul className="dropdown-menu dropdown-menu-end">
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('pdf')}>
-                                <i className="bi bi-file-earmark-pdf me-2"></i>Export as PDF
-                            </a></li>
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('excel')}>
-                                <i className="bi bi-file-earmark-excel me-2"></i>Export as Excel
-                            </a></li>
-                            <li><a className="dropdown-item" href="#!" onClick={() => exportReport('csv')}>
-                                <i className="bi bi-file-earmark-text me-2"></i>Export as CSV
-                            </a></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
 
@@ -103,52 +86,36 @@ const Reports = () => {
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-people-fill text-primary"></i>
-                            <span className="metric-change positive">+12.5%</span>
                         </div>
                         <div className="metric-value">{overview.totalCandidates.toLocaleString()}</div>
                         <div className="metric-label">Total Candidates</div>
-                        <div className="metric-bar">
-                            <div className="metric-bar-fill bg-primary" style={{ width: '75%' }}></div>
-                        </div>
                     </div>
                 </div>
                 <div className="col-xl-3 col-md-6">
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-camera-video-fill text-success"></i>
-                            <span className="metric-change positive">+8.3%</span>
                         </div>
                         <div className="metric-value">{overview.interviewsConducted.toLocaleString()}</div>
                         <div className="metric-label">Interviews Conducted</div>
-                        <div className="metric-bar">
-                            <div className="metric-bar-fill bg-success" style={{ width: '82%' }}></div>
-                        </div>
                     </div>
                 </div>
                 <div className="col-xl-3 col-md-6">
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-graph-up-arrow text-info"></i>
-                            <span className="metric-change positive">+5.1%</span>
                         </div>
                         <div className="metric-value">{overview.hiringRate}%</div>
                         <div className="metric-label">Avg Hiring Rate</div>
-                        <div className="metric-bar">
-                            <div className="metric-bar-fill bg-info" style={{ width: '84%' }}></div>
-                        </div>
                     </div>
                 </div>
                 <div className="col-xl-3 col-md-6">
                     <div className="metric-card">
                         <div className="metric-header">
                             <i className="bi bi-shield-fill-exclamation text-danger"></i>
-                            <span className="metric-change negative">-3.2%</span>
                         </div>
                         <div className="metric-value">{overview.integrityViolations}</div>
                         <div className="metric-label">Integrity Violations</div>
-                        <div className="metric-bar">
-                            <div className="metric-bar-fill bg-danger" style={{ width: '15%' }}></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -224,15 +191,6 @@ const Reports = () => {
                             <h5 className="card-title mb-0">Integrity Violations</h5>
                         </div>
                         <div className="p-4">
-                            <div className="donut-chart-container">
-                                <svg className="donut-chart" viewBox="0 0 200 200">
-                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#ef4444" strokeWidth="30" strokeDasharray="267 535" transform="rotate(-90 100 100)" />
-                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#f59e0b" strokeWidth="30" strokeDasharray="188 535" strokeDashoffset="-267" transform="rotate(-90 100 100)" />
-                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#8b5cf6" strokeWidth="30" strokeDasharray="80 535" strokeDashoffset="-455" transform="rotate(-90 100 100)" />
-                                    <text x="100" y="95" textAnchor="middle" fill="#f8fafc" fontSize="24" fontWeight="bold">{overview?.integrityViolations || 0}</text>
-                                    <text x="100" y="115" textAnchor="middle" fill="#94a3b8" fontSize="12">Total</text>
-                                </svg>
-                            </div>
                             <div className="violation-list">
                                 {integrityMetrics.map((item, index) => (
                                     <div key={index} className="violation-item">
