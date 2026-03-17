@@ -77,6 +77,17 @@ exports.applyForJob = async (req, res) => {
                 `Your application for ${job?.job_title || 'a job'} at ${companyName} has been submitted successfully.`,
                 '/user/applications'
             );
+
+            // Send notification to company
+            if (job?.Fk_company_id?.email) {
+                await createNotification(
+                    job.Fk_company_id.email,
+                    'job',
+                    'New Job Application',
+                    `${candidate.full_name} has applied for ${job.job_title}.`,
+                    `/company/applications/${jobId}`
+                );
+            }
         } catch (notifErr) {
             console.error('Notification error (applyForJob):', notifErr.message);
         }

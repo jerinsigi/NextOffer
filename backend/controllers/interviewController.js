@@ -601,6 +601,17 @@ exports.completeInterview = async (req, res) => {
                         `Your interview for ${job?.job_title || 'a position'} at ${companyName} is complete. Check your results now!`,
                         '/user/results'
                     );
+
+                    // Send notification to company
+                    if (job?.Fk_company_id?.email) {
+                        await createNotification(
+                            job.Fk_company_id.email,
+                            'interview',
+                            'Interview Completed',
+                            `${candidateForNotif.full_name} has just completed their interview for ${job?.job_title || 'a position'}. Review their final report.`,
+                            `/company/interviews?id=${sessionId}`
+                        );
+                    }
                 }
             } catch (notifErr) {
                 console.error('Notification error (completeInterview):', notifErr.message);
@@ -696,12 +707,12 @@ exports.completeInterview = async (req, res) => {
             await finalReport.save();
             console.log('✅ Final Report created/updated');
 
-            // Notify Admins if there are integrity violations
+            // Notify Admins and Company if there are integrity violations
             if (integrityScore < 100) {
                 try {
                     const Login = require('../models/Login');
                     const candidateInfo = await Candidate.findById(session.fk_candidate_id);
-                    const jobInfo = await JobDescription.findById(session.fk_job_id);
+                    const jobInfo = await JobDescription.findById(session.fk_job_id).populate('Fk_company_id');
 
                     if (candidateInfo && jobInfo) {
                         const admins = await Login.find({ usertype: 'admin' });
@@ -714,9 +725,20 @@ exports.completeInterview = async (req, res) => {
                                 '/admin/reports'
                             );
                         }
+                        
+                        // Notify the company
+                        if (jobInfo.Fk_company_id && jobInfo.Fk_company_id.email) {
+                            await createNotification(
+                                jobInfo.Fk_company_id.email,
+                                'integrity',
+                                'Integrity Alert 🚨',
+                                `The interview for ${candidateInfo.full_name} returned an integrity score of ${integrityScore}%. Anomalies were detected and logged.`,
+                                '/company/integrity'
+                            );
+                        }
                     }
                 } catch (notifErr) {
-                    console.error('Admin notification error (integrity violations):', notifErr.message);
+                    console.error('Notification error (integrity violations):', notifErr.message);
                 }
             }
 

@@ -6,7 +6,7 @@ import logo from '../../logo.svg';
 
 const CompanyLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [notificationCount] = useState(5);
+    const [notifications, setNotifications] = useState([]);
     const [companyName, setCompanyName] = useState('Company Admin');
     const [companyLogo, setCompanyLogo] = useState('');
     const location = useLocation();
@@ -46,6 +46,54 @@ const CompanyLayout = () => {
         if (logoPath.startsWith('http')) return logoPath; // Absolute URL
         return `http://localhost:5000${logoPath}`; // Relative backend path
     };
+
+    const fetchNotifications = React.useCallback(async () => {
+        const userStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+        if (!userStr) return;
+        const user = JSON.parse(userStr);
+        try {
+            const res = await fetch(`http://localhost:5000/api/notifications/${encodeURIComponent(user.email)}`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotifications(data);
+            }
+        } catch (err) {
+            console.error('Error fetching notifications:', err);
+        }
+    }, []);
+
+    const formatTimeAgo = (dateStr) => {
+        const diff = (Date.now() - new Date(dateStr)) / 1000;
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
+
+    const handleMarkRead = async (id) => {
+        try {
+            await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PATCH' });
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+        } catch (err) {
+            console.error('Error marking notification read:', err);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchNotifications();
+
+        // Poll every 30 seconds
+        const interval = setInterval(fetchNotifications, 30000);
+
+        window.addEventListener('notificationsUpdated', fetchNotifications);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('notificationsUpdated', fetchNotifications);
+        };
+    }, [fetchNotifications]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     const menuItems = [
         {
@@ -195,51 +243,66 @@ const CompanyLayout = () => {
                                 data-bs-toggle="dropdown"
                             >
                                 <i className="bi bi-bell fs-5"></i>
-                                {notificationCount > 0 && (
+                                {unreadCount > 0 && (
                                     <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                        {notificationCount}
+                                        {unreadCount > 9 ? '9+' : unreadCount}
                                     </span>
                                 )}
                             </button>
-                            <ul className="dropdown-menu dropdown-menu-end notification-dropdown">
-                                <li className="dropdown-header">
+                            <ul className="dropdown-menu dropdown-menu-end notification-dropdown" style={{ minWidth: '340px' }}>
+                                <li className="dropdown-header d-flex justify-content-between align-items-center px-3 py-2">
                                     <h6 className="mb-0">Notifications</h6>
+                                    {unreadCount > 0 && (
+                                        <span className="badge bg-danger rounded-pill">{unreadCount} unread</span>
+                                    )}
                                 </li>
                                 <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <a className="dropdown-item" href="#!">
-                                        <div className="d-flex align-items-start">
-                                            <i className="bi bi-shield-exclamation text-danger me-3 fs-5"></i>
-                                            <div>
-                                                <p className="mb-1 small"><strong>Integrity Violation Detected</strong></p>
-                                                <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>
-                                                    Candidate #4523 flagged for tab switching
-                                                </p>
-                                                <small className="text-muted">5 min ago</small>
+
+                                {notifications.length === 0 ? (
+                                    <li className="px-3 py-3 text-center text-muted small">
+                                        <i className="bi bi-bell-slash d-block fs-4 mb-1"></i>
+                                        No notifications yet
+                                    </li>
+                                ) : (
+                                    notifications.slice(0, 5).map(notif => (
+                                        <li key={notif._id}>
+                                            <div
+                                                className={`dropdown-item d-flex align-items-start gap-2 py-2 ${!notif.read ? 'bg-primary bg-opacity-10' : ''}`}
+                                                style={{ cursor: 'pointer', borderLeft: !notif.read ? '3px solid #6366f1' : '3px solid transparent' }}
+                                                onClick={() => {
+                                                    if (!notif.read) handleMarkRead(notif._id);
+                                                    if (notif.link) navigate(notif.link);
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '1.2rem' }}>
+                                                    {notif.type === 'interview' ? '📅' :
+                                                        notif.type === 'integrity' ? '🛡️' :
+                                                            notif.type === 'company' ? '🏢' : '🔔'}
+                                                </span>
+                                                <div style={{ flex: 1, minWidth: 0 }}>
+                                                    <p className="mb-0 small fw-semibold text-truncate">{notif.title}</p>
+                                                    <p className="mb-0 text-muted" style={{ fontSize: '0.72rem' }}>
+                                                        {notif.message.length > 65 ? notif.message.substring(0, 65) + '…' : notif.message}
+                                                    </p>
+                                                    <small className="text-muted">{formatTimeAgo(notif.createdAt)}</small>
+                                                </div>
+                                                {!notif.read && (
+                                                    <span className="badge bg-primary rounded-pill mt-1" style={{ fontSize: '0.6rem' }}>New</span>
+                                                )}
                                             </div>
-                                        </div>
-                                    </a>
-                                </li>
+                                        </li>
+                                    ))
+                                )}
+
                                 <li><hr className="dropdown-divider" /></li>
                                 <li>
-                                    <a className="dropdown-item" href="#!">
-                                        <div className="d-flex align-items-start">
-                                            <i className="bi bi-building text-primary me-3 fs-5"></i>
-                                            <div>
-                                                <p className="mb-1 small"><strong>New Company Registration</strong></p>
-                                                <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>
-                                                    TechCorp Inc. pending approval
-                                                </p>
-                                                <small className="text-muted">1 hour ago</small>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li>
-                                    <a className="dropdown-item text-center text-primary" href="#!">
+                                    <button
+                                        className="dropdown-item text-center text-primary fw-semibold"
+                                        onClick={() => navigate('/company/notifications')}
+                                    >
+                                        <i className="bi bi-bell me-1"></i>
                                         View All Notifications
-                                    </a>
+                                    </button>
                                 </li>
                             </ul>
                         </div>

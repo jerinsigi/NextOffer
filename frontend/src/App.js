@@ -56,6 +56,7 @@ import CompanyJobDescriptions from './components/company/pages/JobDescriptions';
 import CompanyInterviewMonitoring from './components/company/pages/InterviewMonitoring';
 
 import CompanyDocumentation from './components/company/pages/Documentation';
+import CompanyNotifications from './components/company/pages/Notifications';
 // import CompanyComingSoon from './components/company/pages/ComingSoon';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import MaintenanceGuard from './components/common/MaintenanceGuard';
@@ -131,6 +132,7 @@ function App() {
               <Route path="reports" element={<CompanyReports />} />
               <Route path="support" element={<CompanySupport />} />
               <Route path="documentation" element={<CompanyDocumentation />} />
+              <Route path="notifications" element={<CompanyNotifications />} />
               <Route path="settings" element={<CompanySettings />} />
             </Route>
           </Route>

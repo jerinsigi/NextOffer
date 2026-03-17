@@ -394,7 +394,6 @@ exports.updateCompanyProfile = async (req, res) => {
 exports.getCompanyDashboardStats = async (req, res) => {
     try {
         const { email } = req.body;
-        console.log('Fetching dashboard stats for:', email);
 
         if (!email) {
             return res.status(400).json({ message: 'Email is required' });
