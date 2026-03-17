@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import Loader from '../../common/Loader';
 
@@ -224,43 +225,21 @@ const Dashboard = () => {
 
                 {/* System Health & Quick Stats */}
                 <div className="col-xl-4">
-                    <div className="dashboard-card mb-4">
-                        <div className="card-header-custom">
-                            <h5 className="card-title mb-0">Platform Status</h5>
-                        </div>
-                        <div className="p-3">
-                            <div className="health-item mb-3">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Service Status</span>
-                                    <span className="text-success fw-bold">Operational</span>
-                                </div>
-                                <div className="progress" style={{ height: '6px' }}>
-                                    <div className="progress-bar bg-success" style={{ width: '100%' }}></div>
-                                </div>
-                            </div>
-                            <div className="health-item mb-3">
-                                <div className="d-flex justify-content-between mb-2">
-                                    <span className="text-muted">Subscription</span>
-                                    <span className="text-primary fw-bold">Active</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <div className="dashboard-card">
                         <div className="card-header-custom">
                             <h5 className="card-title mb-0">Quick Actions</h5>
                         </div>
                         <div className="p-3">
-                            <button className="btn btn-outline-primary w-100 mb-2">
+                            <Link to="/company/jobs" className="btn btn-outline-primary w-100 mb-2">
                                 <i className="bi bi-plus-circle me-2"></i>Post New Job
-                            </button>
-                            <button className="btn btn-outline-primary w-100 mb-2">
+                            </Link>
+                            <Link to="/company/interviews" className="btn btn-outline-primary w-100 mb-2">
                                 <i className="bi bi-file-earmark-text me-2"></i>Review Candidates
-                            </button>
-                            <button className="btn btn-outline-primary w-100">
+                            </Link>
+                            <Link to="/company/integrity" className="btn btn-outline-primary w-100">
                                 <i className="bi bi-shield-check me-2"></i>Check Integrity Logs
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
