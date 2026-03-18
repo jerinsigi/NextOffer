@@ -49,12 +49,12 @@ const Reports = () => {
     // ── Utilities ─────────────────────────────────────────────────────────────
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
     };
 
     const formatMonth = (monthStr) => {
         const [y, m] = monthStr.split('-');
-        return new Date(y, m - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        return new Date(y, m - 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
     };
 
     const STATUS_COLORS = {
@@ -512,3 +512,4 @@ const Reports = () => {
 };
 
 export default Reports;
+

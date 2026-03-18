@@ -522,7 +522,7 @@ exports.getCompanyIntegrityStats = async (req, res) => {
             const position = session.fk_job_id ? session.fk_job_id.job_title : 'Unknown';
             
             // Format time properly (e.g. 2024-12-05 03:25:18 PM)
-            const timestamp = log.logged_at ? new Date(log.logged_at).toLocaleString('en-US') : new Date().toLocaleString('en-US');
+            const timestamp = log.logged_at ? new Date(log.logged_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
 
             // Map standard log counts to "violationsData" schema
             if (log.tab_switch_count > 0) {
@@ -629,3 +629,4 @@ exports.getCompanyIntegrityStats = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching integrity stats', error: err.message });
     }
 };
+

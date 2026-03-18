@@ -184,7 +184,7 @@ const ResultsFeedback = () => {
                                     </div>
                                     <div className="rf-meta-row">
                                         <span><i className="bi bi-calendar3 me-1"></i>
-                                            {result.date ? new Date(result.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '–'}
+                                            {result.date ? new Date(result.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '–'}
                                         </span>
                                         <span className="rf-dot">•</span>
                                         <span><i className="bi bi-clock me-1"></i>{result.duration > 0 ? `${result.duration} min` : 'Duration N/A'}</span>
@@ -256,7 +256,7 @@ const ResultsFeedback = () => {
                                 </h2>
                                 <p className="rf-modal-subtitle">
                                     {selectedResult.jobTitle} &nbsp;·&nbsp; {selectedResult.company}
-                                    &nbsp;·&nbsp;{selectedResult.date && new Date(selectedResult.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    &nbsp;·&nbsp;{selectedResult.date && new Date(selectedResult.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
                             </div>
                             <button className="rf-close-btn" onClick={() => setSelectedResult(null)}>
@@ -413,3 +413,4 @@ const ResultsFeedback = () => {
 };
 
 export default ResultsFeedback;
+

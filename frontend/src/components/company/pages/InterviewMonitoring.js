@@ -549,7 +549,7 @@ const InterviewMonitoring = () => {
                                 </h2>
                                 <p className="rf-modal-subtitle">
                                     {selectedReport.jobTitle} &nbsp;·&nbsp; {selectedReport.candidateName || selectedApplication?.Fk_candidate_id?.full_name}
-                                    &nbsp;·&nbsp;{selectedReport.date && new Date(selectedReport.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    &nbsp;·&nbsp;{selectedReport.date && new Date(selectedReport.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
                                 </p>
                             </div>
                             <button className="rf-close-btn" onClick={() => setSelectedReport(null)}>
@@ -747,3 +747,4 @@ const InterviewMonitoring = () => {
 };
 
 export default InterviewMonitoring;
+

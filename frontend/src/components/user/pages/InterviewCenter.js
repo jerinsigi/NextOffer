@@ -516,7 +516,7 @@ const InterviewCenter = () => {
                                 setTimeout(() => {
                                     SpeechRecognition.startListening({
                                         continuous: true,
-                                        language: 'en-US'
+                                        language: 'en-IN'
                                     });
                                 }, 500);
                             }
@@ -812,7 +812,7 @@ const InterviewCenter = () => {
         try {
             SpeechRecognitionAPI.startListening({
                 continuous: true,
-                language: 'en-US'
+                language: 'en-IN'
             });
         } catch (err) {
             console.error('❌ Error starting speech recognition:', err);
@@ -1669,3 +1669,4 @@ const InterviewCenter = () => {
 };
 
 export default InterviewCenter;
+

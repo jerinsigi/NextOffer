@@ -67,7 +67,7 @@ exports.scheduleInterview = async (req, res) => {
 
                 // In-app notification
                 try {
-                    const interviewDate = new Date(startedAt).toLocaleString('en-US', {
+                    const interviewDate = new Date(startedAt).toLocaleString('en-IN', {
                         dateStyle: 'medium', timeStyle: 'short'
                     });
                     await createNotification(
@@ -150,7 +150,7 @@ exports.updateSchedule = async (req, res) => {
 
         // In-app notification
         try {
-            const interviewDate = new Date(startedAt).toLocaleString('en-US', {
+            const interviewDate = new Date(startedAt).toLocaleString('en-IN', {
                 dateStyle: 'medium', timeStyle: 'short'
             });
             await createNotification(
@@ -875,3 +875,4 @@ exports.getInterviewReport = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
+

@@ -108,7 +108,7 @@ const MyApplications = () => {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     return (
@@ -384,3 +384,4 @@ const MyApplications = () => {
 };
 
 export default MyApplications;
+
