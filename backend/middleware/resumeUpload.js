@@ -19,16 +19,16 @@ const storage = multer.diskStorage({
 // Check file type for resumes (PDF, DOC, DOCX)
 function checkResumeFileType(file, cb) {
     // Allowed extensions
-    const filetypes = /pdf|doc|docx/;
+    const filetypes = /pdf/;
     // Check extension
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     // Check mime type
-    const mimetype = /application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document/.test(file.mimetype);
+    const mimetype = /application\/pdf/.test(file.mimetype);
 
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb('Error: Only PDF and Word documents are allowed!');
+        cb('Error: Only PDF documents are allowed!');
     }
 }
 
