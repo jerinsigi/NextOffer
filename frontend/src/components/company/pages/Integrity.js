@@ -99,15 +99,12 @@ const Integrity = () => {
     };
 
     const handleDismissViolation = (id) => {
-        console.log('Dismissing violation:', id);
     };
 
     const handleConfirmViolation = (id) => {
-        console.log('Confirming violation:', id);
     };
 
     const handleViewEvidence = (evidence) => {
-        console.log('Viewing evidence:', evidence);
     };
 
     if (loading) return <Loader inline />;

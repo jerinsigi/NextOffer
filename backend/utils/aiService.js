@@ -10,7 +10,6 @@ const extractTextFromPDF = async (pdfPath) => {
     try {
         // Check if file is actually a PDF
         if (!pdfPath.toLowerCase().endsWith('.pdf')) {
-            console.warn('⚠️ Resume is not a PDF file (found:', pdfPath, '). Skipping text extraction.');
             return null;
         }
 
@@ -26,8 +25,6 @@ const extractTextFromPDF = async (pdfPath) => {
 
         const absolutePath = path.resolve(__dirname, '..', relativePath);
 
-        console.log(`🔍 Attempting to read PDF from: ${absolutePath}`);
-
         if (!fs.existsSync(absolutePath)) {
             console.error('❌ PDF file not found at:', absolutePath);
             return null;
@@ -38,10 +35,8 @@ const extractTextFromPDF = async (pdfPath) => {
         const data = await parser.getText();
 
         if (data.text && data.text.length > 50) {
-            console.log(`✅ PDF Text Extracted Successfully (${data.text.length} chars)`);
             return data.text;
         } else {
-            console.warn('⚠️ PDF extracted but text seems empty or too short.');
             return null;
         }
 
@@ -67,7 +62,6 @@ const generateResumeAwareQuestions = async (resumeText, jobTitle, jobDesc, skill
     const hasResume = resumeText && resumeText.trim().length > 100;
 
     if (!process.env.GEMINI_API_KEY) {
-        console.warn('GEMINI_API_KEY not set — using mock questions.');
         return getMockQuestions(totalCount);
     }
 
@@ -119,13 +113,11 @@ Return ONLY a valid JSON array (no markdown, no extra text) of exactly ${totalCo
 `;
 
     try {
-        console.log(`=== AI Resume-Aware Question Generation (${totalCount} questions) ===`);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(jsonStr);
-        console.log(`✅ Generated ${parsed.length} questions (${parsed.filter(q => q.question_source === 'resume').length} resume-based)`);
         return parsed;
     } catch (err) {
         console.error('Error in generateResumeAwareQuestions:', err.message);
@@ -163,12 +155,8 @@ const getMockQuestions = (count = 5) => {
  */
 const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'General', difficultyLevel = 'Medium') => {
     try {
-        console.log('=== AI Response Scoring ===');
-        console.log('Question Topic:', expectedTopic);
-        console.log('Difficulty:', difficultyLevel);
 
         if (!process.env.GEMINI_API_KEY) {
-            console.warn('GEMINI_API_KEY not found. Using mock scoring.');
             return {
                 ai_score: 75,
                 confidence_score: 80,
@@ -209,7 +197,6 @@ const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'Gen
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const scoringResult = JSON.parse(jsonStr);
 
-        console.log('AI Score:', scoringResult.ai_score);
         return scoringResult;
 
     } catch (error) {
@@ -223,5 +210,58 @@ const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'Gen
     }
 };
 
-module.exports = { extractTextFromPDF, generateInterviewQuestions, generateResumeAwareQuestions, scoreResponse };
+const evaluateResumeMatch = async (resumeText, jobDescription, skills = []) => {
+    try {
+        if (!process.env.GEMINI_API_KEY) {
+            return {
+                resume_score: 75,
+                recommendation: "Candidate shows a good match for the role (mock evaluation)."
+            };
+        }
+
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const skillsStr = skills.length > 0 ? skills.join(', ') : 'general requirements';
+
+        const prompt = `
+            You are an expert technical recruiter evaluating a candidate's resume against a job description.
+            
+            === CANDIDATE RESUME ===
+            ${resumeText ? resumeText.substring(0, 4000) : 'No resume provided.'}
+            
+            === JOB DESCRIPTION ===
+            ${jobDescription ? jobDescription.substring(0, 1500) : 'No description provided.'}
+            
+            === REQUIRED SKILLS ===
+            ${skillsStr}
+            
+            Evaluate the resume on these criteria:
+            1. Relevance - Does the experience match the job description?
+            2. Skills Match - Do they possess the required skills?
+            
+            Provide a response in ONLY valid JSON format with:
+            - "resume_score": A number from 0-100 indicating how well the candidate matches the job.
+            - "recommendation": A brief 1-2 sentence explanation of why they received this score and whether they are recommended for an interview.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Clean markdown code blocks if present
+        const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const scoringResult = JSON.parse(jsonStr);
+
+        return scoringResult;
+
+    } catch (error) {
+        console.error('Error evaluating resume match:', error);
+        // Return neutral score on error
+        return {
+            resume_score: 50,
+            recommendation: "Unable to fully evaluate the resume match automatically. Manual review is required."
+        };
+    }
+};
+
+module.exports = { extractTextFromPDF, generateInterviewQuestions, generateResumeAwareQuestions, scoreResponse, evaluateResumeMatch };
 

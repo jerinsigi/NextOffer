@@ -105,7 +105,6 @@ exports.registerCompany = async (req, res) => {
 
         // Cleanup: Delete the created login if company creation fails
         if (savedLogin && savedLogin._id) {
-            console.log('Rolling back Login creation due to error...');
             await Login.findByIdAndDelete(savedLogin._id);
         }
 
@@ -274,7 +273,6 @@ exports.deleteCompany = async (req, res) => {
 exports.approveCompany = async (req, res) => {
     try {
         const companyId = req.params.id;
-        console.log(`Approving company with ID: ${companyId}`);
 
         // Find the company
         const company = await Company.findById(companyId);
@@ -291,9 +289,6 @@ exports.approveCompany = async (req, res) => {
         if (login) {
             login.status = 'active';
             await login.save();
-            console.log(`Approved company: ${company.company_name}, Login status updated to active`);
-        } else {
-            console.warn(`Login not found for company email: ${company.email}`);
         }
 
         res.json({
@@ -527,7 +522,7 @@ exports.getCompanyIntegrityStats = async (req, res) => {
             const position = session.fk_job_id ? session.fk_job_id.job_title : 'Unknown';
             
             // Format time properly (e.g. 2024-12-05 03:25:18 PM)
-            const timestamp = log.logged_at ? new Date(log.logged_at).toLocaleString('en-US') : new Date().toLocaleString('en-US');
+            const timestamp = log.logged_at ? new Date(log.logged_at).toLocaleString('en-IN') : new Date().toLocaleString('en-IN');
 
             // Map standard log counts to "violationsData" schema
             if (log.tab_switch_count > 0) {
@@ -634,3 +629,4 @@ exports.getCompanyIntegrityStats = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching integrity stats', error: err.message });
     }
 };
+

@@ -121,7 +121,6 @@ exports.getUserDashboardStats = async (req, res) => {
             const totalScore = reports.reduce((acc, report) => acc + (report.final_trust_score || 0), 0);
             averageScore = reports.length > 0 ? Math.round(totalScore / reports.length) : 0;
         } catch (e) {
-            console.log("No Final Report model or error fetching reports", e);
             averageScore = 0;
         }
 

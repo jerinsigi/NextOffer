@@ -77,7 +77,6 @@ const ResetPassword = () => {
             const data = await response.json();
 
             if (response.ok) {
-                console.log('OTP Verified - setting isOtpVerified to true');
                 setIsOtpVerified(true);
                 setMessage({ type: 'success', text: 'Code verified! Please set your new password.' });
             } else {

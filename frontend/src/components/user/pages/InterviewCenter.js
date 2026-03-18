@@ -46,6 +46,7 @@ const InterviewCenter = () => {
     const { interviewId } = useParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [banned, setBanned] = useState(false);
     const [interviewSession, setInterviewSession] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [currentAnswer, setCurrentAnswer] = useState('');
@@ -56,6 +57,7 @@ const InterviewCenter = () => {
     const [useTextInput, setUseTextInput] = useState(false);
     const useTextInputRef = useRef(false);
     const retryCountRef = useRef(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // React Speech Recognition Hook with event handlers
     // React Speech Recognition Hook
@@ -72,10 +74,8 @@ const InterviewCenter = () => {
     // Monitor listening state
     useEffect(() => {
         if (listening) {
-            console.log('🎤 Speech Recognition STARTED');
             setIsListening(true);
         } else {
-            console.log('🛑 Speech Recognition ENDED');
             setIsListening(false);
         }
     }, [listening]);
@@ -97,7 +97,6 @@ const InterviewCenter = () => {
     useEffect(() => {
         // Only update currentAnswer from transcript when NOT in text input mode
         if (!useTextInput && transcript) {
-            console.log('📝 Updating currentAnswer with transcript:', transcript);
             setCurrentAnswer(transcript.trim());
         }
     }, [transcript, useTextInput]);
@@ -109,6 +108,14 @@ const InterviewCenter = () => {
             try {
                 // Fetch Session Data
                 const sessionRes = await fetch(`http://localhost:5000/api/interviews/${interviewId}`);
+                if (sessionRes.status === 403) {
+                    const errData = await sessionRes.json();
+                    if (errData.reason === 'banned') {
+                        setBanned(true);
+                        setLoading(false);
+                        return;
+                    }
+                }
                 if (!sessionRes.ok) throw new Error('Failed to load interview data');
                 const sessionData = await sessionRes.json();
 
@@ -274,7 +281,6 @@ const InterviewCenter = () => {
 
         // Record violation helper
         const recordViolation = (type, message) => {
-            console.warn(`⚠️ INTEGRITY VIOLATION: ${message}`);
             setIntegrityStatus(prev => ({
                 ...prev,
                 tabSwitched: true,
@@ -380,7 +386,6 @@ const InterviewCenter = () => {
         };
 
         const handleWindowFocus = () => {
-            console.log("✅ Window focus regained");
             setIntegrityStatus(prev => ({
                 ...prev,
                 tabSwitched: false
@@ -392,7 +397,6 @@ const InterviewCenter = () => {
             if (document.hidden) {
                 recordViolation('tab_hidden', 'Tab hidden - Switched to another tab or minimized window');
             } else {
-                console.log("✅ Tab visible again");
                 setIntegrityStatus(prev => ({
                     ...prev,
                     tabSwitched: false
@@ -452,7 +456,6 @@ const InterviewCenter = () => {
 
                     // No face detected
                     if (faceCount === 0) {
-                        console.warn("⚠️ Face not detected");
                         setIntegrityStatus(prev => ({
                             ...prev,
                             faceDetected: false
@@ -479,7 +482,6 @@ const InterviewCenter = () => {
                     }
                     // Multiple faces detected
                     else if (faceCount > 1) {
-                        console.warn("⚠️ Multiple faces detected");
                         setIntegrityStatus(prev => ({
                             ...prev,
                             faceDetected: true,
@@ -507,7 +509,6 @@ const InterviewCenter = () => {
                     }
                     // Exactly one face detected (good state)
                     else {
-                        console.log("✅ Face detected properly");
                         setIntegrityStatus(prev => ({
                             ...prev,
                             faceDetected: true,
@@ -516,7 +517,6 @@ const InterviewCenter = () => {
 
                         // Resume interview if it was paused due to face issues
                         if (interviewPausedRef.current && (lastFaceCount === 0 || lastFaceCount > 1)) {
-                            console.log("✅ Face integrity restored - Resuming interview");
                             interviewPausedRef.current = false;
                             setInterviewPaused(false);
                             setPauseReason('');
@@ -526,7 +526,7 @@ const InterviewCenter = () => {
                                 setTimeout(() => {
                                     SpeechRecognition.startListening({
                                         continuous: true,
-                                        language: 'en-US'
+                                        language: 'en-IN'
                                     });
                                 }, 500);
                             }
@@ -566,15 +566,13 @@ const InterviewCenter = () => {
                                 await faceDetectionRef.current.send({ image: videoRef.current });
                             }
                         } catch (err) {
-                            console.warn("Mediapipe processing error (likely unmounted):", err);
+                            // Mediapipe processing error
                         }
                     }
                 };
 
                 // Run face detection every 2 seconds (adjust for performance)
                 detectionIntervalRef.current = setInterval(processFrame, 2000);
-
-                console.log("✅ MediaPipe Face Detection initialized");
 
             } catch (error) {
                 console.error("Error initializing face detection:", error);
@@ -598,7 +596,7 @@ const InterviewCenter = () => {
                 try {
                     fd.close();
                 } catch (e) {
-                    console.warn("Error closing FaceDetection:", e);
+                    // Error closing FaceDetection
                 }
             }
         };
@@ -644,15 +642,12 @@ const InterviewCenter = () => {
     const allChecksPass = Object.values(systemChecks).every(check => check.status === 'success');
 
     const stopCamera = () => {
-        console.log('stopCamera called');
         try {
             // Stop tracks from streamRef (source of truth)
             if (streamRef.current) {
                 const tracks = streamRef.current.getTracks();
-                console.log(`Stopping ${tracks.length} media tracks from streamRef`);
                 tracks.forEach(track => {
                     track.stop();
-                    console.log(`Track stopped: ${track.kind}`);
                 });
                 streamRef.current = null;
             }
@@ -661,8 +656,6 @@ const InterviewCenter = () => {
             if (videoRef.current) {
                 videoRef.current.srcObject = null;
             }
-
-            console.log('Camera stopped successfully');
         } catch (error) {
             console.error('Error stopping camera:', error);
         }
@@ -705,7 +698,6 @@ const InterviewCenter = () => {
                     const blob = new Blob(chunks, { type: 'video/webm' });
                     // Here we would upload the blob to the server.
                     // For now, valid mock behavior is satisfied.
-                    console.log('Recording stopped, blob created:', blob.size);
                 };
 
                 mediaRecorder.start();
@@ -715,7 +707,6 @@ const InterviewCenter = () => {
             }
         } else {
             // Fallback or Audio only
-            console.warn("Video recording not supported, trying audio only if needed or generic setup.");
         }
     };
 
@@ -735,11 +726,15 @@ const InterviewCenter = () => {
         // Stop speech recognition
         SpeechRecognitionAPI.stopListening();
 
+        setIsSubmitting(true);
+
         // Submit current answer to backend (use transcript if in voice mode, currentAnswer if in text mode)
         const answerToSubmit = useTextInput ? currentAnswer : transcript;
         if (answerToSubmit.trim()) {
             await submitResponse(questions[currentQuestion].id, answerToSubmit);
         }
+
+        setIsSubmitting(false);
 
         // Move to next question
         if (currentQuestion < questions.length - 1) {
@@ -766,7 +761,6 @@ const InterviewCenter = () => {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('Response submitted:', result);
                 // Store response data for completion screen
                 setResponses(prev => [...prev, result.response]);
             }
@@ -794,12 +788,9 @@ const InterviewCenter = () => {
             utterance.onend = () => {
                 // Check the ref for the most up-to-date value
                 if (!useTextInputRef.current) {
-                    console.log('Starting speech recognition (Text Input Mode: OFF)');
-
                     // Start speech recognition
                     startSpeechRecognition();
                 } else {
-                    console.log('Skipping speech recognition (Text Input Mode: ON)');
                 }
             };
         }
@@ -813,15 +804,11 @@ const InterviewCenter = () => {
 
     // Speech Recognition using react-speech-recognition library
     const startSpeechRecognition = () => {
-        console.log('Starting speech recognition...');
-
         if (useTextInputRef.current) {
-            console.log('Text input mode is ON, skipping speech recognition');
             return;
         }
 
         if (listening) {
-            console.log('Already listening, skipping duplicate start');
             return;
         }
 
@@ -836,13 +823,11 @@ const InterviewCenter = () => {
         setSpeechError(null);
         resetTranscript();
 
-        console.log('Calling SpeechRecognition.startListening...');
         try {
             SpeechRecognitionAPI.startListening({
                 continuous: true,
-                language: 'en-US'
+                language: 'en-IN'
             });
-            console.log('✅ Speech recognition started successfully');
         } catch (err) {
             console.error('❌ Error starting speech recognition:', err);
             setSpeechError(`Failed to start speech recognition: ${err.message}`);
@@ -854,7 +839,6 @@ const InterviewCenter = () => {
     };
 
     const endInterview = async () => {
-        console.log('🎬 endInterview called');
         stopCamera(); // Stop camera when interview ends
 
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -879,7 +863,6 @@ const InterviewCenter = () => {
         const gazeViolations = 0;
 
         // Call backend completion endpoint
-        console.log('📞 Calling completion endpoint with sessionId:', interviewId);
         try {
             const response = await fetch('http://localhost:5000/api/interviews/complete', {
                 method: 'POST',
@@ -893,13 +876,8 @@ const InterviewCenter = () => {
                 })
             });
 
-            console.log('📡 Completion endpoint response status:', response.status);
-
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Interview marked as complete:', result);
-                console.log('   - Session Status:', result.sessionStatus);
-                console.log('   - Application Status:', result.applicationStatus);
             } else {
                 const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
                 console.error('❌ Failed to mark interview as complete:', response.status, errorData);
@@ -915,7 +893,6 @@ const InterviewCenter = () => {
         if (document.fullscreenElement) {
             document.exitFullscreen().catch(err => console.error('Error exiting fullscreen:', err));
         }
-        console.log('✅ Interview ended, camera stopped, stage set to completed');
     };
 
     const getStatusIcon = (status) => {
@@ -948,6 +925,26 @@ const InterviewCenter = () => {
                     <button className="btn btn-secondary mt-3" onClick={() => window.history.back()}>
                         Go Back
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (banned) {
+        return (
+            <div className="interview-center-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center', maxWidth: '480px', padding: '40px', background: 'rgba(220,53,69,0.08)', border: '1px solid rgba(220,53,69,0.3)', borderRadius: '16px' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '16px' }}>⛔</div>
+                    <h2 style={{ color: '#dc3545', marginBottom: '12px' }}>Interview Access Suspended</h2>
+                    <p style={{ color: '#adb5bd', marginBottom: '24px' }}>
+                        Your access to this interview has been suspended due to <strong style={{ color: '#dc3545' }}>multiple integrity violations</strong> detected during a previous session.
+                    </p>
+                    <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>
+                        If you believe this is a mistake, please contact the company or platform support.
+                    </p>
+                    <a href="/user/applications" className="btn btn-outline-danger mt-3">
+                        <i className="bi bi-arrow-left me-2"></i>Back to My Applications
+                    </a>
                 </div>
             </div>
         );
@@ -1418,8 +1415,14 @@ const InterviewCenter = () => {
                                     <button
                                         className="btn btn-primary"
                                         onClick={nextQuestion}
+                                        disabled={isSubmitting}
                                     >
-                                        {currentQuestion < questions.length - 1 ? (
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Evaluating...
+                                            </>
+                                        ) : currentQuestion < questions.length - 1 ? (
                                             <>
                                                 <i className="bi bi-arrow-right me-2"></i>
                                                 Next Question
@@ -1706,3 +1709,4 @@ const InterviewCenter = () => {
 };
 
 export default InterviewCenter;
+

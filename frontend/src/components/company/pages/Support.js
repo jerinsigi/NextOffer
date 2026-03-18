@@ -196,7 +196,6 @@ const Support = () => {
 
     const handleTicketSubmit = (e) => {
         e.preventDefault();
-        console.log('Support ticket submitted:', ticketForm);
         // Reset form
         setTicketForm({
             subject: '',

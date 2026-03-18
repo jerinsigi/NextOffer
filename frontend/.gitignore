@@ -3,7 +3,6 @@ node_modules
 
 package-lock.json
 README.md
-ADMIN_README.md
 
 # Environment variables
 .env

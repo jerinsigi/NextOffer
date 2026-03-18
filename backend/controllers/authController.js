@@ -4,18 +4,62 @@ const Company = require('../models/Company');
 const bcrypt = require('bcrypt');
 const { sendOTP } = require('../utils/emailService');
 const { auth: firebaseAuth } = require('../config/firebase');
+const https = require('https');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+// Helper: Download a Google profile photo and save it to the upload folder.
+// Returns the local relative path (e.g. '/upload/profileImage-12345.jpg') or '' on failure.
+const downloadGooglePhoto = (photoURL) => {
+    return new Promise((resolve) => {
+        if (!photoURL) return resolve('');
+        try {
+            const uploadDir = path.join(__dirname, '..', 'upload');
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+            const ext = '.jpg';
+            const filename = `profileImage-${Date.now()}${ext}`;
+            const filePath = path.join(uploadDir, filename);
+            const fileStream = fs.createWriteStream(filePath);
+
+            const protocol = photoURL.startsWith('https') ? https : http;
+            const request = protocol.get(photoURL, (response) => {
+                // Follow redirects (Google photos often redirect)
+                if (response.statusCode === 301 || response.statusCode === 302) {
+                    fileStream.close();
+                    fs.unlink(filePath, () => {});
+                    return downloadGooglePhoto(response.headers.location).then(resolve);
+                }
+                if (response.statusCode !== 200) {
+                    fileStream.close();
+                    fs.unlink(filePath, () => {});
+                    return resolve('');
+                }
+                response.pipe(fileStream);
+                fileStream.on('finish', () => {
+                    fileStream.close();
+                    resolve(`/upload/${filename}`);
+                });
+            });
+            request.on('error', () => {
+                fileStream.close();
+                fs.unlink(filePath, () => {});
+                resolve('');
+            });
+        } catch (e) {
+            resolve('');
+        }
+    });
+};
 
 // Login authentication
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        console.log('=== LOGIN ATTEMPT ===');
-        console.log('Username/Email provided:', username);
-
         // Validate input
         if (!username || !password) {
-            console.log('Missing username or password');
             return res.status(400).json({ message: 'Please provide username and password' });
         }
 
@@ -25,39 +69,23 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            console.log('User not found in database');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        console.log('User found:', {
-            username: user.username,
-            email: user.email,
-            usertype: user.usertype,
-            status: user.status
-        });
-
         // Check if account is active
         if (user.status === 'inactive') {
-            console.log('Account is inactive - blocking login');
             return res.status(403).json({
                 message: 'Your account is pending admin approval. Please wait for activation.',
                 status: 'inactive'
             });
         }
 
-        console.log('Account status check passed');
-
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        console.log('Password valid:', isPasswordValid);
-
         if (!isPasswordValid) {
-            console.log('Invalid password');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-
-        console.log('Login successful!');
 
         // Successful login - return user info (excluding password)
         res.json({
@@ -456,6 +484,21 @@ exports.googleLogin = async (req, res) => {
             });
         }
 
+        // Download and save Google profile photo if candidate doesn't have a local image yet
+        if (photoURL && user.usertype === 'candidate') {
+            const candidate = await Candidate.findOne({ email });
+            if (candidate) {
+                const needsPhoto = !candidate.image_url || candidate.image_url.startsWith('http');
+                if (needsPhoto) {
+                    const localPath = await downloadGooglePhoto(photoURL);
+                    if (localPath) {
+                        candidate.image_url = localPath;
+                        await candidate.save();
+                    }
+                }
+            }
+        }
+
         // Successful login
         res.json({
             message: 'Login successful',
@@ -532,13 +575,16 @@ exports.googleRegister = async (req, res) => {
 
         // Create specific user record based on type
         if (usertype === 'candidate') {
+            // Download Google profile photo to local upload folder
+            const localPhotoPath = await downloadGooglePhoto(photoURL);
+
             const newCandidate = new Candidate({
                 full_name: displayName,
                 email,
                 phone: '', // Optional for Google sign-up
                 education: '',
                 experience_years: 0,
-                image_url: photoURL || ''
+                image_url: localPhotoPath || ''
             });
             await newCandidate.save();
         }

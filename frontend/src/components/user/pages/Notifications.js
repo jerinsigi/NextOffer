@@ -40,7 +40,7 @@ const Notifications = () => {
         if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
         if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
-        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        return new Date(dateStr).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
     const filterOptions = [
@@ -287,3 +287,4 @@ const Notifications = () => {
 };
 
 export default Notifications;
+

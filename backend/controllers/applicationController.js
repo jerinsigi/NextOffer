@@ -2,7 +2,9 @@ const Application = require('../models/Application');
 const Job_Description = require('../models/Job_Description');
 const Candidate = require('../models/Candidate');
 const Resume = require('../models/Resume');
+const Final_Report = require('../models/Final_Report');
 const { createNotification } = require('./notificationController');
+const { extractTextFromPDF, evaluateResumeMatch } = require('../utils/aiService');
 
 // Apply for a job
 exports.applyForJob = async (req, res) => {
@@ -65,6 +67,41 @@ exports.applyForJob = async (req, res) => {
 
         // Increment application count in Job Description
         await Job_Description.findByIdAndUpdate(jobId, { $inc: { applications_count: 1 } });
+
+        // Trigger AI Resume Evaluation Asynchronously
+        (async () => {
+            try {
+                // Fetch Job Description to pass to Gemini
+                const job = await Job_Description.findById(jobId);
+                if (!job) return;
+
+                let actualResumePath = null;
+                if (resumeId) {
+                    const existingR = await Resume.findById(resumeId);
+                    if (existingR) actualResumePath = existingR.resume_path;
+                } else {
+                    actualResumePath = resume_path;
+                }
+
+                if (actualResumePath) {
+                    const resumeText = await extractTextFromPDF(actualResumePath);
+                    if (resumeText) {
+                        const evalResult = await evaluateResumeMatch(resumeText, job.description || job.job_title, job.skills);
+                        
+                        // Save to Final Report
+                        const report = new Final_Report({
+                            Fk_candidate_id: candidate._id,
+                            Fk_job_id: jobId,
+                            resume_score: evalResult.resume_score,
+                            recommendation: evalResult.recommendation
+                        });
+                        await report.save();
+                    }
+                }
+            } catch (evalError) {
+                console.error("AI Resume Evaluation failed during application:", evalError);
+            }
+        })();
 
         // Send notification to candidate
         try {
@@ -232,13 +269,11 @@ exports.shortlistCandidates = async (req, res) => {
                 .populate('Fk_job_id', 'job_title Fk_company_id');
 
             if (!application) {
-                console.warn(`Application ${appId} not found, skipping...`);
                 continue;
             }
 
             // Skip if already shortlisted
             if (application.status === 'Shortlisted') {
-                console.log(`Application ${appId} already shortlisted, skipping...`);
                 continue;
             }
 
