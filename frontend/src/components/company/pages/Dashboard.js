@@ -177,7 +177,6 @@ const Dashboard = () => {
                                         <th>Candidate</th>
                                         <th>Position</th>
                                         <th>Status</th>
-                                        <th>Score</th>
                                         <th>Time</th>
                                     </tr>
                                 </thead>
@@ -199,12 +198,6 @@ const Dashboard = () => {
                                                         session.status === 'ongoing' ? 'bg-warning' : 'bg-secondary'
                                                         }`}>
                                                         {session.status}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span className={`${session.integrity_status === 'Flagged' ? 'text-danger fw-bold' : 'text-success fw-bold'
-                                                        }`}>
-                                                        {session.score}
                                                     </span>
                                                 </td>
                                                 <td>{formatTime(session.time)}</td>

@@ -15,6 +15,11 @@ const InterviewMonitoring = () => {
     const [showFinalizeModal, setShowFinalizeModal] = useState(false);
     const [hireCount, setHireCount] = useState(1);
     const [finalizeLoading, setFinalizeLoading] = useState(false);
+    const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [scheduleStartDate, setScheduleStartDate] = useState('');
+    const [scheduleEndDate, setScheduleEndDate] = useState('');
+    const [scheduleLoading, setScheduleLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
 
     useEffect(() => {
         fetchJobs();
@@ -128,16 +133,13 @@ const InterviewMonitoring = () => {
         if (!window.confirm("Are you sure you want to reject this candidate? They will be notified via email.")) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/applications/job/${applicationId}/reject`, {
+            const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/reject`, {
                 method: 'POST'
             });
 
             if (response.ok) {
                 alert("Candidate has been rejected.");
-                if (selectedJob) {
-                    fetchApplications(selectedJob._id);
-                }
-
+                if (selectedJob) fetchApplications(selectedJob._id);
                 if (selectedApplication && selectedApplication._id === applicationId) {
                     setSelectedApplication(prev => ({ ...prev, status: 'Rejected' }));
                 }
@@ -148,6 +150,71 @@ const InterviewMonitoring = () => {
         } catch (error) {
             console.error("Error rejecting candidate:", error);
             alert("An error occurred while rejecting the candidate.");
+        }
+    };
+
+    const handleShortlistCandidate = async (applicationId) => {
+        setActionLoading(true);
+        try {
+            const response = await fetch('http://localhost:5000/api/applications/shortlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ applicationIds: [applicationId] })
+            });
+            if (response.ok) {
+                alert('Candidate shortlisted successfully! They will be notified via email.');
+                setSelectedApplication(prev => ({ ...prev, status: 'Shortlisted' }));
+                if (selectedJob) fetchApplications(selectedJob._id);
+            } else {
+                const err = await response.json();
+                alert(`Failed to shortlist: ${err.message}`);
+            }
+        } catch (error) {
+            console.error('Shortlist error:', error);
+            alert('Error shortlisting candidate.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleScheduleInterview = async () => {
+        if (!scheduleStartDate || !scheduleEndDate) {
+            alert('Please set both start and end date/time.');
+            return;
+        }
+        if (new Date(scheduleEndDate) <= new Date(scheduleStartDate)) {
+            alert('End date/time must be after start date/time.');
+            return;
+        }
+        setScheduleLoading(true);
+        try {
+            const candidateId = selectedApplication.Fk_candidate_id._id;
+            const response = await fetch('http://localhost:5000/api/interviews/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    candidateIds: [candidateId],
+                    jobId: selectedJob._id,
+                    startedAt: scheduleStartDate,
+                    endedAt: scheduleEndDate
+                })
+            });
+            if (response.ok) {
+                alert('Interview scheduled successfully! The candidate will be notified via email.');
+                setShowScheduleModal(false);
+                setScheduleStartDate('');
+                setScheduleEndDate('');
+                setSelectedApplication(prev => ({ ...prev, status: 'Scheduled' }));
+                if (selectedJob) fetchApplications(selectedJob._id);
+            } else {
+                const err = await response.json();
+                alert(`Failed to schedule interview: ${err.message}`);
+            }
+        } catch (error) {
+            console.error('Schedule interview error:', error);
+            alert('Error scheduling interview.');
+        } finally {
+            setScheduleLoading(false);
         }
     };
 
@@ -198,7 +265,8 @@ const InterviewMonitoring = () => {
             'Interviewing': 'status-badge-live',
             'Interviewed': 'status-badge-completed',
             'Rejected': 'status-badge-failed',
-            'Hired': 'status-badge-completed'
+            'Hired': 'status-badge-completed',
+            'Banned': 'status-badge-failed'
         };
         return badges[status] || 'status-badge-scheduled';
     };
@@ -510,12 +578,20 @@ const InterviewMonitoring = () => {
                                         </button>
                                     )}
                                     {selectedApplication.status === 'Applied' && (
-                                        <button className="btn btn-sm btn-primary w-100 mb-2">
-                                            <i className="bi bi-check-circle me-2"></i>Shortlist Candidate
+                                        <button
+                                            className="btn btn-sm btn-primary w-100 mb-2"
+                                            onClick={() => handleShortlistCandidate(selectedApplication._id)}
+                                            disabled={actionLoading}
+                                        >
+                                            <i className="bi bi-check-circle me-2"></i>
+                                            {actionLoading ? 'Processing...' : 'Shortlist Candidate'}
                                         </button>
                                     )}
                                     {['Applied', 'Shortlisted'].includes(selectedApplication.status) && (
-                                        <button className="btn btn-sm btn-info w-100 mb-2 text-white">
+                                        <button
+                                            className="btn btn-sm btn-info w-100 mb-2 text-white"
+                                            onClick={() => setShowScheduleModal(true)}
+                                        >
                                             <i className="bi bi-calendar me-2"></i>Schedule Interview
                                         </button>
                                     )}
@@ -692,6 +768,61 @@ const InterviewMonitoring = () => {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ======== Schedule Interview Modal ======== */}
+            {showScheduleModal && (
+                <div className="rf-modal-overlay" onClick={() => !scheduleLoading && setShowScheduleModal(false)}>
+                    <div className="rf-modal-box" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
+                        <div className="rf-modal-header">
+                            <div>
+                                <h2 className="rf-modal-title">
+                                    <i className="bi bi-calendar-plus me-2"></i>Schedule Interview
+                                </h2>
+                                <p className="rf-modal-subtitle mt-1">
+                                    For: <strong>{selectedApplication?.Fk_candidate_id?.full_name}</strong>
+                                </p>
+                            </div>
+                            <button className="rf-close-btn" disabled={scheduleLoading} onClick={() => setShowScheduleModal(false)}>
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <div className="rf-modal-body p-4">
+                            <div className="mb-3">
+                                <label className="form-label text-light mb-2">Interview Start Date &amp; Time</label>
+                                <input
+                                    type="datetime-local"
+                                    className="form-control-dark w-100"
+                                    value={scheduleStartDate}
+                                    onChange={e => setScheduleStartDate(e.target.value)}
+                                    disabled={scheduleLoading}
+                                    min={new Date().toISOString().slice(0, 16)}
+                                />
+                            </div>
+                            <div className="mb-3">
+                                <label className="form-label text-light mb-2">Interview End Date &amp; Time</label>
+                                <input
+                                    type="datetime-local"
+                                    className="form-control-dark w-100"
+                                    value={scheduleEndDate}
+                                    onChange={e => setScheduleEndDate(e.target.value)}
+                                    disabled={scheduleLoading}
+                                    min={scheduleStartDate || new Date().toISOString().slice(0, 16)}
+                                />
+                            </div>
+                            <div className="alert alert-info bg-info bg-opacity-10 border-info text-info mt-2">
+                                <i className="bi bi-info-circle-fill me-2"></i>
+                                The candidate will receive an email and in-app notification with the scheduled time.
+                            </div>
+                        </div>
+                        <div className="rf-modal-footer d-flex justify-content-end p-3 border-top border-secondary border-opacity-25">
+                            <button className="btn btn-outline-secondary me-2" disabled={scheduleLoading} onClick={() => setShowScheduleModal(false)}>Cancel</button>
+                            <button className="btn btn-info text-white" disabled={scheduleLoading || !scheduleStartDate || !scheduleEndDate} onClick={handleScheduleInterview}>
+                                {scheduleLoading ? <><span className="spinner-border spinner-border-sm me-2"></span>Scheduling...</> : <><i className="bi bi-calendar-check me-2"></i>Confirm Schedule</>}
+                            </button>
                         </div>
                     </div>
                 </div>

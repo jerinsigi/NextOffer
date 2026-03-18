@@ -46,6 +46,7 @@ const InterviewCenter = () => {
     const { interviewId } = useParams();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [banned, setBanned] = useState(false);
     const [interviewSession, setInterviewSession] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [currentAnswer, setCurrentAnswer] = useState('');
@@ -56,6 +57,7 @@ const InterviewCenter = () => {
     const [useTextInput, setUseTextInput] = useState(false);
     const useTextInputRef = useRef(false);
     const retryCountRef = useRef(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // React Speech Recognition Hook with event handlers
     // React Speech Recognition Hook
@@ -106,6 +108,14 @@ const InterviewCenter = () => {
             try {
                 // Fetch Session Data
                 const sessionRes = await fetch(`http://localhost:5000/api/interviews/${interviewId}`);
+                if (sessionRes.status === 403) {
+                    const errData = await sessionRes.json();
+                    if (errData.reason === 'banned') {
+                        setBanned(true);
+                        setLoading(false);
+                        return;
+                    }
+                }
                 if (!sessionRes.ok) throw new Error('Failed to load interview data');
                 const sessionData = await sessionRes.json();
 
@@ -716,11 +726,15 @@ const InterviewCenter = () => {
         // Stop speech recognition
         SpeechRecognitionAPI.stopListening();
 
+        setIsSubmitting(true);
+
         // Submit current answer to backend (use transcript if in voice mode, currentAnswer if in text mode)
         const answerToSubmit = useTextInput ? currentAnswer : transcript;
         if (answerToSubmit.trim()) {
             await submitResponse(questions[currentQuestion].id, answerToSubmit);
         }
+
+        setIsSubmitting(false);
 
         // Move to next question
         if (currentQuestion < questions.length - 1) {
@@ -911,6 +925,26 @@ const InterviewCenter = () => {
                     <button className="btn btn-secondary mt-3" onClick={() => window.history.back()}>
                         Go Back
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (banned) {
+        return (
+            <div className="interview-center-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+                <div style={{ textAlign: 'center', maxWidth: '480px', padding: '40px', background: 'rgba(220,53,69,0.08)', border: '1px solid rgba(220,53,69,0.3)', borderRadius: '16px' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '16px' }}>⛔</div>
+                    <h2 style={{ color: '#dc3545', marginBottom: '12px' }}>Interview Access Suspended</h2>
+                    <p style={{ color: '#adb5bd', marginBottom: '24px' }}>
+                        Your access to this interview has been suspended due to <strong style={{ color: '#dc3545' }}>multiple integrity violations</strong> detected during a previous session.
+                    </p>
+                    <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>
+                        If you believe this is a mistake, please contact the company or platform support.
+                    </p>
+                    <a href="/user/applications" className="btn btn-outline-danger mt-3">
+                        <i className="bi bi-arrow-left me-2"></i>Back to My Applications
+                    </a>
                 </div>
             </div>
         );
@@ -1381,8 +1415,14 @@ const InterviewCenter = () => {
                                     <button
                                         className="btn btn-primary"
                                         onClick={nextQuestion}
+                                        disabled={isSubmitting}
                                     >
-                                        {currentQuestion < questions.length - 1 ? (
+                                        {isSubmitting ? (
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Evaluating...
+                                            </>
+                                        ) : currentQuestion < questions.length - 1 ? (
                                             <>
                                                 <i className="bi bi-arrow-right me-2"></i>
                                                 Next Question

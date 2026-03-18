@@ -188,6 +188,20 @@ exports.getInterviewSession = async (req, res) => {
             return res.status(404).json({ message: 'Interview session not found' });
         }
 
+        // Check if the candidate has been banned (3+ violations on a previous attempt)
+        const ApplicationCheck = require('../models/Application');
+        const applicationCheck = await ApplicationCheck.findOne({
+            Fk_candidate_id: session.fk_candidate_id._id,
+            Fk_job_id: session.fk_job_id._id
+        });
+        if (applicationCheck && applicationCheck.status === 'Banned') {
+            return res.status(403).json({
+                message: 'Access denied',
+                reason: 'banned',
+                details: 'Your access to this interview has been suspended due to multiple integrity violations.'
+            });
+        }
+
         const job = session.fk_job_id;
         const skills = job.skills || [];
 
@@ -566,7 +580,15 @@ exports.completeInterview = async (req, res) => {
         session.actual_completed_at = new Date();
         await session.save();
 
-        // Update Application status to 'Interviewed'
+        // Calculate total violations early so we can use it for application status
+        const tabCount = typeof tab_switch_count === 'number' ? tab_switch_count : 0;
+        const gazeCount = typeof gaze_away_count === 'number' ? gaze_away_count : 0;
+        const faceCount = typeof face_absent_count === 'number' ? face_absent_count : 0;
+        const numViolations = typeof violationsCount === 'number' ? violationsCount : 0;
+        const totalViolations = (tab_switch_count !== undefined) ? (tabCount + gazeCount + faceCount) : numViolations;
+        const isBanned = totalViolations >= 3;
+
+        // Update Application status: 'Banned' if 3+ violations, else 'Interviewed'
         const Application = require('../models/Application');
         const application = await Application.findOne({
             Fk_candidate_id: session.fk_candidate_id,
@@ -574,7 +596,7 @@ exports.completeInterview = async (req, res) => {
         });
 
         if (application) {
-            application.status = 'Interviewed';
+            application.status = isBanned ? 'Banned' : 'Interviewed';
             await application.save();
 
             // In-app notification for interview completion
@@ -583,23 +605,44 @@ exports.completeInterview = async (req, res) => {
                 const companyName = job?.Fk_company_id?.company_name || 'the company';
                 const candidateForNotif = await Candidate.findById(session.fk_candidate_id);
                 if (candidateForNotif) {
-                    await createNotification(
-                        candidateForNotif.email,
-                        'result',
-                        'Interview Completed — Results Available 📊',
-                        `Your interview for ${job?.job_title || 'a position'} at ${companyName} is complete. Check your results now!`,
-                        '/user/results'
-                    );
-
-                    // Send notification to company
-                    if (job?.Fk_company_id?.email) {
+                    if (isBanned) {
+                        // Notify candidate they are banned
                         await createNotification(
-                            job.Fk_company_id.email,
-                            'interview',
-                            'Interview Completed',
-                            `${candidateForNotif.full_name} has just completed their interview for ${job?.job_title || 'a position'}. Review their final report.`,
-                            `/company/interviews?id=${sessionId}`
+                            candidateForNotif.email,
+                            'system',
+                            'Interview Access Suspended ⛔',
+                            `Your interview for ${job?.job_title || 'a position'} at ${companyName} has been flagged for ${totalViolations} integrity violations. You have been banned from this interview.`,
+                            '/user/applications'
                         );
+                    } else {
+                        await createNotification(
+                            candidateForNotif.email,
+                            'result',
+                            'Interview Completed — Results Available 📊',
+                            `Your interview for ${job?.job_title || 'a position'} at ${companyName} is complete. Check your results now!`,
+                            '/user/results'
+                        );
+                    }
+
+                    // Notify company
+                    if (job?.Fk_company_id?.email) {
+                        if (isBanned) {
+                            await createNotification(
+                                job.Fk_company_id.email,
+                                'integrity',
+                                'Candidate Banned for Integrity Violations 🚨',
+                                `${candidateForNotif.full_name} was banned from the interview for ${job?.job_title || 'a position'} due to ${totalViolations} integrity violations.`,
+                                '/company/interviews'
+                            );
+                        } else {
+                            await createNotification(
+                                job.Fk_company_id.email,
+                                'interview',
+                                'Interview Completed',
+                                `${candidateForNotif.full_name} has just completed their interview for ${job?.job_title || 'a position'}. Review their final report.`,
+                                `/company/interviews?id=${sessionId}`
+                            );
+                        }
                     }
                 }
             } catch (notifErr) {
@@ -633,19 +676,16 @@ exports.completeInterview = async (req, res) => {
             });
             const interviewScore = responseCount > 0 ? Math.round(totalAiScore / responseCount) : 0;
 
-            // 2. Resume Score (Placeholder or fetch if available)
-            // Just usage a mock or default for now if not stored. 
-            // In getInterviewSession we used 85 as mock.
-            const resumeScore = 85;
+            // 2. Resume Score
+            // Try to fetch Final Report first to see if the resume was graded during application
+            let finalReport = await FinalReport.findOne({
+                Fk_candidate_id: session.fk_candidate_id,
+                Fk_job_id: session.fk_job_id
+            });
+            const resumeScore = finalReport && finalReport.resume_score !== undefined ? finalReport.resume_score : 85; // Fallback only if no score exists
 
             // 3. Integrity Score (based on actual violations count from frontend)
-            const numViolations = typeof violationsCount === 'number' ? violationsCount : 0;
-            const tabCount = typeof tab_switch_count === 'number' ? tab_switch_count : 0;
-            const gazeCount = typeof gaze_away_count === 'number' ? gaze_away_count : 0;
-            const faceCount = typeof face_absent_count === 'number' ? face_absent_count : 0;
-            
-            // Re-calculate based on detailed counts if passed
-            const totalViolations = (tab_switch_count !== undefined) ? (tabCount + gazeCount + faceCount) : numViolations;
+            // Note: tabCount, gazeCount, faceCount, totalViolations are computed above (before application save)
             const integrityScore = Math.max(0, 100 - totalViolations * 10);
 
             // Log Integrity explicitly
@@ -667,12 +707,6 @@ exports.completeInterview = async (req, res) => {
             if (finalTrustScore >= 85) recommendation = 'Highly Recommended';
             else if (finalTrustScore >= 70) recommendation = 'Recommended';
 
-            // Check if report exists
-            let finalReport = await FinalReport.findOne({
-                Fk_candidate_id: session.fk_candidate_id,
-                Fk_job_id: session.fk_job_id
-            });
-
             if (!finalReport) {
                 finalReport = new FinalReport({
                     Fk_candidate_id: session.fk_candidate_id,
@@ -684,12 +718,11 @@ exports.completeInterview = async (req, res) => {
                     recommendation: recommendation
                 });
             } else {
-                finalReport.resume_score = resumeScore;
                 finalReport.interview_score = interviewScore;
                 finalReport.integrity_score = integrityScore;
                 finalReport.final_trust_score = finalTrustScore;
-                finalReport.recommendation = recommendation;
                 finalReport.generated_at = Date.now();
+                // Do NOT overwrite resume_score or recommendation — they were set by Gemini during application
             }
 
             await finalReport.save();
@@ -707,8 +740,10 @@ exports.completeInterview = async (req, res) => {
                             await createNotification(
                                 admin.email,
                                 'system',
-                                'Integrity Violation Detected ⚠️',
-                                `An interview for ${candidateInfo.full_name} (${jobInfo.job_title}) was flagged with an integrity score of ${integrityScore}%.`,
+                                isBanned ? 'Candidate Banned — Integrity Violations 🚨' : 'Integrity Violation Detected ⚠️',
+                                isBanned
+                                    ? `${candidateInfo.full_name} was BANNED from the interview for ${jobInfo.job_title} due to ${totalViolations} integrity violations (integrity score: ${integrityScore}%).`
+                                    : `An interview for ${candidateInfo.full_name} (${jobInfo.job_title}) was flagged with an integrity score of ${integrityScore}%.`,
                                 '/admin/reports'
                             );
                         }
