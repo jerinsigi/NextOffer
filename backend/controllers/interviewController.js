@@ -216,7 +216,6 @@ exports.getInterviewSession = async (req, res) => {
         // If so, delete them to try AI generation again
         const targetCount = job.questions_count || 5;
         if (questions.length > 0 && (questions[0].question_text === "Tell us about yourself." || questions.length !== targetCount)) {
-            console.log(`Found mismatch (Default: ${questions[0].question_text === "Tell us about yourself."}, Count: ${questions.length} vs ${targetCount}), removing to regenerate...`);
             await InterviewQuestion.deleteMany({ Fk_session_id: session._id });
             questions = [];
         }
@@ -240,15 +239,11 @@ exports.getInterviewSession = async (req, res) => {
                 const { extractTextFromPDF, generateResumeAwareQuestions } = require('../utils/aiService');
                 let resumeText = null;
                 if (application && application.Fk_resume_id && application.Fk_resume_id.resume_path) {
-                    console.log('📄 Extracting resume text from:', application.Fk_resume_id.resume_path);
                     resumeText = await extractTextFromPDF(application.Fk_resume_id.resume_path);
                     if (resumeText) {
-                        console.log(`✅ Resume text extracted (${resumeText.length} chars)`);
                     } else {
-                        console.warn('⚠️ Could not extract resume text — generating role-only questions');
                     }
                 } else {
-                    console.warn('⚠️ No resume attached to this application — generating role-only questions');
                 }
 
                 // Generate questions: ~50% resume-personalised + ~50% role-based
@@ -272,10 +267,8 @@ exports.getInterviewSession = async (req, res) => {
 
                 await InterviewQuestion.insertMany(questionsToInsert);
                 questions = await InterviewQuestion.find({ Fk_session_id: session._id });
-                console.log(`✅ Saved ${questions.length} questions (${questions.filter(q => q.question_source === 'resume').length} resume-based)`);
 
             } catch (err) {
-                console.error('AI Question Generation failed, using defaults:', err.message);
                 const companyName = job.Fk_company_id ? job.Fk_company_id.company_name : (job.company_name || 'our company');
                 const defaultQuestions = [
                     { Fk_session_id: session._id, question_text: "Tell us about yourself and your background.", topic: "Introduction", difficulty_level: "Easy", question_source: "role" },
@@ -557,7 +550,6 @@ exports.getUserInterviewResults = async (req, res) => {
 exports.completeInterview = async (req, res) => {
     try {
         const { sessionId, violationsCount, tab_switch_count, gaze_away_count, face_absent_count } = req.body;
-        console.log('🔄 Complete Interview - Received sessionId:', sessionId);
 
         if (!sessionId) {
             return res.status(400).json({ message: 'Session ID is required' });
@@ -566,7 +558,6 @@ exports.completeInterview = async (req, res) => {
         // Find the session
         const session = await InterviewSession.findById(sessionId);
         if (!session) {
-            console.log('❌ Session not found for ID:', sessionId);
             return res.status(404).json({ message: 'Interview session not found' });
         }
 
@@ -574,7 +565,6 @@ exports.completeInterview = async (req, res) => {
         session.session_status = 'completed';
         session.actual_completed_at = new Date();
         await session.save();
-        console.log('✅ Session status updated to: completed');
 
         // Update Application status to 'Interviewed'
         const Application = require('../models/Application');
@@ -586,7 +576,6 @@ exports.completeInterview = async (req, res) => {
         if (application) {
             application.status = 'Interviewed';
             await application.save();
-            console.log('\u2705 Application status updated to: Interviewed');
 
             // In-app notification for interview completion
             try {
@@ -668,7 +657,6 @@ exports.completeInterview = async (req, res) => {
                 face_absent_count: faceCount,
                 integrity_score: integrityScore
             });
-            console.log('✅ Integrity Log created');
 
             // 4. Final Trust Score (Weighted Average)
             // e.g. 60% Interview, 30% Resume, 10% Integrity
@@ -705,7 +693,6 @@ exports.completeInterview = async (req, res) => {
             }
 
             await finalReport.save();
-            console.log('✅ Final Report created/updated');
 
             // Notify Admins and Company if there are integrity violations
             if (integrityScore < 100) {

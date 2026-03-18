@@ -105,7 +105,6 @@ exports.registerCompany = async (req, res) => {
 
         // Cleanup: Delete the created login if company creation fails
         if (savedLogin && savedLogin._id) {
-            console.log('Rolling back Login creation due to error...');
             await Login.findByIdAndDelete(savedLogin._id);
         }
 
@@ -274,7 +273,6 @@ exports.deleteCompany = async (req, res) => {
 exports.approveCompany = async (req, res) => {
     try {
         const companyId = req.params.id;
-        console.log(`Approving company with ID: ${companyId}`);
 
         // Find the company
         const company = await Company.findById(companyId);
@@ -291,9 +289,6 @@ exports.approveCompany = async (req, res) => {
         if (login) {
             login.status = 'active';
             await login.save();
-            console.log(`Approved company: ${company.company_name}, Login status updated to active`);
-        } else {
-            console.warn(`Login not found for company email: ${company.email}`);
         }
 
         res.json({

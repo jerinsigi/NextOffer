@@ -12,12 +12,6 @@ const sendOTP = async (email, otp, context = 'registration') => {
     try {
         // If no credentials, just log it (Safety for dev environment without env vars)
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('=================================================');
-            console.log(`[DEV MODE] Email Service mocked.`);
-            console.log(`To: ${email}`);
-            console.log(`OTP: ${otp}`);
-            console.log(`Context: ${context}`);
-            console.log('=================================================');
             return true;
         }
 
@@ -55,7 +49,6 @@ const sendOTP = async (email, otp, context = 'registration') => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
         return true;
     } catch (error) {
         console.error('Error sending email:', error);
@@ -67,12 +60,6 @@ const sendShortlistEmail = async (candidateEmail, candidateName, jobTitle, compa
     try {
         // If no credentials, just log it (Safety for dev environment without env vars)
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('=================================================');
-            console.log(`[DEV MODE] Shortlist Email Service mocked.`);
-            console.log(`To: ${candidateEmail}`);
-            console.log(`Candidate: ${candidateName}`);
-            console.log(`Job: ${jobTitle} at ${companyName}`);
-            console.log('=================================================');
             return true;
         }
 
@@ -122,7 +109,6 @@ const sendShortlistEmail = async (candidateEmail, candidateName, jobTitle, compa
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Shortlist email sent to', candidateEmail, ':', info.response);
         return true;
     } catch (error) {
         console.error('Error sending shortlist email:', error);
@@ -133,14 +119,6 @@ const sendShortlistEmail = async (candidateEmail, candidateName, jobTitle, compa
 const sendInterviewEmail = async (candidateEmail, candidateName, jobTitle, companyName, interviewDate, interviewEndDate) => {
     try {
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('=================================================');
-            console.log(`[DEV MODE] Interview Email Service mocked.`);
-            console.log(`To: ${candidateEmail}`);
-            console.log(`Candidate: ${candidateName}`);
-            console.log(`Job: ${jobTitle} at ${companyName}`);
-            console.log(`Start: ${interviewDate}`);
-            console.log(`End: ${interviewEndDate}`);
-            console.log('=================================================');
             return true;
         }
 
@@ -205,7 +183,6 @@ const sendInterviewEmail = async (candidateEmail, candidateName, jobTitle, compa
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Interview email sent to', candidateEmail, ':', info.response);
         return true;
     } catch (error) {
         console.error('Error sending interview email:', error);
@@ -216,12 +193,6 @@ const sendInterviewEmail = async (candidateEmail, candidateName, jobTitle, compa
 const sendHireEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
     try {
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('=================================================');
-            console.log(`[DEV MODE] Hire Email Service mocked.`);
-            console.log(`To: ${candidateEmail}`);
-            console.log(`Candidate: ${candidateName}`);
-            console.log(`Job: ${jobTitle} at ${companyName}`);
-            console.log('=================================================');
             return true;
         }
 
@@ -257,7 +228,6 @@ const sendHireEmail = async (candidateEmail, candidateName, jobTitle, companyNam
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Hire email sent to', candidateEmail, ':', info.response);
         return true;
     } catch (error) {
         console.error('Error sending hire email:', error);
@@ -268,12 +238,6 @@ const sendHireEmail = async (candidateEmail, candidateName, jobTitle, companyNam
 const sendRejectEmail = async (candidateEmail, candidateName, jobTitle, companyName) => {
     try {
         if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-            console.log('=================================================');
-            console.log(`[DEV MODE] Reject Email Service mocked.`);
-            console.log(`To: ${candidateEmail}`);
-            console.log(`Candidate: ${candidateName}`);
-            console.log(`Job: ${jobTitle} at ${companyName}`);
-            console.log('=================================================');
             return true;
         }
 
@@ -313,7 +277,6 @@ const sendRejectEmail = async (candidateEmail, candidateName, jobTitle, companyN
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Reject email sent to', candidateEmail, ':', info.response);
         return true;
     } catch (error) {
         console.error('Error sending reject email:', error);

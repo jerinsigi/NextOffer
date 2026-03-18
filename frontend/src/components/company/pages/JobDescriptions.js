@@ -845,7 +845,6 @@ const JobDescriptions = () => {
             </div>
 
             {/* Create Job Modal */}
-            {console.log('Rendering Modal, showCreateModal:', showCreateModal)}
             {showCreateModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
                     <div className="modal-dialog modal-dialog-centered modal-lg custom-modal-center">
@@ -1413,7 +1412,6 @@ const JobDescriptions = () => {
             )}
 
             {/* Schedule Interview Modal */}
-            {console.log('Rendering Schedule Modal, show:', showScheduleModal)}
             {showScheduleModal && (
                 <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1060 }}>
                     <div className="modal-dialog modal-dialog-centered">

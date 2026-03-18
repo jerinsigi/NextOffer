@@ -5,7 +5,6 @@ const initializeSettings = async () => {
     try {
         const count = await System_Settings.countDocuments();
         if (count === 0) {
-            console.log('Initializing default system settings...');
             await System_Settings.create({});
         }
     } catch (error) {

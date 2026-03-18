@@ -190,18 +190,15 @@ const Users = () => {
     };
 
     const handleSuspendUser = (userId) => {
-        console.log('Suspending user:', userId);
         // Add suspend logic
     };
 
     const handleActivateUser = (userId) => {
-        console.log('Activating user:', userId);
         // Add activate logic
     };
 
     const handleDeleteUser = (userId) => {
         if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            console.log('Deleting user:', userId);
             // Add delete logic
         }
     };
@@ -219,7 +216,6 @@ const Users = () => {
     };
 
     const handleResetPassword = (userId) => {
-        console.log('Sending password reset email to user:', userId);
         alert('Password reset email sent successfully');
     };
 
@@ -565,7 +561,6 @@ const Users = () => {
                             <form onSubmit={(e) => {
                                 e.preventDefault();
                                 // Handle form submission here
-                                console.log('Form submitted:', formData);
                                 setShowAddModal(false);
                                 setShowEditModal(false);
                             }}>

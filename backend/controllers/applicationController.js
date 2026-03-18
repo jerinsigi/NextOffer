@@ -232,13 +232,11 @@ exports.shortlistCandidates = async (req, res) => {
                 .populate('Fk_job_id', 'job_title Fk_company_id');
 
             if (!application) {
-                console.warn(`Application ${appId} not found, skipping...`);
                 continue;
             }
 
             // Skip if already shortlisted
             if (application.status === 'Shortlisted') {
-                console.log(`Application ${appId} already shortlisted, skipping...`);
                 continue;
             }
 

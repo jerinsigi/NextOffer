@@ -13,7 +13,6 @@ const NativeSpeechTest = () => {
 
         if (SpeechRecognition) {
             setBrowserSupport(true);
-            console.log('✅ Browser supports Speech Recognition');
 
             // Create recognition instance
             const recognition = new SpeechRecognition();
@@ -23,13 +22,11 @@ const NativeSpeechTest = () => {
 
             // Event handlers
             recognition.onstart = () => {
-                console.log('🎤 Speech recognition started');
                 setIsListening(true);
                 setError(null);
             };
 
             recognition.onresult = (event) => {
-                console.log('📝 Got result:', event);
                 let finalTranscript = '';
                 let interimTranscript = '';
 
@@ -42,7 +39,6 @@ const NativeSpeechTest = () => {
                     }
                 }
 
-                console.log('Final:', finalTranscript, 'Interim:', interimTranscript);
                 setTranscript(prev => prev + finalTranscript + interimTranscript);
             };
 
@@ -53,7 +49,6 @@ const NativeSpeechTest = () => {
             };
 
             recognition.onend = () => {
-                console.log('🛑 Speech recognition ended');
                 setIsListening(false);
             };
 
@@ -73,7 +68,6 @@ const NativeSpeechTest = () => {
     const startListening = () => {
         if (recognitionRef.current && !isListening) {
             try {
-                console.log('Starting recognition...');
                 recognitionRef.current.start();
             } catch (err) {
                 console.error('Error starting recognition:', err);

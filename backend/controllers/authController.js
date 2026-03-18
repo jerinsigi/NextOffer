@@ -10,12 +10,8 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        console.log('=== LOGIN ATTEMPT ===');
-        console.log('Username/Email provided:', username);
-
         // Validate input
         if (!username || !password) {
-            console.log('Missing username or password');
             return res.status(400).json({ message: 'Please provide username and password' });
         }
 
@@ -25,39 +21,23 @@ exports.login = async (req, res) => {
         });
 
         if (!user) {
-            console.log('User not found in database');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        console.log('User found:', {
-            username: user.username,
-            email: user.email,
-            usertype: user.usertype,
-            status: user.status
-        });
-
         // Check if account is active
         if (user.status === 'inactive') {
-            console.log('Account is inactive - blocking login');
             return res.status(403).json({
                 message: 'Your account is pending admin approval. Please wait for activation.',
                 status: 'inactive'
             });
         }
 
-        console.log('Account status check passed');
-
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        console.log('Password valid:', isPasswordValid);
-
         if (!isPasswordValid) {
-            console.log('Invalid password');
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-
-        console.log('Login successful!');
 
         // Successful login - return user info (excluding password)
         res.json({
