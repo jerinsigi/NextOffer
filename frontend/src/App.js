@@ -40,8 +40,8 @@ import Notifications from './components/user/pages/Notifications';
 import HelpSupport from './components/user/pages/HelpSupport';
 import UserSettings from './components/user/pages/Settings';
 import JobOpportunities from './components/user/pages/JobOpportunities';
-import SpeechTest from './components/SpeechTest';
-import NativeSpeechTest from './components/NativeSpeechTest';
+import SpeechTest from '../../backend/dev/SpeechTest';
+import NativeSpeechTest from '../../backend/dev/NativeSpeechTest';
 
 import CompanyLayout from './components/company/CompanyLayout';
 import CompanyDashboard from './components/company/pages/Dashboard';
