@@ -238,10 +238,17 @@ const InterviewMonitoring = () => {
                 (job.department && job.department.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         } else {
-            return applications.filter(app => {
-                const name = app.Fk_candidate_id?.full_name || '';
-                return name.toLowerCase().includes(searchTerm.toLowerCase());
-            });
+            return applications
+                .filter(app => {
+                    const name = app.Fk_candidate_id?.full_name || '';
+                    return name.toLowerCase().includes(searchTerm.toLowerCase());
+                })
+                .sort((a, b) => {
+                    // Push banned candidates to the bottom
+                    if (a.status === 'Banned' && b.status !== 'Banned') return 1;
+                    if (a.status !== 'Banned' && b.status === 'Banned') return -1;
+                    return 0;
+                });
         }
     };
 
@@ -458,7 +465,9 @@ const InterviewMonitoring = () => {
                                                     </div>
                                                     <div>
                                                         <h5 className="candidate-name d-flex align-items-center">
-                                                            <span className="badge bg-primary rounded-pill me-2 fs-6 px-3 py-2">#{rank}</span>
+                                                            {app.status !== 'Banned' && (
+                                                                <span className="badge bg-primary rounded-pill me-2 fs-6 px-3 py-2">#{rank}</span>
+                                                            )}
                                                             {candidate.full_name || 'Unknown Candidate'}
                                                             {hasScore && app.final_trust_score >= 85 && (
                                                                 <i className="bi bi-star-fill text-warning ms-2" title="Top Candidate"></i>
@@ -852,7 +861,7 @@ const InterviewMonitoring = () => {
                                 type="number"
                                 className="form-control-dark w-100 mb-3"
                                 min="1"
-                                max={filteredItems.filter(app => app.status !== 'Hired' && app.status !== 'Rejected').length || 1}
+                                max={filteredItems.filter(app => app.status !== 'Hired' && app.status !== 'Rejected' && app.status !== 'Banned').length || 1}
                                 value={hireCount}
                                 onChange={(e) => setHireCount(e.target.value)}
                                 disabled={finalizeLoading}
@@ -861,6 +870,7 @@ const InterviewMonitoring = () => {
                                 <i className="bi bi-exclamation-triangle-fill me-2"></i>
                                 <strong>Warning:</strong> The top <strong>{hireCount}</strong> candidate(s) will be marked as <strong>Hired</strong>.
                                 ALL OTHER active candidates for this job will be automatically marked as <strong>Rejected</strong>.
+                                Banned candidates are excluded from this process.
                                 Emails will be sent immediately. This action cannot be undone.
                             </div>
                         </div>

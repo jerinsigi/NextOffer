@@ -113,7 +113,7 @@ Return ONLY a valid JSON array (no markdown, no extra text) of exactly ${totalCo
 `;
 
     try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -164,7 +164,7 @@ const scoreResponse = async (questionText, candidateAnswer, expectedTopic = 'Gen
             };
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
         const prompt = `
             You are an expert technical interviewer evaluating a candidate's response to an interview question.
@@ -219,7 +219,7 @@ const evaluateResumeMatch = async (resumeText, jobDescription, skills = []) => {
             };
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
         const skillsStr = skills.length > 0 ? skills.join(', ') : 'general requirements';
 
         const prompt = `

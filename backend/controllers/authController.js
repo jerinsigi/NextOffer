@@ -553,13 +553,15 @@ exports.googleRegister = async (req, res) => {
         const randomPassword = Math.random().toString(36).substring(2, 15);
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-        // Create username from display name or email
-        let username = displayName || email.split('@')[0];
+        // Derive base username from the email local part (before @), ignoring the domain
+        const baseUsername = email.split('@')[0];
 
-        // Check if username exists, if so append random number
-        const existingUsername = await Login.findOne({ username });
-        if (existingUsername) {
-            username = `${username}_${Math.floor(Math.random() * 10000)}`;
+        // Incrementally find a unique username: try baseUsername, then baseUsername1, baseUsername2, ...
+        let username = baseUsername;
+        let counter = 1;
+        while (await Login.findOne({ username })) {
+            username = `${baseUsername}${counter}`;
+            counter++;
         }
 
         // Create Login record (automatically active for Google users)

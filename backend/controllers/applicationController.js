@@ -430,8 +430,11 @@ exports.finalizeHiring = async (req, res) => {
             }
         }
 
-        // Sort applications: Those with a score first (descending), then fallback to creation date
-        applications.sort((a, b) => {
+        // Filter out banned candidates entirely — they are disqualified and should not be ranked or hired
+        const eligibleApplications = applications.filter(app => app.status !== 'Banned');
+
+        // Sort eligible applications: Those with a score first (descending), then fallback to creation date
+        eligibleApplications.sort((a, b) => {
             if (a.temp_final_score !== -1 && b.temp_final_score !== -1) {
                 return b.temp_final_score - a.temp_final_score; // Higher score first
             }
@@ -448,9 +451,9 @@ exports.finalizeHiring = async (req, res) => {
         let rejectedCount = 0;
         const emailResults = [];
 
-        // 3. Process each application (Hire top N, Reject the rest)
-        for (let i = 0; i < applications.length; i++) {
-            const application = applications[i];
+        // 3. Process each eligible application (Hire top N, Reject the rest)
+        for (let i = 0; i < eligibleApplications.length; i++) {
+            const application = eligibleApplications[i];
 
             // Skip already finalized applications so we don't double email them
             if (application.status === 'Hired' || application.status === 'Rejected') {
