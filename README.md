@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🚀 NextOffer</h1>
+  <h1>🚀 NextOffer : AI Powered Interview Automation platform</h1>
   <p><strong>Your Ultimate AI-Powered Hiring Platform</strong></p>
   
   [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
